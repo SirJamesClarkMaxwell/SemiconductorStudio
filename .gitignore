@@ -1,0 +1,11 @@
+*.vs*
+*bin*
+*lib*
+*obj*
+*ci*
+*cmake*
+
+*.vcxproj*
+*.filters*
+*.users*
+*.sln*
