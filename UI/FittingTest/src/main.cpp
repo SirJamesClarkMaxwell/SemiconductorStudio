@@ -6,7 +6,7 @@ int main() {
 
 	Tester win{};
 
-	win.init();
+	if (!win.init()) return -1;
 	win.run();
 
 
