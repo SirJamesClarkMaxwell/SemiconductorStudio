@@ -7,6 +7,8 @@ void Tester::run(std::function<void(std::shared_ptr<Data::FittingTesterData>)> d
 	while (!Platform::Window::shouldClose()) {
 		if (!Platform::Window::beginFrame()) return;
 
+		Components::draw_bg_window();
+
 		draw(this->state);
 
 		Platform::Window::endFrame();

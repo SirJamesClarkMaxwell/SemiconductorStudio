@@ -3,17 +3,6 @@
 
 namespace UI::Components {
 	
-	void parameter_input_double(const std::string& pName, double* val) {
-		ImGui::InputDouble(pName.c_str(), val, 0.0f, 0.0f, "%e");
-	}
-
-	void show_button(bool* pressed) {
-		if (pressed == nullptr) return;
-		bool disable = *pressed;
-		if (disable) ImGui::BeginDisabled();
-		*pressed ^= ImGui::Button("Sumbit");
-		if (disable) ImGui::EndDisabled();
-	}
 	
 
 	void draw_bg_window() {
@@ -291,13 +280,35 @@ namespace UI::Components {
 		ImGui::EndGroup();
 	}
 
-	void window_wrap(const std::string& name, std::function<void()> content) {
-		ImGui::Begin(name.c_str());
+	void draw_fitting_tester(std::shared_ptr<Data::FittingTesterData> state) {
+		ImGui::Begin("Fitting Tester");
 
-		content();
+
+		UI::Components::draw_fitting_options(state.get());
+		ImGui::SameLine(0, 20);
+		UI::Components::draw_control_buttons(state.get());
+
+		static ImGuiTableFlags flags = ImGuiTableFlags_SizingStretchProp
+			| ImGuiTableFlags_BordersOuter
+			| ImGuiTableFlags_BordersInnerV;
+
+
+		if (ImGui::BeginTable("Layout", 2, flags)) {
+			ImGui::TableNextColumn();
+			UI::Components::draw_plot_grid(state.get());
+
+			ImGui::TableNextColumn();
+			UI::Components::draw_chisq_lists(state.get());
+
+
+			ImGui::EndTable();
+		}
+
 
 		ImGui::End();
 	}
+
+
 
 	
 }
