@@ -6,7 +6,7 @@ project "Sandbox"
     staticruntime(srunt)
     files {
         "%{prj.location}/**.cpp",
-        "%{prj.location}/**.h"
+        "%{prj.location}/**.hpp"
     }
 
     removefiles { "%{prj.location}/implot_demos/**.*" }
