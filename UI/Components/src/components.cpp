@@ -215,7 +215,7 @@ namespace UI::Components {
 			if (data->plots[plot_num].comp_values.size() != 0)
 				ImPlot::PlotLine("Fitted Curve", xs, fys, data->plots[plot_num].comp_values.size());
 
-			if(!ImGui::GetIO().KeyCtrl) ImGui::SetItemTooltip("Ctrl to interact");
+			if(!ImGui::GetIO().KeyCtrl && ImGui::GetScrollMaxY() > 0) ImGui::SetItemTooltip("Ctrl to interact");
 			ImPlot::EndPlot();
 		}
 
