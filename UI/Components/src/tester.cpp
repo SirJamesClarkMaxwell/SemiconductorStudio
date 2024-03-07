@@ -10,12 +10,22 @@ void Tester::run(std::function<void(std::shared_ptr<Data::FittingTesterData>)> d
 		Components::draw_bg_window();
 
 		draw(this->state);
+		this->update();
 
 		Platform::Window::endFrame();
 	}
 }
 
+void Tester::update() {
+	this->fitting.update(this->getState());
+}
+
+
 Tester::Tester() {
+	//TestedFitting to be initialized here
+
+	//mock code to present the UI
+	//to be deleted
 	this->state = std::make_shared<Data::FittingTesterData>();
 
 	auto& lst = this->state.get()->getFittingOptions()->list;
