@@ -25,6 +25,8 @@ Tester::Tester() {
 	//TestedFitting to be initialized here
 
 	//mock code to present the UI
+
+	
 	//to be deleted
 	this->state = std::make_shared<Data::FittingTesterData>();
 
@@ -41,7 +43,7 @@ Tester::Tester() {
 
 	//plots setup
 	int d_points = 400;
-	int verts = 7;
+	int verts = 6;
 	std::vector<double> args{};
 	std::vector<double> gvals{};
 	std::vector<double> comp{};
@@ -61,7 +63,7 @@ Tester::Tester() {
 	for (int p = 0; p < verts; p++) {
 		auto& plot = this->state.get()->getPlots()->plots[p];
 		plot.comp_values.resize(d_points);
-		plot.parameters.push_back((double)p / 5.0);
+		plot.parameters.push_back((double)p / 5.0 + 1.0);
 		plot.parameters.push_back((double)p / 10.0);
 		plot.parameters.push_back(3.0);
 	}

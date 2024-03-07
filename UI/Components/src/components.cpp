@@ -190,18 +190,32 @@ namespace UI::Components {
 
 
 		ImVec2 plot_pos = ImGui::GetCursorScreenPos();
+		ImPlotFlags plot_flags = ImPlotFlags_None;
+		ImPlotAxisFlags axes_flags = ImPlotAxisFlags_NoHighlight;
+		ImGuiID tableID = ImGui::GetItemID();
+		
+		//I spent too much time trying to figure out how
+		//to block just scrolling form the plot, not disabling inputs
+		//entirely
+		//I wish there was a better way
 
-		if (ImPlot::BeginPlot((name_base.append(std::to_string(data->plots[plot_num].vertex_num)).c_str()))) {
-			ImPlot::SetupAxes(data->axis.second.c_str(), data->axis.first.c_str());
+		//it will not prevent from scrolling if there is no scrollbar
+		if (!ImGui::GetIO().KeyCtrl && ImGui::GetScrollMaxY() > 0) {
+			plot_flags = ImPlotFlags_NoInputs;
+		}
+
+
+		if (ImPlot::BeginPlot((name_base.append(std::to_string(data->plots[plot_num].vertex_num)).c_str()), ImVec2(-1, 0), plot_flags)) {
+			ImPlot::SetupAxes(data->axis.second.c_str(), data->axis.first.c_str(), axes_flags, axes_flags);
 			if (!data->lin_x_scale) ImPlot::SetupAxisScale(ImAxis_X1, TR_FW_LN, TR_INV_LN);
 			if (!data->lin_y_scale) ImPlot::SetupAxisScale(ImAxis_Y1, TR_FW_LN, TR_INV_LN);
-
 
 			if (data->given_values.size() != 0)
 				ImPlot::PlotLine("Measurement", xs, mys, data->arguments.size());
 			if (data->plots[plot_num].comp_values.size() != 0)
 				ImPlot::PlotLine("Fitted Curve", xs, fys, data->plots[plot_num].comp_values.size());
 
+			if(!ImGui::GetIO().KeyCtrl) ImGui::SetItemTooltip("Ctrl to interact");
 			ImPlot::EndPlot();
 		}
 
@@ -306,6 +320,8 @@ namespace UI::Components {
 
 
 		ImGui::End();
+
+		ImPlot::ShowDemoWindow();
 	}
 
 

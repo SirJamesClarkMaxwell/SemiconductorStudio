@@ -34,6 +34,8 @@ namespace UI::Platform {
 
 		ImGui::StyleColorsDark();
 
+		ImPlot::GetInputMap().OverrideMod = ImGuiMod_None;
+
 		ImGui_ImplGlfw_InitForOpenGL(m_winPtr.get(), true);
 		ImGui_ImplOpenGL3_Init("#version 130");
 	}
