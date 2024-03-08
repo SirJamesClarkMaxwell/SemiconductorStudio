@@ -200,12 +200,12 @@ namespace UI::Components {
 		//I wish there was a better way
 
 		//it will not prevent from scrolling if there is no scrollbar
-		if (!ImGui::GetIO().KeyCtrl && ImGui::GetScrollMaxY() > 0) {
-			plot_flags = ImPlotFlags_NoInputs;
-		}
+		if (!ImGui::GetIO().KeyCtrl && ImGui::GetScrollMaxY() > 0) plot_flags = ImPlotFlags_NoInputs;
+
+		ImVec2 plot_size(-1, ImGui::GetContentRegionAvail().x * 0.7f);
 
 
-		if (ImPlot::BeginPlot((name_base.append(std::to_string(data->plots[plot_num].vertex_num)).c_str()), ImVec2(-1, 0), plot_flags)) {
+		if (ImPlot::BeginPlot((name_base.append(std::to_string(data->plots[plot_num].vertex_num)).c_str()), plot_size, plot_flags)) {
 			ImPlot::SetupAxes(data->axis.second.c_str(), data->axis.first.c_str(), axes_flags, axes_flags);
 			if (!data->lin_x_scale) ImPlot::SetupAxisScale(ImAxis_X1, TR_FW_LN, TR_INV_LN);
 			if (!data->lin_y_scale) ImPlot::SetupAxisScale(ImAxis_Y1, TR_FW_LN, TR_INV_LN);
@@ -322,6 +322,7 @@ namespace UI::Components {
 		ImGui::End();
 
 		ImPlot::ShowDemoWindow();
+		ImGui::ShowDemoWindow();
 	}
 
 
