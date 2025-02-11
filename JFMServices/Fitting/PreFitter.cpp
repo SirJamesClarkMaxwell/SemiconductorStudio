@@ -261,63 +261,24 @@ namespace JFMService
 		std::transform(I.begin() + AStart, I.begin() + AEnd, std::back_inserter(logI), [](double i)
 			{ return std::log(i); });
 
-		auto derivate = [&](const std::span<double>& v, const std::span<double>& c, std::pair<std::vector<double>, std::vector<double>>& result)
+		auto derivate = [&](const std::span<double>& voltage, const std::span<double>& current, std::pair<std::vector<double>, std::vector<double>>& result)
 			{
 				double der{ 0.0 };
 
 				result.first.clear();
 				result.second.clear();
 
-				for (size_t i = 0; i < c.size() - 2; i++)
+				for (size_t i = 0; i < current.size() - 2; i++)
 				{
-					der = (c[i + 2] - c[i]) / (v[i + 2 + AStart] - v[i + AStart]);
-					result.first.push_back(v[i + 1 + AStart]);
+					der = (current[i + 2] - current[i]) / (voltage[i + 2 + AStart] - voltage[i + AStart]);
+					result.first.push_back(voltage[i + 1 + AStart]);
 					result.second.push_back(der);
 				}
 			};
-
-		auto derivateFull = [&](const std::span<double>& v, const std::span<double>& c, std::pair<std::vector<double>, std::vector<double>>& result)
-			{
-				double der{ 0.0 };
-
-				result.first.clear();
-				result.second.clear();
-
-				for (size_t i = 0; i < c.size() - 2; i++)
-				{
-					der = (c[i + 2] - c[i]) / (v[i + 2] - v[i]);
-					result.first.push_back(v[i + 1]);
-					result.second.push_back(der);
-				}
-			};
-
-		std::pair<std::vector<double>, std::vector<double>> ADerivative;
-		derivate(V, logI, ADerivative);
-
-		std::vector<double> filteredI = { I.begin(), I.end() };
-
-		std::vector<double> logV{}, loglogI{};
-		std::transform(V.begin(), V.end(), std::back_inserter(logV), [](double v)
-			{ return std::log(v); });
-
-		std::transform(filteredI.begin(), filteredI.end(), std::back_inserter(loglogI), [](double i)
-			{ return std::log(i); });
-
-		/*filteredI.clear();
-		for (const auto& [i, v] : std::views::zip(I, V)) {
-			filteredI.push_back(std::log(i - v / parameterResult[Fitters::ParameterID::Rsh]));
-		}*/
 
 		
-		//derivateFull(logV, loglogI, globalErrors[0]);
-		//globalErrors[1].first = logV;
-		//globalErrors[1].second = loglogI;
-		/*for (const auto& [i, v] : std::views::zip(loglogI, logV))
-			globalErrors[1].second.push_back((i - std::log(parameterResult[Fitters::ParameterID::Rsh])) / v);*/
-
-
-
-
+		std::pair<std::vector<double>, std::vector<double>> ADerivative;
+		derivate(V, logI, ADerivative);
 
 
 		double maxDer{ 0.0 };
@@ -350,11 +311,9 @@ namespace JFMService
 		double A = 1 / (k * T * maxDer);
 
 		A *= adjustCoefficient(dV);
-		// log(I) = V / (A  * k * T) + log(I0)
-		// I0 = I / exp(V / (A * k * T))
-		// double I0 = I[maxDerIndex + AStart] / std::exp(V[maxDerIndex + AStart] / (A * k * T));
-		double l = logI[maxDerIndex] - V[maxDerIndex + AStart] / (A * k * T);
-
+		double l = logI[maxDerIndex] - V[maxDerIndex] / (A * k * T);
+		double l1 = logI[maxDerIndex] - V[maxDerIndex + AStart] / (A * k * T);
+		std::cout << "l: " << std::exp(l) << "l1: " << std::exp(l1) << std::endl;
 		double I0 = std::exp(l);
 
 		parameterResult[Fitters::ParameterID::A] = A;

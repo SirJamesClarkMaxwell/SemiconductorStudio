@@ -3,7 +3,7 @@
 #include "../Fitting/JFMFitter.hpp"
 #include "../Models/CalculateData.hpp"
 #include <compare>
-#define MULTITHREAD
+ #define MULTITHREAD
 extern std::vector<std::pair<std::vector<double>, std::vector<double>>> globalNoisyI;
 std::mutex g_mutex;
 static int blockNumber = 0;
@@ -138,8 +138,8 @@ namespace JFMService
 			copied.startingData.initialValues = preFitter->Estimate(copied.startingData.initialData);
 			fitter->Fit(copied.startingData, callback);
 			calculateFittingError(input, result, calculated);
-
-		} while (0 and (result.error > 23.5 or outOfBounds(result.foundParameters, input.startingData.bounds))); // and any of the parameters is negative
+		} while (result.error > 23.5 or outOfBounds(result.foundParameters, input.startingData.bounds));
+		//} while (0 and (result.error > 23.5 or outOfBounds(result.foundParameters, input.startingData.bounds))); // and any of the parameters is negative
 		g_mutex.lock();
 
 		globalNoisyI.push_back({ copiedCurrent, calculated });
@@ -176,20 +176,20 @@ namespace JFMService
 		std::span<double> fittedCurrent = data.characteristic.currentData;
 		double accumulatedError = 0.0;
 		double noise = input.noise / 100.0;
-		int dataSize = trueCurrent.size();
+		//int dataSize = trueCurrent.size();
 		
-		auto calculateSigma = [&](const std::vector<double>& noisedI, const std::span<double>& trueI)
-		{
-			double sigma = 0.0;
-			for (const auto&[tI,nI]:std::views::zip(trueI,noisedI))
-				sigma += std::pow(std::abs((std::log(tI) - std::log(nI))),2)/ dataSize;
-			return sigma;
+		// auto calculateSigma = [&](const std::vector<double>& noisedI, const std::span<double>& trueI)
+		// {
+		// 	double sigma = 0.0;
+		// 	for (const auto&[tI,nI]:std::views::zip(trueI,noisedI))
+		// 		sigma += std::pow(std::abs((std::log(tI) - std::log(nI))),2)/ dataSize;
+		// 	return sigma;
 			
-		};
+		// };
 
-		double sigma = calculateSigma(copiedCurrent,trueData.characteristic.currentData);
+		// double sigma = calculateSigma(copiedCurrent,trueData.characteristic.currentData);
 
-		double firstError = input.firstFitError;
+		// double firstError = input.firstFitError;
 		auto IerrorModel = [&](double trueI, double fittedI)
 			{
 			/*
