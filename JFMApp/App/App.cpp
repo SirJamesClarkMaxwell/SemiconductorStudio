@@ -791,9 +791,6 @@ namespace JFMApp {
 
 
 				};
-
-
-
 			m_state.browserData.m_loadAllCallback = [&]() {
 
 				std::vector<std::filesystem::path> paths{};
@@ -931,7 +928,8 @@ namespace JFMApp {
 
 				};
 
-			m_state.browserData.m_unselectAllCallback = [&]() {
+
+			{
 				for (auto& ch : m_state.browserData.m_characteristics) {
 					ch.checked = false;
 				}
@@ -986,6 +984,7 @@ namespace JFMApp {
 				}
 				active.savedUseBounds = true;
 				active.useBounds = true;
+				active.savedUseInitial = true;
 				};
 
 			m_state.plotData.m_fitCallback = [&]() {

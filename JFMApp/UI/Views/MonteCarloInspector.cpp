@@ -132,7 +132,8 @@ namespace JFMApp::Views {
 					ImGui::BeginChild("PlotsArea", s, cf);
 
 					{
-						auto& name = data.mcTempName;
+						//auto& name = data.mcTempName;
+						auto& name = data.active->name;
 						ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x * 0.25f);
 						ImGui::InputTextWithHint("##Name", "Name",
 							(char*)name.c_str(),
@@ -140,7 +141,7 @@ namespace JFMApp::Views {
 							ImGuiInputTextFlags_CallbackResize,
 							InputTextCallback,
 							(void*)&name);
-
+						data.mcTempName = data.active->name;
 						ImGui::SameLine();
 
 						auto& tempParams = data.mcTempParams;
@@ -188,7 +189,7 @@ namespace JFMApp::Views {
 							return mc.name == data.mcTempName;
 							});
 
-						if (str != data.mcPlots.end() || data.mcTempName.size() == 0) cond = false;
+						//if (str != data.mcPlots.end() || data.mcTempName.size() == 0) cond = false;
 
 						if (!cond)
 							ImGui::BeginDisabled();

@@ -156,14 +156,15 @@ namespace JFMService::FittingService
 
 		for (const auto &[x, y, e] : std::views::zip(xSave, ySave, errors))
 			dataToSave += formatData(x, y, e);
-
+		if (!std::filesystem::exists(path))
+			std::filesystem::create_directories(path);
 		std::ofstream file(path);
 		file << dataToSave;
 		file.close();
 		std::string command = "python ./generate_image.py " + path.string();
 		std::system(command.c_str());
-#if 0		
-		std::cout << path.string()
+#if 1		
+		std::cout << path.string();
 		try {
 			// Attempt to remove the file
 			if (std::filesystem::remove(path)) {

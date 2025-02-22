@@ -36,7 +36,7 @@ namespace JFMService
 	static int num = 0;
 	void MonteCarloEngine::Simulate(const MCInput& input, std::function<void(MCOutput&&)> callback)
 	{
-		int chunkSize = (input.iterations / 14) + 1; // 41
+		int chunkSize = (input.iterations / 23) + 1; // 41
 		std::jthread thread{
 			[=]()
 			{

@@ -313,7 +313,7 @@ namespace JFMService
 		A *= adjustCoefficient(dV);
 		double l = logI[maxDerIndex] - V[maxDerIndex] / (A * k * T);
 		double l1 = logI[maxDerIndex] - V[maxDerIndex + AStart] / (A * k * T);
-		std::cout << "l: " << std::exp(l) << "l1: " << std::exp(l1) << std::endl;
+		//std::cout << "l: " << std::exp(l) << "l1: " << std::exp(l1) << std::endl;
 		double I0 = std::exp(l);
 
 		parameterResult[Fitters::ParameterID::A] = A;
