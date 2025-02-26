@@ -7,12 +7,12 @@
 [submodule "Vendor/imgui"]
 	path = Vendor/imgui
 	url = https://github.com/ArnoXX/imgui.git
-[submodule "Vendor/NumericStorm"]
-	path = Vendor/NumericStorm
-	url = https://github.com/SirJamesClarkMaxwell/NumericStorm.git
 [submodule "Vendor/googletest"]
 	path = Vendor/googletest
 	url = https://github.com/ArnoXX/googletest.git
 [submodule "Vendor/LambertW"]
 	path = Vendor/LambertW
 	url = https://github.com/SirJamesClarkMaxwell/LambertW.git
+[submodule "Vendor/NumericStorm"]
+	path = Vendor/NumericStorm
+	url = https://github.com/SirJamesClarkMaxwell/NumericStorm.git
