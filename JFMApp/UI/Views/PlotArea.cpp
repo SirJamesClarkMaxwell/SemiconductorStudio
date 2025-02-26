@@ -266,6 +266,13 @@ namespace JFMApp::Views {
 					ImGui::Checkbox("Hide non-active", &data.hideNonActive);
 					ImGui::SameLine(0.0, 20.0);
 					ImGui::Checkbox("Plot Original", &data.plotOriginal);
+					ImGui::SameLine(0.0, 20.0);
+					/*
+					if(ImGui::BeginCombo())
+					{
+					
+					}
+					*/
 					ImGui::Separator();
 					if(ImGui::Button("Print Parameters"))
 					{

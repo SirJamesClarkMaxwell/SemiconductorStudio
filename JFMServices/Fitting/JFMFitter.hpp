@@ -6,20 +6,21 @@
 namespace JFMService::Fitters
 {
 
-    enum ParameterID
-    {
-        I0=0,
-        A=1,
-        Rs,
-        Rsh,
-        alpha,
-        Rsh2,
-        p_size
-    };
-    enum AdditionalParametersID
-    {
-        Temperature = p_size,
-    };
+    //enum ParameterID
+    //{
+    //    I0=0,
+    //    A=1,
+    //    Rs,
+    //    Rsh,
+    //    alpha,
+    //    Rsh2,
+    //    I_sc,
+    //    p_size
+    //};
+    //enum AdditionalParametersID
+    //{
+    //    Temperature = p_size,
+    //};
 
     using namespace FittingService;
     using Callback = std::function<void(ParameterMap &&)>;
@@ -34,6 +35,18 @@ namespace JFMService::Fitters
     {
     public:
         FourParameterFitter() = default;
+        virtual void Fit(const FittingInput &input, Callback callback) override;
+    };
+    class FiveParameterFitter : public AbstractFitter
+    {
+    public:
+        FiveParameterFitter() = default;
+        virtual void Fit(const FittingInput &input, Callback callback) override;
+    };
+    class SevenParameterFitter : public AbstractFitter
+    {
+    public:
+        SevenParameterFitter() = default;
         virtual void Fit(const FittingInput &input, Callback callback) override;
     };
     class SixParameterFitter : public AbstractFitter

@@ -71,46 +71,48 @@ namespace JFMService::Fitters
 		return additional;
 	}
 
-	//! Four Parameter Fitter
-	void FourParameterFitter::Fit(const FittingInput &input, Callback callback)
+	template<class CurrentModel, size_t parameter_size>
+	void fit_current(const FittingInput& input, Callback callback)
 	{
 		int fittingIterationRuns = 0;
-		auto checkRepetitionCondition = [&](const SimplexOptimizationResults<4> &result)
+		auto checkRepetitionCondition = [&](const SimplexOptimizationResults<parameter_size>& result)
 		{
 			auto parameters = result.getParameters();
 			bool negativeValueParameters = std::ranges::any_of(parameters, [](double value)
-															   { return value < 0; });
-			bool bigError = result.getError() > 1 or result.getError()<0;
+			{ return value < 0; });
+			bool bigError = result.getError() > 1 || result.getError() < 0;
 			bool iterationCondition = fittingIterationRuns < 5;
-			//return false;
-			return (negativeValueParameters or bigError) and iterationCondition;
+			return (negativeValueParameters || bigError) && iterationCondition;
 		};
-		//! this can be rebuild and templated via model and number of parameters
-
-		IVFittingSetup<4> setUp = transferFittingSetUp<4>(input);
+	
+		IVFittingSetup<parameter_size> setUp = transferFittingSetUp<parameter_size>(input);
 		Data NSDdata = transferFittingData(input.initialData.characteristic);
 		JFMAdditionalParameters additionalParameters = transferAdditionalParameters(input.initialData.additionalParameters, input.fixConfig);
-		NumericStorm::Fitting::Parameters<4> initialPoint = transferInitialPoint<4>(input.initialValues);
-		auto recalculateBounds = [](IVFittingSetup<4>& setUp, NumericStorm::Fitting::Parameters<4>& initial) 
-			{
-				auto min = (NumericStorm::Fitting::SimplexPoint<4>(initial) * 0.1).getParameters().getParameters();
-				auto max = (NumericStorm::Fitting::SimplexPoint<4>(initial) * 10).getParameters().getParameters();
-				setUp.simplexMin = min;
-				setUp.simplexMax = max;
-			};
-		auto recalculateInitialPoint = [](NumericStorm::Fitting::Parameters<4>& initial) 
-			{
-				for (auto& item : initial.getParameters())
-					item *= Random::Float(0.1, 10);
-			};
-		SimplexOptimizationResults<4> results;
+		NumericStorm::Fitting::Parameters<parameter_size> initialPoint = transferInitialPoint<parameter_size>(input.initialValues);
+	
+		auto recalculateBounds = [](IVFittingSetup<parameter_size>& setUp, NumericStorm::Fitting::Parameters<parameter_size>& initial)
+		{
+			auto min = (NumericStorm::Fitting::SimplexPoint<parameter_size>(initial) * 0.1).getParameters().getParameters();
+			auto max = (NumericStorm::Fitting::SimplexPoint<parameter_size>(initial) * 10).getParameters().getParameters();
+			setUp.simplexMin = min;
+			setUp.simplexMax = max;
+		};
+	
+		auto recalculateInitialPoint = [](NumericStorm::Fitting::Parameters<parameter_size>& initial)
+		{
+			for (auto& item : initial.getParameters())
+				item *= Random::Float(0.1, 10);
+		};
+	
+		SimplexOptimizationResults<parameter_size> results;
 		auto transferFixingConfiguration = [&](const ParameterMap& additional)
-			{
-				auto& destination = results.getParameters();
-				for (const auto& [key,val] : additional)
-					if(additional.at(key))
-						destination[(int)key] = val;
-			};
+		{
+			auto& destination = results.getParameters();
+			for (const auto& [key, val] : additional)
+				if (additional.at(key))
+					destination[(int)key] = val;
+		};
+	
 		do
 		{
 			if (fittingIterationRuns > 1)
@@ -118,84 +120,39 @@ namespace JFMService::Fitters
 				recalculateBounds(setUp, initialPoint);
 				recalculateInitialPoint(initialPoint);
 			}
-			results = fit<FourParameterModel, 4>(setUp, initialPoint, NSDdata, additionalParameters);
-			initialPoint = results.getParameters();
+			results = fit<CurrentModel, parameter_size>(setUp, initialPoint, NSDdata, additionalParameters);
 			if (additionalParameters.fixingConfiguration)
 				transferFixingConfiguration(input.fixConfig);
 			fittingIterationRuns += 1;
 		} while (checkRepetitionCondition(results));
-
+	
 		ParameterMap fittingResult;
-
-		for (const auto &[index,value] : std::views::enumerate(results.getParameters()))
+		for (const auto& [index, value] : std::views::enumerate(results.getParameters()))
 			fittingResult[(Fitters::ParameterID)index] = value;
-
+	
 		if (callback)
 			callback(std::move(fittingResult));
 	}
-
-	//! Six Parameter Fitter
+	
+	//! Dark Characteristic Fitters
+	void FourParameterFitter::Fit(const FittingInput &input, Callback callback)
+	{
+		fit_current<FourParameterModel,4>(input,callback);
+	}
 	void SixParameterFitter::Fit(const FittingInput &input, Callback callback)
 	{
 		
-		int fittingIterationRuns = 0;
-		auto checkRepetitionCondition = [&](const SimplexOptimizationResults<6>& result)
-			{
-				auto parameters = result.getParameters();
-				bool negativeValueParameters = std::ranges::any_of(parameters, [](double value)
-					{ return value < 0; });
-				bool bigError = result.getError() > 1 or result.getError() < 0;
-				bool iterationCondition = fittingIterationRuns < 5;
-				return false;
-				return (negativeValueParameters or bigError) and iterationCondition;
-			};
-		//! this can be rebuild and templated via model and number of parameters
+		fit_current<SixParameterModel,6>(input,callback);
+	}
 
-		IVFittingSetup<6> setUp = transferFittingSetUp<6>(input);
-		Data NSDdata = transferFittingData(input.initialData.characteristic);
-		JFMAdditionalParameters additionalParameters = transferAdditionalParameters(input.initialData.additionalParameters, input.fixConfig);
-		NumericStorm::Fitting::Parameters<6> initialPoint = transferInitialPoint<6>(input.initialValues);
-		auto recalculateBounds = [](IVFittingSetup<6>& setUp, NumericStorm::Fitting::Parameters<6>& initial)
-			{
-				auto min = (NumericStorm::Fitting::SimplexPoint<6>(initial) * 0.1).getParameters().getParameters();
-				auto max = (NumericStorm::Fitting::SimplexPoint<6>(initial) * 10).getParameters().getParameters();
-				setUp.simplexMin = min;
-				setUp.simplexMax = max;
-			};
-		auto recalculateInitialPoint = [](NumericStorm::Fitting::Parameters<6>& initial)
-			{
-				for (auto& item : initial.getParameters())
-					item *= Random::Float(0.1, 10);
-			};
-		SimplexOptimizationResults<6> results;
-		auto transferFixingConfiguration = [&](const ParameterMap& additional)
-			{
-				auto& destination = results.getParameters();
-				for (const auto& [key, val] : additional)
-					if (additional.at(key))
-						destination[(int)key] = val;
-			};
-		do
-		{
-			if (false)//fittingIterationRuns > 1)
-			{
-				recalculateBounds(setUp, initialPoint);
-				recalculateInitialPoint(initialPoint);
-			}
-			results = fit<SixParameterModel, 6>(setUp, initialPoint, NSDdata, additionalParameters);
-			//initialPoint = results.getParameters();
-			if (additionalParameters.fixingConfiguration)
-				transferFixingConfiguration(input.fixConfig);
-			fittingIterationRuns += 1;
-		} while (checkRepetitionCondition(results));
-
-		ParameterMap fittingResult;
-
-		for (const auto& [index, value] : std::views::enumerate(results.getParameters()))
-			fittingResult[(Fitters::ParameterID)index] = value;
-
-		if (callback)
-			callback(std::move(fittingResult));
+	//! Light Characteristic Fitters
+	void FiveParameterFitter::Fit(const FittingInput &input, Callback callback)
+	{
+		fit_current<FiveParameterModel,5>(input,callback);
+	}
+	void SevenParameterFitter::Fit(const FittingInput &input, Callback callback)
+	{
+		fit_current<SevenParameterModel,7>(input,callback);
 	}
 
 	//! General Fitter
@@ -203,6 +160,9 @@ namespace JFMService::Fitters
 	{
 		fitterMap[Model4P] = std::make_shared<FourParameterFitter>();
 		fitterMap[Model6P] = std::make_shared<SixParameterFitter>();
+		fitterMap[Model4PLight] = std::make_shared<FiveParameterFitter>();
+		fitterMap[Model6PLight] = std::make_shared<SevenParameterFitter>();
+
 	}
 	void Fitter::Fit(const FittingInput &input, Callback callback)
 	{

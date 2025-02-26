@@ -22,6 +22,7 @@ namespace JFMService::FittingService
 	using ModelParameters = std::unordered_map<ModelID, std::vector<ParameterID>>;
 	using ModelAdditionalParameters = std::unordered_map<ModelID, std::vector<AdditionalParameterID>>;
 
+	using CharacteristicType = unsigned int;
 	// theoretical bounds for parameters
 	using Bounds = std::pair<double, double>;
 	using ParamBounds = std::unordered_map<ParameterID, Bounds>;
@@ -120,5 +121,23 @@ namespace JFMService::FittingService
 		virtual double GetUncertainty(const MCOutput &output, int level, ParameterID id) = 0;
 		virtual void SaveMCPlot(const MCSave &toSave) = 0;
 		virtual void SaveUncertanties(const std::vector< UncertaintySave>& toSave,const std::filesystem::path& path)=0;
+	};
+}
+namespace JFMService::Fitters
+{
+	enum ParameterID
+	{
+		I0 = 0,
+		A = 1,
+		Rs,
+		Rsh,
+		alpha,
+		Rsh2,
+		I_sc,
+		p_size
+	};
+	enum AdditionalParametersID
+	{
+		Temperature = p_size,
 	};
 }

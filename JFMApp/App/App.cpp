@@ -693,14 +693,12 @@ namespace JFMApp {
 
 								temp.fitError = m_numerics->CalculateError(cData.characteristic.currentData, temp.getEstimateInput().characteristic.currentData);
 								};
-
-							//do preFit
-
 							//range the data
-
 							temp.dataRange = m_numerics->RangeData({ temp.V, temp.I });
+							
+							
 
-							//estimate
+							// Model Auto-Detection
 							fittingFunction(temp,m_numerics);
 							if (temp.fitError > 1e-3)
 							{
@@ -985,6 +983,9 @@ namespace JFMApp {
 				active.tuneError = m_numerics->CalculateError(tData.characteristic.currentData, active.getEstimateInput().characteristic.currentData);
 				};
 
+			//m_state.plotData.m_changeModelCallback
+			
+			
 			//Monte Carlo callbacks
 
 			m_state.plotData.m_saveMCConfCallback = [&]() {

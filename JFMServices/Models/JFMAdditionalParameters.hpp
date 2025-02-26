@@ -14,6 +14,7 @@ namespace JFMService
         Rsh = BIT(3),
         alpha = BIT(4),
         Rsh2 = BIT(5),
+        Isc = BIT(6),
 
     };
     inline uint32_t toUnderlying(FixingConfiguration val) {return static_cast<uint32_t>(val);}

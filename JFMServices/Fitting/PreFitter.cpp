@@ -2,12 +2,11 @@
 #include "JFMFitter.hpp"
 #include "CalculateData.hpp"
 
-
-
-
 namespace JFMService
 {
 
+
+	
 	std::pair<size_t, size_t> AbstractPreFit::RangeData(const FittingService::PlotData& characteristic)
 	{
 		return std::make_pair<size_t, size_t>(getLowerRange(characteristic), getUpperRange(characteristic));
@@ -189,6 +188,7 @@ namespace JFMService
 
 		return interpolate(index);
 	};
+	
 	FittingService::ParameterMap FourParameterModelPreFit::Estimate(const FittingService::EstimateInput& input)
 	{
 

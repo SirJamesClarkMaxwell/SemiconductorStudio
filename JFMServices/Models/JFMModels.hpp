@@ -28,4 +28,19 @@ namespace JFMService
         void current(Data &data, const NumericStorm::Fitting::Parameters<6> &parameters, const JFMAdditionalParameters &additionalParameters);
         void call( CalculatingData& data);
     };
+    class FiveParameterModel : public ModelBase<5, JFMAdditionalParameters>
+    {
+    public:
+        FiveParameterModel();
+        void current(Data &data, const NumericStorm::Fitting::Parameters<5> &parameters, const JFMAdditionalParameters &additionalParameters);
+        void call( CalculatingData& data);
+    };
+
+    class SevenParameterModel : public ModelBase<7, JFMAdditionalParameters>
+    {
+    public:
+        SevenParameterModel();
+        void current(Data &data, const NumericStorm::Fitting::Parameters<7> &parameters, const JFMAdditionalParameters &additionalParameters);
+        void call( CalculatingData& data);
+    };
 }

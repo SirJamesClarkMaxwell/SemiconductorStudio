@@ -28,7 +28,8 @@ namespace JFMApp::Data
 		std::span<double> eI{I.begin() + dataRange.first, I.begin() + dataRange.second};
 
 		// FIX this in the future - abstract parameters in the loading service
-		input.additionalParameters[6] = T;
+		int index = JFMService::Fitters::AdditionalParametersID::Temperature;
+		input.additionalParameters[index] = T;
 		input.modelID = savedModelID;
 		input.characteristic = {eV, eI};
 

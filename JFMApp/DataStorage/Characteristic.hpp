@@ -131,6 +131,7 @@ namespace JFMApp::Data {
 
 		//fitting configuration
 		ModelID modelID{};
+		CharacteristicType characteristicType = 0;
 		std::unordered_map<ParameterID, bool> fixedParameterIDs{};
 		ParameterMap fixedParametersValues{};
 		ParameterMap initialGuess{};
