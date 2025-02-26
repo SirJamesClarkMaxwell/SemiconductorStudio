@@ -18,7 +18,7 @@ namespace JFMService
     public:
         MonteCarloEngine();
         void Simulate(const MCInput &input, std::function<void(MCOutput &&)> callback);
-        std::pair<double, double> GetUncertainty(const MCOutput &output, int level, ParameterID id);
+        double GetUncertainty(const MCOutput &output, int level, ParameterID id);
 
     private:
         using UncertaintyMultipliers = std::vector<std::array<double, 3>>;

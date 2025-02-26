@@ -8,8 +8,8 @@ namespace JFMService::Fitters
 
     enum ParameterID
     {
-        A = 0,
-        I0,
+        I0=0,
+        A=1,
         Rs,
         Rsh,
         alpha,

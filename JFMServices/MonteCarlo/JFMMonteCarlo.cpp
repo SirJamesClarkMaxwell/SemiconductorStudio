@@ -5,7 +5,7 @@ void JFMService::MonteCarlo::Simulate(const MCInput &input, std::function<void(M
     engine.Simulate(input, callback);
 }
 
-std::pair<double,double>JFMService::MonteCarlo::GetUncertainty(const MCOutput& output, int level, ParameterID id)
+double JFMService::MonteCarlo::GetUncertainty(const MCOutput& output, int level, ParameterID id)
 {
     return engine.GetUncertainty(output, level, id);
 }

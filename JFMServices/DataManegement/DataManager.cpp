@@ -12,10 +12,17 @@ namespace JFMService
 
 	void DataManager::Load(const path &path, const Callback &callback)
 	{
-		std::shared_ptr<Loader> loader = loaders.at(findLoader(path));
-		LoaderOutput output = std::move(loader->Load(path));
-		if (callback)
-			callback(std::move(output));
+        try
+        {
+			std::shared_ptr<Loader> loader = loaders.at(findLoader(path));
+			LoaderOutput output = std::move(loader->Load(path));
+			if (callback)
+				callback(std::move(output));
+        }
+        catch(std::exception& e)
+        {
+			std::cout << e.what() << std::endl;
+        }
 	}
 
 	void DataManager::Load(const std::vector<path> &paths, const VectorCallback &callbacks)
@@ -26,7 +33,7 @@ namespace JFMService
 		{
 			mutex.lock();
 			outputs.push_back(std::move(output));
-			if (outputs.size() == paths.size() && callbacks)
+			if (callbacks)
 				callbacks(std::move(outputs));
 			mutex.unlock();
 		};

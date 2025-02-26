@@ -8,7 +8,7 @@ namespace JFMService
     public:
         MonteCarlo() = default;
         void Simulate(const MCInput& input, std::function<void(MCOutput&&)> callback);
-        std::pair<double,double> GetUncertainty(const MCOutput& output, int level, ParameterID id);
+        double GetUncertainty(const MCOutput& output, int level, ParameterID id);
 
     private:
         MonteCarloEngine engine;

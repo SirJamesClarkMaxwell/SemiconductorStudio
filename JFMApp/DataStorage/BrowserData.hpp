@@ -18,7 +18,8 @@ namespace JFMApp::Data
 		Data::NumericsConfig* nConfig{ nullptr };
 
 
-		ImVec4 startColor{}, endColor{};
+		ImVec4 endColor{ 1,224/255,0,1}, startColor{ 0.0f, 0.0f, 1.0f, 1.0f };
+		
 
 		std::filesystem::path rootPath{};
 		std::filesystem::path currentPath{};

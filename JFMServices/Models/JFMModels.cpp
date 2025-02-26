@@ -27,7 +27,7 @@ namespace JFMService
         NumericStorm::Fitting::Parameters<4> params(parameters);
         JFMAdditionalParameters additionalParams(additionalParameters);
         auto adjusted = adjustFixingConfiguration<4>(params, additionalParams);
-        auto [A, I0, Rs, Rsh] = adjusted;
+        auto [I0,A,  Rs, Rsh] = adjusted;
         const double k = 8.6e-5;
 
         auto func = [&](double &V, double &I, double &I0, double &A, double &Rsh, double &Rs, double T)
@@ -75,7 +75,7 @@ namespace JFMService
         NumericStorm::Fitting::Parameters<6> params(parameters);
         JFMAdditionalParameters additionalParams(additionalParameters);
         auto adjusted = adjustFixingConfiguration<6>(params, additionalParams);
-        auto [A, I0, Rs, Rsh, alpha, Rsh2] = adjusted; // utils::cast<6>(adjusted);
+        auto [ I0,A, Rs, Rsh, alpha, Rsh2] = adjusted; // utils::cast<6>(adjusted);
         const double k = 8.6e-5;
 
         auto func = [&](double &V, double &I, double &I0, double &A, double &Rsh, double &Rs, double &alpha, double &Rsh2, double T)

@@ -100,7 +100,7 @@ namespace JFMService::FittingService
 	};
 	struct UncertaintySave {
 		ParameterMap paramPair{};
-		std::vector<ParamBounds> uncertainty{};
+		std::vector<ParameterMap> uncertainty{};
 		double T{};
 		std::string name{};
 	};
@@ -117,7 +117,7 @@ namespace JFMService::FittingService
 		virtual void Fit(const FittingInput &input, std::function<void(ParameterMap &&)> callback) = 0;
 
 		virtual void Simulate(const MCInput &input, std::function<void(MCOutput &&)> callback) = 0;
-		virtual std::pair<double,double> GetUncertainty(const MCOutput &output, int level, ParameterID id) = 0;
+		virtual double GetUncertainty(const MCOutput &output, int level, ParameterID id) = 0;
 		virtual void SaveMCPlot(const MCSave &toSave) = 0;
 		virtual void SaveUncertanties(const std::vector< UncertaintySave>& toSave,const std::filesystem::path& path)=0;
 	};

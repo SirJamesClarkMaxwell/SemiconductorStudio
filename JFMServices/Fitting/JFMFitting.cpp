@@ -115,7 +115,7 @@ namespace JFMService::FittingService
 	{
 		m_monteCarlo.Simulate(input, callback);
 	}
-	std::pair<double, double> Fitting::GetUncertainty(const MCOutput &output, int level, ParameterID id)
+	double Fitting::GetUncertainty(const MCOutput &output, int level, ParameterID id)
 	{
 		return m_monteCarlo.GetUncertainty(output, level, id);
 	}
@@ -191,23 +191,33 @@ namespace JFMService::FittingService
 		std::stringstream sttringStream;
 		std::string xlabel = Fitters::parameterIdToString((Fitters::ParameterID)(*toSave.front().paramPair.begin()).first);
 		std::string ylabel = Fitters::parameterIdToString((Fitters::ParameterID)(*(--toSave.front().paramPair.end())).first);
-		sttringStream << "Name, Temperature, " << xlabel << ", " << ylabel << " ,66% , ," << "95%, ," << "99%" << std::endl;
+
+		sttringStream << "Name\tTemperature\t1/T\t";
+		for (const auto& [key, val] : toSave.front().paramPair)
+			sttringStream <<"ln("<< Fitters::parameterIdToString((Fitters::ParameterID)key)<<")" << "\t66%\t95%\t99%\t";
+		sttringStream << std::endl;
+
 		auto SerializeUncertaintyType = [](const UncertaintySave &save)
 		{
-			auto ToScientific = [](double value)
+			auto ToScientific = [](double value,bool ln=false)
 			{
 				std::ostringstream out;
-				out << std::scientific << std::setprecision(6) << value;
+				if (ln)
+					out << std::scientific << std::setprecision(6) << std::log(value);
+				else
+					out << std::scientific << std::setprecision(6) << value;
 				return out.str();
 			};
 			std::string string;
-			string += save.name + ", ";
-			string += std::to_string(save.T) + ", ";
+			string += save.name + "\t";
+			string += std::to_string(save.T) + "\t"+std::to_string(1/save.T) + "\t";
 			for (const auto &[key, val] : save.paramPair)
-				string += ToScientific(val) + ", ";
-
-			for (const auto &item : save.uncertainty)
-				string += ToScientific(item.begin()->second.first) + ", " + ToScientific(item.begin()->second.second) + ',';
+				string += ToScientific(val) + "\t";
+			for (int i=0;i<4;i++)
+			{
+				for (const auto& item : save.uncertainty)
+					string += ToScientific(item.at(i)) + "\t";
+			}
 			return string + "\n";
 		};
 		for (const auto &item : toSave)

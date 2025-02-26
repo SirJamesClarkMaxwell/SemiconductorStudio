@@ -266,6 +266,35 @@ namespace JFMApp::Views {
 					ImGui::Checkbox("Hide non-active", &data.hideNonActive);
 					ImGui::SameLine(0.0, 20.0);
 					ImGui::Checkbox("Plot Original", &data.plotOriginal);
+					ImGui::Separator();
+					if(ImGui::Button("Print Parameters"))
+					{
+						std::stringstream stringStream;
+						stringStream << "Name\tTemperature\t1/T\t";
+
+						// Add parameter headers
+                        for (const auto& [id, name] : data.paramConfig->parameters) {
+							stringStream << name << "\t";
+						}
+						stringStream << std::endl;
+
+						// Serialize each characteristic
+						for (const auto& characteristic : *data.characteristics) {
+							if (!characteristic.isFitted) continue;
+
+							stringStream << characteristic.name << "\t";
+							stringStream << characteristic.T << "\t" << 1 / characteristic.T << "\t";
+
+							for (const auto& [id, value] : characteristic.fittedParameters) {
+								stringStream << value << "\t";
+							}
+							stringStream << std::endl;
+						}
+
+						// Print to console
+						std::cout << stringStream.str();
+					}
+					ImGui::Separator();
 				}
 
 				ImGui::Separator();
@@ -298,8 +327,10 @@ namespace JFMApp::Views {
 
 					float sliderW = ImGui::GetCursorPosX();
 
-					if (ImGui::SliderInt("Up range", (int*)&(act.dataRange.second), middle, upper, vStr.c_str())) {
-
+					if (ImGui::SliderInt("Up range", (int*)&(act.dataRange.second), middle, upper, vStr.c_str())) 
+					{
+						data.m_estimateCallback();
+						data.m_fitCallback();
 					}
 
 					sliderW = ImGui::GetCursorPosX() - sliderW;
@@ -320,8 +351,10 @@ namespace JFMApp::Views {
 
 					middle = std::max(lower, (int)act.dataRange.second - 1);
 
-					if (ImGui::SliderInt("Down range", (int*)&(act.dataRange.first), lower, middle, vStr.c_str())) {
-
+					if (ImGui::SliderInt("Down range", (int*)&(act.dataRange.first), lower, middle, vStr.c_str())) 
+					{
+						data.m_estimateCallback();
+						data.m_fitCallback();
 					}
 
 					ImGui::PopItemWidth();

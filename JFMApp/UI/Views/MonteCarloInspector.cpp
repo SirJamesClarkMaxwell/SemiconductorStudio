@@ -313,7 +313,7 @@ namespace JFMApp::Views {
 												data.activeMC = &mc;
 
 												auto& tempParams = data.mcTempParams;
-
+												data.active = &ch;
 												tempParams.first = nConf.modelParameters[ch.modelID][0];
 												tempParams.second = nConf.modelParameters[ch.modelID][1];
 											}

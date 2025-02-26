@@ -435,18 +435,35 @@ namespace JFMApp::Views {
 					data.savedGlobalModelID = data.globalModelID;
 					data.savedGlobalMCConfig = data.globalMCConfig;
 				}
-				else {
-					for (auto& ch : *(data.characteristics)) {
-						ch.savedBounds = ch.bounds;
+
+				for (auto& ch : *(data.characteristics)) 
+				{
+					if(data.configAll)
+					{
+						ch.savedFixedParameterIDs = data.globalFixedParameterIDs;
+						ch.fixedParameterIDs = data.globalFixedParameterIDs;
+						ch.savedMCConfig = data.globalMCConfig;
+						ch.mcConfig= data.globalMCConfig;
+						ch.savedModelID = data.globalModelID;
+						ch.modelID = data.globalModelID;
+					}
+					else 
+					{
 						ch.savedFixedParameterIDs = ch.fixedParameterIDs;
-						ch.savedFixedParametersValues = ch.fixedParametersValues;
-						ch.savedInitialGuess = ch.initialGuess;
 						ch.savedMCConfig = ch.mcConfig;
 						ch.savedModelID = ch.modelID;
-						ch.savedUseBounds = ch.useBounds;
-						ch.savedUseInitial = ch.useInitial;
+						ch.fixedParameterIDs = ch.fixedParameterIDs;
+						ch.mcConfig = ch.mcConfig;
+						ch.modelID = ch.modelID;
+
 					}
+					ch.savedBounds = ch.bounds;
+					ch.savedFixedParametersValues = ch.fixedParametersValues;
+					ch.savedInitialGuess = ch.initialGuess;
+					ch.savedUseBounds = ch.useBounds;
+					ch.savedUseInitial = ch.useInitial;
 				}
+
 			}
 
 			ImGui::SameLine();

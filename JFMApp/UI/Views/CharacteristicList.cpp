@@ -40,7 +40,7 @@ namespace JFMApp::Views {
 			}
 
 			if (ImGui::Button("Unselect all")) {
-				data.m_unselectAllCallback();
+				//data.m_unselectAllCallback();
 			}
 
 			ImGui::EndGroup();
