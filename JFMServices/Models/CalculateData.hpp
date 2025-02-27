@@ -16,7 +16,7 @@ namespace JFMService
 		Model4P = 3,
 		Model4PLight = 4,
 		Model6P = 5,
-		Model6PLight = 5,
+		Model6PLight = 6,
 	};
 	using namespace FittingService;
 	class DataCalculator

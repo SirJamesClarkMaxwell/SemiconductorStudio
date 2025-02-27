@@ -12,6 +12,10 @@ namespace JFMService
             return "FourParameterModel";
         case JFMModelID::Model6P:
             return "SixParameterModel";
+        case JFMModelID::Model4PLight:
+            return "FiveParameterModel";
+        case JFMModelID::Model6PLight:
+            return "SevenParameterModel";  
         default:
             return "";
         }

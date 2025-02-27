@@ -58,7 +58,10 @@ namespace JFMService::FittingService
 					return "FourParameterModel";
 				case Model6P:
 					return "SixParameterModel";
-
+				case Model4PLight:
+					return "FiveParameterModel";
+				case Model6PLight:
+					return "SevenParameterModel"; 
 				default:
 					break;
 				}
@@ -66,6 +69,9 @@ namespace JFMService::FittingService
 			ModelParameters map;
 			map[Model4P] = intRange(0, Model4P, 1);
 			map[Model6P] = intRange(0, Model6P, 1);
+			map[Model4PLight] = intRange(0, Model4PLight, 1);
+			map[Model6PLight] = intRange(0, Model6PLight, 1);
+
 			return map;
 		};
 		auto createParameterMap = [&]()
@@ -81,6 +87,8 @@ namespace JFMService::FittingService
 			ModelParameters map;
 			map[Model4P] = intRange(0, Model4P, 1);
 			map[Model6P] = intRange(0, Model6P, 1);
+			map[Model4PLight] = intRange(0, Model4PLight, 1);
+			map[Model6PLight] = intRange(0, Model6PLight, 1);
 			return map;
 		};
 		auto createGeneralBounds = [&]()

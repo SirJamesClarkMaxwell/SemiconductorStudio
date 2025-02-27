@@ -121,6 +121,10 @@ namespace JFMService
 				return Model4P;
 			if (name == "SixParameterModel")
 				return Model6P;
+			if (name == "SevenParameterModel")
+				return Model4PLight;
+			if (name == "FiveParameterModel")
+				return Model6PLight;
 		};
 
 		std::string model = config["model"].as<std::string>();
