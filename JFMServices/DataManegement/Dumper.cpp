@@ -8,13 +8,13 @@ namespace JFMService
     {
         switch (id)
         {
-        case JFMModelID::Model4P:
+        case Fitters::JFMModelID::Model4P:
             return "FourParameterModel";
-        case JFMModelID::Model6P:
+        case Fitters::JFMModelID::Model6P:
             return "SixParameterModel";
-        case JFMModelID::Model4PLight:
+        case Fitters::JFMModelID::Model4PLight:
             return "FiveParameterModel";
-        case JFMModelID::Model6PLight:
+        case Fitters::JFMModelID::Model6PLight:
             return "SevenParameterModel";  
         default:
             return "";

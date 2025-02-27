@@ -118,13 +118,13 @@ namespace JFMService
 		auto modelNameToID = [](const std::string &name)
 		{
 			if (name == "FourParameterModel")
-				return Model4P;
+				return Fitters::JFMModelID::Model4P;
 			if (name == "SixParameterModel")
-				return Model6P;
+				return Fitters::JFMModelID::Model6P;
 			if (name == "SevenParameterModel")
-				return Model4PLight;
+				return Fitters::JFMModelID::Model4PLight;
 			if (name == "FiveParameterModel")
-				return Model6PLight;
+				return Fitters::JFMModelID::Model6PLight;
 		};
 
 		std::string model = config["model"].as<std::string>();

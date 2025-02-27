@@ -653,6 +653,38 @@ namespace JFMApp {
 
 			};
 
+			m_state.browserData.m_loadSingleCharacteristic = [&](Data::Characteristic& temp)
+			{
+				using ModelID = JFMService::Fitters::JFMModelID;
+				using CharacteristicType = JFMService::Fitters::CharacteristicType;
+				bool light = false;
+				auto modelID = ModelID::Model4P;
+				auto copiedI = temp.I;
+				if(m_state.browserData.m_characteristicType == CharacteristicType::Light)
+				{
+					light = true;
+					unsigned int index = ModelID::Model4PLight;  
+					temp.modelID = index;
+					temp.savedModelID = index;
+					auto minValue = std::abs(*std::min_element(temp.I.begin(), temp.I.end()));
+					std::ranges::for_each(copiedI, [&](auto& item) { item += minValue; });
+					temp.dataRange = m_numerics->RangeData({ temp.V, copiedI });
+				}
+				else
+					temp.dataRange = m_numerics->RangeData({ temp.V, temp.I });
+							
+				// Model Auto-Detection
+				fittingFunction(temp,m_numerics);
+				if (temp.fitError > 1e-3)
+				{
+					modelID = light == true ? ModelID::Model6PLight : ModelID::Model6P;
+					temp.modelID = modelID;
+					temp.savedModelID = modelID;
+					fittingFunction(temp,m_numerics);
+				}
+			};
+
+
 			m_state.browserData.m_loadCallback = [&]() {
 
 				std::vector<std::filesystem::path> paths{};
@@ -693,19 +725,7 @@ namespace JFMApp {
 
 								temp.fitError = m_numerics->CalculateError(cData.characteristic.currentData, temp.getEstimateInput().characteristic.currentData);
 								};
-							//range the data
-							temp.dataRange = m_numerics->RangeData({ temp.V, temp.I });
-							
-							
-
-							// Model Auto-Detection
-							fittingFunction(temp,m_numerics);
-							if (temp.fitError > 1e-3)
-							{
-								temp.modelID = 5;
-								temp.savedModelID = 5;
-								fittingFunction(temp,m_numerics);
-							}
+							m_state.browserData.m_loadSingleCharacteristic(temp);
 							m_state.browserData.m_characteristics.push_back(temp);
 							m_state.plotData.active = &m_state.browserData.m_characteristics.back();
 						}
@@ -820,26 +840,11 @@ namespace JFMApp {
 							temp.m_tuneCallback = [&]() {
 								//assuming the tuned parameters are copied into fitted
 								CalculatingData cData = temp.getCalculatingData();
-
 								m_numerics->CalculateData(cData);
-
 								temp.fitError = m_numerics->CalculateError(cData.characteristic.currentData, temp.getEstimateInput().characteristic.currentData);
 								};
 
-							//do preFit
-
-							//range the data
-
-							temp.dataRange = m_numerics->RangeData({ temp.V, temp.I });
-
-							//estimate
-							fittingFunction(temp,m_numerics);
-							if (temp.fitError > 1e-3)
-							{
-								temp.modelID = 5;
-								temp.savedModelID = 5;
-								fittingFunction(temp,m_numerics);
-							}
+							m_state.browserData.m_loadSingleCharacteristic(temp);
 							m_state.browserData.m_characteristics.push_back(temp);
 							m_state.plotData.active = &m_state.browserData.m_characteristics.back();
 						}

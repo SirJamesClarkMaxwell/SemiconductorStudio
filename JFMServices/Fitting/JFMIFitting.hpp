@@ -23,6 +23,7 @@ namespace JFMService::FittingService
 	using ModelAdditionalParameters = std::unordered_map<ModelID, std::vector<AdditionalParameterID>>;
 
 	using CharacteristicType = unsigned int;
+	using CharacteristicTypeMap = std::unordered_map<CharacteristicType,std::string>;
 	// theoretical bounds for parameters
 	using Bounds = std::pair<double, double>;
 	using ParamBounds = std::unordered_map<ParameterID, Bounds>;
@@ -139,5 +140,18 @@ namespace JFMService::Fitters
 	enum AdditionalParametersID
 	{
 		Temperature = p_size,
+	};
+	enum CharacteristicType
+	{
+		Dark = 0,
+		Light,
+	};
+	enum JFMModelID
+	{
+		None = 0,
+		Model4P = 3,
+		Model4PLight = 4,
+		Model6P = 5,
+		Model6PLight = 6,
 	};
 }

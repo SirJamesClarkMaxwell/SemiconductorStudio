@@ -23,7 +23,16 @@ namespace JFMApp::Views {
 			if (ImGui::Button("Load all")) {
 				data.m_loadAllCallback();
 			}
-
+            if (ImGui::BeginCombo("Loading Characteristic Type", data.m_characteristicTypeMap[data.m_characteristicType].c_str(), ImGuiComboFlags_WidthFitPreview))
+            {
+				for (const auto& [id, name] : data.m_characteristicTypeMap) 
+				{
+					if (ImGui::Selectable(name.c_str())) 
+						data.m_characteristicType = id;
+					
+				}
+				ImGui::EndCombo();
+            }
 			ImGui::EndMenuBar();
 		}
 

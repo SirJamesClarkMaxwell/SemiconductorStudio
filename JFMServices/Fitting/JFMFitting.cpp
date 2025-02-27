@@ -54,23 +54,23 @@ namespace JFMService::FittingService
 			{
 				switch (id)
 				{
-				case Model4P:
+				case Fitters::JFMModelID::Model4P:
 					return "FourParameterModel";
-				case Model6P:
+				case Fitters::JFMModelID::Model6P:
 					return "SixParameterModel";
-				case Model4PLight:
+				case Fitters::JFMModelID::Model4PLight:
 					return "FiveParameterModel";
-				case Model6PLight:
-					return "SevenParameterModel"; 
+				case Fitters::JFMModelID::Model6PLight:
+					return "SevenParameterModel";
 				default:
 					break;
 				}
-			};
+				};
 			ModelParameters map;
-			map[Model4P] = intRange(0, Model4P, 1);
-			map[Model6P] = intRange(0, Model6P, 1);
-			map[Model4PLight] = intRange(0, Model4PLight, 1);
-			map[Model6PLight] = intRange(0, Model6PLight, 1);
+			map[Fitters::JFMModelID::Model4P] = intRange(0, Fitters::JFMModelID::Model4P, 1);
+			map[Fitters::JFMModelID::Model6P] = intRange(0, Fitters::JFMModelID::Model6P, 1);
+			map[Fitters::JFMModelID::Model4PLight] = intRange(0, Fitters::JFMModelID::Model4PLight, 1);
+			map[Fitters::JFMModelID::Model6PLight] = intRange(0, Fitters::JFMModelID::Model6PLight, 1);
 
 			return map;
 		};
@@ -85,10 +85,10 @@ namespace JFMService::FittingService
 		auto createModelsParameterMap = [&]()
 		{
 			ModelParameters map;
-			map[Model4P] = intRange(0, Model4P, 1);
-			map[Model6P] = intRange(0, Model6P, 1);
-			map[Model4PLight] = intRange(0, Model4PLight, 1);
-			map[Model6PLight] = intRange(0, Model6PLight, 1);
+			map[Fitters::JFMModelID::Model4P] = intRange(0, Fitters::JFMModelID::Model4P, 1);
+			map[Fitters::JFMModelID::Model6P] = intRange(0, Fitters::JFMModelID::Model6P, 1);
+			map[Fitters::JFMModelID::Model4PLight] = intRange(0, Fitters::JFMModelID::Model4PLight, 1);
+			map[Fitters::JFMModelID::Model6PLight] = intRange(0, Fitters::JFMModelID::Model6PLight, 1);
 			return map;
 		};
 		auto createGeneralBounds = [&]()
@@ -105,8 +105,8 @@ namespace JFMService::FittingService
 		auto createModel = [&]()
 		{
 			FittingService::Models models;
-			models[Model4P] = "Four Parameter";
-			models[Model6P] = "Six Parameter";
+			models[Fitters::JFMModelID::Model6P] = "Six Parameter";
+			models[Fitters::JFMModelID::Model4P] = "Four Parameter";
 			return models;
 		};
 		config.models = createModel();

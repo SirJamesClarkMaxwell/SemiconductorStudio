@@ -17,7 +17,7 @@ namespace JFMService
 	{
 		return std::make_pair<size_t, size_t>(getLowerRange(characteristic), getUpperRange(characteristic));
 	};
-    double AbstractPreFit::adjustCoefficient(double dV)
+    double adjustCoefficient(double dV, const std::vector<std::pair<double,double>>& m_AMultiplier)
     {
 		int index = std::distance(m_AMultiplier.begin(), std::lower_bound(m_AMultiplier.begin(), m_AMultiplier.end(), dV, [&](std::pair<double, double> lhs, double rhs)
 			{ return lhs.first < rhs; }));
@@ -42,8 +42,8 @@ namespace JFMService
     size_t AbstractPreFit::getLowerRange(const FittingService::PlotData &characteristic)
     {
 		size_t start{ 0 };
-		for (const auto& [V, I] : std::views::zip(characteristic.voltageData, characteristic.voltageData))
-			if (I < 0.0 or V < 0.0)
+		for (const auto& [V, I] : std::views::zip(characteristic.voltageData, characteristic.currentData))
+			if (I < 0.0)
 				start++;
 		start += 2;
 		return start;
@@ -77,10 +77,6 @@ namespace JFMService
 		return copy.size();
 	};
 
-	FourParameterModelPreFit::FourParameterModelPreFit()
-		:AbstractPreFit{}{};
-
-	
 	double estimateRsh(const std::vector<double>& V,const std::vector<double>& I,int&AStart )
 	{
 		double S{ 0.0 }, S0{ 0.0 };
@@ -182,9 +178,8 @@ namespace JFMService
 
 	
 	}
-	FittingService::ParameterMap FourParameterModelPreFit::Estimate(const FittingService::EstimateInput& input)
+	FittingService::ParameterMap estimate4PModel(const FittingService::EstimateInput& input,const std::vector<std::pair<double,double>>& AMultipiers)
 	{
-
 		std::vector<std::vector<double>> result(2);
 		result[0] = std::vector<double>{ input.characteristic.voltageData.begin(), input.characteristic.voltageData.end() };
 		result[1].resize(input.characteristic.currentData.size());
@@ -203,7 +198,6 @@ namespace JFMService
 		auto& V = result[0];
 		auto& I = result[1];
 		Fitters::ParameterMap parameterResult{};
-
 		int RpStart{ 0 }, RsStart{ 0 };
 		int AStart{ 0 }, AEnd{ 0 };
 		RsStart = I.size() - 1;
@@ -215,8 +209,7 @@ namespace JFMService
 		double T = input.additionalParameters.at(Fitters::AdditionalParametersID::Temperature);
 		IdealityFactorAdditionalParameters idealityFactorParams{ AStart, AEnd, 0, T};
 		
-
-		double A = estimateIdealityFactor(V, I, idealityFactorParams)* adjustCoefficient(idealityFactorParams.dV);
+		double A = estimateIdealityFactor(V, I, idealityFactorParams) * adjustCoefficient(idealityFactorParams.dV, AMultipiers);
 		auto logI = idealityFactorParams.logI;
 		auto maxDerIndex = idealityFactorParams.maxDerIndex;
 		auto k = idealityFactorParams.k;
@@ -227,77 +220,58 @@ namespace JFMService
 
 		parameterResult[Fitters::ParameterID::A] = A;
 		parameterResult[Fitters::ParameterID::I0] = I0;
-
 		return parameterResult;
 	}
-
-
+	// Dark IVs PreFitters
+	FourParameterModelPreFit::FourParameterModelPreFit()
+		:AbstractPreFit{}{};
+	FittingService::ParameterMap FourParameterModelPreFit::Estimate(const FittingService::EstimateInput& input)
+	{
+		return estimate4PModel(input,m_AMultiplier);
+	}
 
 	SixParameterModelPreFit::SixParameterModelPreFit()
 		:AbstractPreFit{}{};
-
-	
 	FittingService::ParameterMap SixParameterModelPreFit::Estimate(const FittingService::EstimateInput& input)
 	{
-
-		std::vector<std::vector<double>> result(2);
-		result[0] = std::vector<double>{ input.characteristic.voltageData.begin(), input.characteristic.voltageData.end() };
-		result[1].resize(input.characteristic.currentData.size());
-		double sum = 0;
-		const unsigned int N{ 4 };
-		for (size_t i = 0; i < result[1].size(); i++)
-		{
-			sum += input.characteristic.currentData[i];
-			if (i >= N)
-			{
-				sum -= input.characteristic.currentData[i - N];
-			}
-			result[1][i] = sum / std::min(i + 1, (size_t)N);
-		}
-
-		auto& V = result[0];
-		auto& I = result[1];
-		Fitters::ParameterMap parameterResult{};
-
-		int RpStart{ 0 }, RsStart{ 0 };
-		int AStart{ 0 }, AEnd{ 0 };
-		RsStart = I.size() - 1;
-
-		parameterResult[Fitters::ParameterID::Rsh] = estimateRsh(V, I, AStart);
-		parameterResult[Fitters::ParameterID::Rs] = estimateRs(V, I, AStart, AEnd);
-
-		// getting A
-		double T = input.additionalParameters.at(Fitters::AdditionalParametersID::Temperature);
-		IdealityFactorAdditionalParameters idealityFactorParams{ AStart, AEnd, 0, T };
-
-
-		double A = estimateIdealityFactor(V, I, idealityFactorParams) * adjustCoefficient(idealityFactorParams.dV);
-		auto logI = idealityFactorParams.logI;
-		auto maxDerIndex = idealityFactorParams.maxDerIndex;
-		auto k = idealityFactorParams.k;
-		double l = logI[maxDerIndex] - V[maxDerIndex] / (A * k * T);
-		double l1 = logI[maxDerIndex] - V[maxDerIndex + AStart] / (A * k * T);
-		//std::cout << "l: " << std::exp(l) << "l1: " << std::exp(l1) << std::endl;
-		double I0 = std::exp(l);
-
-		parameterResult[Fitters::ParameterID::A] = A;
-		parameterResult[Fitters::ParameterID::I0] = I0;
-
-
+		ParameterMap parameterResult = estimate4PModel(input, m_AMultiplier);
 		parameterResult[Fitters::ParameterID::alpha] = 2.0;
 		parameterResult[Fitters::ParameterID::Rsh2] = parameterResult[Fitters::ParameterID::Rsh];
-
 		return parameterResult;
 	}
 
+
+	//Light IVs IVs PreFitters
+	FiveParameterModelPreFit::FiveParameterModelPreFit()
+	:AbstractPreFit{}{};
+
+	ParameterMap FiveParameterModelPreFit::Estimate(const FittingService::EstimateInput& input)
+	{
+		ParameterMap parameterResult = estimate4PModel(input, m_AMultiplier);
+		int index = *std::ranges::find(input.characteristic.voltageData, 0);
+		parameterResult[Fitters::ParameterID::I_sc] = input.characteristic.currentData[index];
+		return parameterResult;
+	};
+	
+	
+	SevenParameterModelPreFit::SevenParameterModelPreFit()
+	:AbstractPreFit{}{};
+	ParameterMap SevenParameterModelPreFit::Estimate(const FittingService::EstimateInput& input)
+	{
+		ParameterMap parameterResult = estimate4PModel(input, m_AMultiplier);
+		int index = *std::ranges::find(input.characteristic.voltageData, 0);
+		parameterResult[Fitters::ParameterID::I_sc] = input.characteristic.currentData[index];
+		return parameterResult;
+	};
 
 
 
 	PreFitter::PreFitter()
 	{
-
-		preFitterMap[Model4P] = std::make_shared<FourParameterModelPreFit>();
-		preFitterMap[Model6P] = std::make_shared<SixParameterModelPreFit>();
+		preFitterMap[Fitters::JFMModelID::Model4P] = std::make_shared<FourParameterModelPreFit>();
+		preFitterMap[Fitters::JFMModelID::Model6P] = std::make_shared<SixParameterModelPreFit>();
+		preFitterMap[Fitters::JFMModelID::Model4PLight] = std::make_shared<FiveParameterModelPreFit>();
+		preFitterMap[Fitters::JFMModelID::Model6PLight] = std::make_shared<SevenParameterModelPreFit>();
 	};
 	FittingService::ParameterMap PreFitter::Estimate(const FittingService::EstimateInput& input)
 	{
@@ -310,6 +284,6 @@ namespace JFMService
 	;
 	std::pair<size_t, size_t> PreFitter::RangeData(const FittingService::PlotData& characteristic)
 	{
-		return preFitterMap[Model4P]->RangeData(characteristic);
+		return preFitterMap[Fitters::JFMModelID::Model4P]->RangeData(characteristic); //FIX it to be more general
 	};
 }

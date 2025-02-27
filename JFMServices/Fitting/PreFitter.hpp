@@ -4,8 +4,7 @@
 
 namespace JFMService
 {
-	// inline double estimateRsh(const auto& V,const auto& I,int&AStart );
-	// inline double estimateRs(const auto&V,const auto&I,const int& AStart,int& AEnd);
+
 	class AbstractPreFit
 	{
 	public:
@@ -135,10 +134,6 @@ namespace JFMService
 	{
 	public:
 		FourParameterModelPreFit();
-		FourParameterModelPreFit(const FourParameterModelPreFit&) = default;
-		FourParameterModelPreFit( FourParameterModelPreFit&&) = default;
-		FourParameterModelPreFit& operator=(const FourParameterModelPreFit&) = default;
-		FourParameterModelPreFit& operator=(FourParameterModelPreFit&&) = default;
 		virtual FittingService::ParameterMap Estimate(const FittingService::EstimateInput& input) override;
 		std::pair<size_t, size_t> rangeData(const FittingService::PlotData& characteristic) { return this->RangeData(characteristic); };
 
@@ -150,7 +145,20 @@ namespace JFMService
 		SixParameterModelPreFit();
 		virtual FittingService::ParameterMap Estimate(const FittingService::EstimateInput& input) override;
 		std::pair<size_t, size_t> rangeData(const FittingService::PlotData& characteristic) { return this->RangeData(characteristic); };
-
+	};
+	class FiveParameterModelPreFit :public AbstractPreFit
+	{
+	public:
+		FiveParameterModelPreFit();
+		virtual FittingService::ParameterMap Estimate(const FittingService::EstimateInput& input) override;
+		std::pair<size_t, size_t> rangeData(const FittingService::PlotData& characteristic) { return this->RangeData(characteristic); };
+	};
+	class SevenParameterModelPreFit :public AbstractPreFit
+	{
+	public:
+		SevenParameterModelPreFit();
+		virtual FittingService::ParameterMap Estimate(const FittingService::EstimateInput& input) override;
+		std::pair<size_t, size_t> rangeData(const FittingService::PlotData& characteristic) { return this->RangeData(characteristic); };
 	};
 
 	class PreFitter

@@ -10,16 +10,16 @@ void JFMService::DataCalculator::CalculateData(CalculatingData &input)
     
     switch (input.modelID)
     {
-    case Model4P:
+    case Fitters::JFMModelID::Model4P:
         model4.call(input);
         break;
-    case Model6P:
+    case Fitters::JFMModelID::Model6P:
         model6.call(input);
         break;
-    case Model4PLight:
+    case Fitters::JFMModelID::Model4PLight:
         model5.call(input);
         break;
-    case Model6PLight:
+    case Fitters::JFMModelID::Model6PLight:
         model7.call(input);
         break;
     default:

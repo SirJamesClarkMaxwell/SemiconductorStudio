@@ -17,6 +17,12 @@ namespace JFMApp::Data
 		std::vector<Characteristic> m_characteristics{};
 		Data::NumericsConfig* nConfig{ nullptr };
 
+		CharacteristicType m_characteristicType = JFMService::Fitters::CharacteristicType::Dark;
+		CharacteristicTypeMap m_characteristicTypeMap{
+			{JFMService::Fitters::CharacteristicType::Dark, "Dark" },
+			{JFMService::Fitters::CharacteristicType::Light, "Light" },
+		};
+		void changeCharacteristicType(CharacteristicType type) { m_characteristicType = type; };
 
 		ImVec4 endColor{ 1,224/255,0,1}, startColor{ 0.0f, 0.0f, 1.0f, 1.0f };
 		
@@ -68,6 +74,7 @@ namespace JFMApp::Data
 		std::function<void()> m_generateCallback{};
 
 
+		std::function<void(Data::Characteristic& )> m_loadSingleCharacteristic{};
 		std::function<void()> m_loadCallback{};
 		std::function<void()> m_loadAllCallback{};
 
@@ -77,7 +84,6 @@ namespace JFMApp::Data
 		std::function<void()> m_unselectAllCallback{};
 		std::function<void()> m_removeSelectedCallback{};
 		std::function<void()> m_removeUnselectedCallback{};
-
 		
 	};
 }
