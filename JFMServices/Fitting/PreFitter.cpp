@@ -45,7 +45,7 @@ namespace JFMService
 		for (const auto& [V, I] : std::views::zip(characteristic.voltageData, characteristic.currentData))
 			if (I < 0.0 or V<0)
 				start++;
-		start += 1;
+		start += 3;
 		return start;
 	};
 

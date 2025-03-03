@@ -292,9 +292,12 @@ namespace JFMApp::Views {
 							stringStream << characteristic.name << "\t";
 							stringStream << characteristic.T << "\t" << 1 / characteristic.T << "\t";
 
-							for (const auto& [id, value] : characteristic.fittedParameters) {
+							for (const auto& [id, value] : characteristic.fittedParameters)
+							{
 								stringStream << value << "\t";
 							}
+							if (characteristic.characteristicType == JFMService::Fitters::CharacteristicType::Light)
+								stringStream << "I_sc" << "\t"<<characteristic.ShortCircuitCurrent<<"\t";
 							stringStream << std::endl;
 						}
 

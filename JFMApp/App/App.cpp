@@ -668,11 +668,12 @@ namespace JFMApp {
 				if(m_state.browserData.m_characteristicType == CharacteristicType::Light)
 				{
 					light = true;
-					unsigned int index = ModelID::Model4PLight;  
+					unsigned int index = ModelID::Model4P;  
 					temp.modelID = index;
 					temp.savedModelID = index;
 					auto minValue = std::abs(temp.I[*std::ranges::find(temp.V, 0)]);
-					temp.savedInitialGuess[ParameterID::I_sc] = minValue;
+					//temp.savedInitialGuess[ParameterID::I_sc] = minValue;
+					temp.ShortCircuitCurrent = minValue;	
 					std::ranges::for_each(copiedI, [&](auto& item) { item += minValue; });
 					temp.dataRange = m_numerics->RangeData({ temp.V, copiedI });
 					temp.I = copiedI;
@@ -684,7 +685,7 @@ namespace JFMApp {
 				fittingFunction(temp,m_numerics);
 				if (temp.fitError > 1e-3)
 				{
-					modelID = light == true ? ModelID::Model6PLight : ModelID::Model6P;
+					modelID = /*light == true ? ModelID::Model6PLight :*/ ModelID::Model6P;
 					temp.modelID = modelID;
 					temp.savedModelID = modelID;
 					fittingFunction(temp,m_numerics);
