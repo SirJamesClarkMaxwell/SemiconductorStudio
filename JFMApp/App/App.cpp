@@ -613,7 +613,11 @@ namespace JFMApp {
 
 			auto fittingFunction = [&](Data::Characteristic& temp, const auto& numerics )
 			{
+					using ParametersID = JFMService::Fitters::ParameterID;
 					auto eParams = numerics->Estimate(temp.getEstimateInput());
+					if(temp.savedInitialGuess[ParametersID::I_sc])
+						eParams[ParametersID::I_sc] = temp.savedInitialGuess[ParametersID::I_sc];
+
 					temp.savedInitialGuess = eParams;
 					temp.savedUseInitial = true;
 					//fit
@@ -657,6 +661,7 @@ namespace JFMApp {
 			{
 				using ModelID = JFMService::Fitters::JFMModelID;
 				using CharacteristicType = JFMService::Fitters::CharacteristicType;
+				using ParameterID = JFMService::Fitters::ParameterID;
 				bool light = false;
 				auto modelID = ModelID::Model4P;
 				auto copiedI = temp.I;
@@ -666,12 +671,14 @@ namespace JFMApp {
 					unsigned int index = ModelID::Model4PLight;  
 					temp.modelID = index;
 					temp.savedModelID = index;
-					auto minValue = std::abs(*std::min_element(temp.I.begin(), temp.I.end()));
+					auto minValue = std::abs(temp.I[*std::ranges::find(temp.V, 0)]);
+					temp.savedInitialGuess[ParameterID::I_sc] = minValue;
 					std::ranges::for_each(copiedI, [&](auto& item) { item += minValue; });
 					temp.dataRange = m_numerics->RangeData({ temp.V, copiedI });
+					temp.I = copiedI;
 				}
 				else
-					temp.dataRange = m_numerics->RangeData({ temp.V, temp.I });
+					temp.dataRange = m_numerics->RangeData({ temp.V,copiedI });// temp.I });
 							
 				// Model Auto-Detection
 				fittingFunction(temp,m_numerics);

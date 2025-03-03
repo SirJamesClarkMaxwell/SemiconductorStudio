@@ -53,19 +53,19 @@ namespace JFMService
 		std::vector<std::string> lines = utils::spliting(content, "\n");
 		int size = lines.size();
 		std::vector<double> voltages{}, currents{}, densityCurrents{};
-		std::vector<std::vector<double>> items = {voltages, currents, densityCurrents};
 
 		for (const auto &line : lines)
 		{
 			auto splittedLine = utils::spliting(line, "\t");
 			if (splittedLine.size() == 3)
 			{
-				items[0].push_back(std::stod(splittedLine[0]));
-				items[1].push_back(std::stod(splittedLine[1]));
-				items[2].push_back(std::stod(splittedLine[2]));
+				voltages.push_back(std::stod(splittedLine[0]));
+				currents.push_back(std::stod(splittedLine[1]));
+				densityCurrents.push_back(std::stod(splittedLine[2]));
 			}
 		}
-		return items;
+		return {voltages, currents, densityCurrents};
+		//return items;
 	}
 
 	bool CharacteristicLoader::CheckExtentionCompatibility(const std::filesystem::path &path)

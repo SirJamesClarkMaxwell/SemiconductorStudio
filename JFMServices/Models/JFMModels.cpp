@@ -7,10 +7,12 @@ namespace JFMService
         std::array<double, parameter_size> destination(parameters.getParameters());
         std::valarray<double> fixedValues(additionalParameters.fixingValues.getParameters());
         FixingConfiguration config = additionalParameters.fixingConfiguration;
+        int i = 0;
         for (const auto &[dst, src] : std::views::zip(destination, fixedValues))
         {
             if (config & 1)
-                dst = src;
+                destination[i] = src;
+            i++;
             config >>= (uint32_t)1;
         }
         return destination;
@@ -123,7 +125,7 @@ namespace JFMService
             double x = ((I0 * Rs) / (A * k * T)) * std::exp(V / (A * k * T));
             double I_lw = utl::LambertW<0>(x);
             I_lw *= (A * k * T) / Rs;
-            I = I_lw + (V - I_lw * Rs) / Rsh - Isc;
+            I = I_lw + (V - I_lw * Rs) / Rsh; //+ Isc;
             
         };
 
@@ -157,7 +159,7 @@ namespace JFMService
             double I_lw = utl::LambertW<0>(x);
             I_lw *= (A * k * T) / Rs;
             double additionalFactor = std::pow((V - I_lw * Rs), alpha) / Rsh2;
-            I = I_lw + (V - I_lw * Rs) / Rsh + additionalFactor - Isc;
+            I = I_lw + (V - I_lw * Rs) / Rsh + additionalFactor;// +Isc;
         };
 
         for (const auto &[V, I] : std::views::zip(data[0], data[1]))

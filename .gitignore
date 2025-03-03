@@ -22,3 +22,5 @@ JFMServices/python/SemiconductorStudio-enviroment
 /JunctionFitMaster/testsToSave.png
 /JunctionFitMaster/testsToSave.txt
 /data/CIGS_Sulfur_temp
+/JunctionFitMaster/CIGS_Sulfur_temp/results
+/JunctionFitMaster/CIGS_Sulfur_temp/convert-data.py

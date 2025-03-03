@@ -43,9 +43,9 @@ namespace JFMService
     {
 		size_t start{ 0 };
 		for (const auto& [V, I] : std::views::zip(characteristic.voltageData, characteristic.currentData))
-			if (I < 0.0)
+			if (I < 0.0 or V<0)
 				start++;
-		start += 2;
+		start += 1;
 		return start;
 	};
 
@@ -81,14 +81,28 @@ namespace JFMService
 	{
 		double S{ 0.0 }, S0{ 0.0 };
 		size_t n = 2;
+		bool sb=false, s0b=false;
 		do
 		{
 			if (n >= V.size() || n >= I.size() || I.size() == 0 || V.size() == 0)
 				break;
+
+			// Prevent division by zero
+			if ((I[n - 1] - I[n - 2]) == 0 || (I[n - 1] - I[0]) == 0) {
+				std::cout << "Skipping iteration due to division by zero\n";
+				//continue;
+			}
+
 			S = (V[n - 1] - V[n - 2]) / (I[n - 1] - I[n - 2]);
 			S0 = (V[n - 1] - V[0]) / (I[n - 1] - I[0]);
 			n++;
-		} while (S / S0 >= 0.8);
+
+			sb = std::isinf(S);
+			s0b = std::isinf(S0);
+			std::cout << "S: " << S << " (valid: " << sb << ")  S0: " << S0 << " (valid: " << s0b << ")\n";
+			bool t = S / S0 >= 0.8;
+			std::cout << "t: " << t << std::endl;
+		} while ((S / S0) >= 0.8 or sb or s0b);
 
 		AStart = n;
 		return S0;
@@ -248,7 +262,9 @@ namespace JFMService
 	ParameterMap FiveParameterModelPreFit::Estimate(const FittingService::EstimateInput& input)
 	{
 		ParameterMap parameterResult = estimate4PModel(input, m_AMultiplier);
-		int index = *std::ranges::find(input.characteristic.voltageData, 0);
+		int index = 0;
+		if(input.characteristic.voltageData[0]<0)
+            int index = std::distance(input.characteristic.voltageData.begin(), std::ranges::find(input.characteristic.voltageData.begin(), input.characteristic.voltageData.end(), 0));
 		parameterResult[Fitters::ParameterID::I_sc] = input.characteristic.currentData[index];
 		return parameterResult;
 	};

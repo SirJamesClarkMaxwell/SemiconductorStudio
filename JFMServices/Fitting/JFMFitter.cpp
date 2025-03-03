@@ -15,11 +15,13 @@ namespace JFMService::Fitters
 
 		ParameterMap initials = input.initialValues;
 		std::array<double, parameter_size> min, max;
-
-		for (int index : std::ranges::iota_view(0, (int)(parameter_size)))
+		int i = 0;
+		for (auto [index,value] : input.bounds)
 		{
-			min[index] = input.bounds.at((ParameterID)index).first;	 // * 0.9;
-			max[index] = input.bounds.at((ParameterID)index).second; // *1.1;
+			min[index] = value.first;	 // * 0.9;
+			max[index] = value.second; // *1.1;
+			i += 1;
+			//max[index] = input.bounds.at((ParameterID)index).second; // *1.1;
 		}
 		// double power = std::floor(std::log10(min[(ParameterID)I0]));
 		// min[I0] = std::pow(10, power);
@@ -32,9 +34,13 @@ namespace JFMService::Fitters
 	template <size_t parameter_size>
 	NumericStorm::Fitting::Parameters<parameter_size> transferInitialPoint(const ParameterMap &initial)
 	{
+		int i = 0;
 		NumericStorm::Fitting::Parameters<parameter_size> initialPoint;
-		for (auto index : std::ranges::iota_view(0, (int)(parameter_size)))
+		for (auto [index, value] : initial)
+		{
 			initialPoint[index] = initial.at((ParameterID)index);
+			i++;
+		}
 
 		return initialPoint;
 	}
