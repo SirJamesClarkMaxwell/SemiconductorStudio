@@ -444,8 +444,8 @@ namespace JFMApp::Views {
 						ch.fixedParameterIDs = data.globalFixedParameterIDs;
 						ch.savedMCConfig = data.globalMCConfig;
 						ch.mcConfig= data.globalMCConfig;
-						ch.savedModelID = data.globalModelID;
-						ch.modelID = data.globalModelID;
+						//ch.savedModelID = data.globalModelID;
+						//ch.modelID = data.globalModelID;
 					}
 					else 
 					{
@@ -458,9 +458,11 @@ namespace JFMApp::Views {
 
 					}
 					ch.savedBounds = ch.bounds;
+					//ch.save
 					ch.savedFixedParametersValues = ch.fixedParametersValues;
 					ch.savedInitialGuess = ch.initialGuess;
-					ch.savedUseBounds = ch.useBounds;
+					ch.savedUseBounds = true;
+					ch.useBounds = true;
 					ch.savedUseInitial = ch.useInitial;
 				}
 

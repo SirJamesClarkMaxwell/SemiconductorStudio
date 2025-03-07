@@ -12,23 +12,37 @@ namespace JFMService::Fitters
 	IVFittingSetup<parameter_size> transferFittingSetUp(const FittingInput &input)
 	{
 		IVFittingSetup<parameter_size> setUp;
-
 		ParameterMap initials = input.initialValues;
-		std::array<double, parameter_size> min, max;
-		int i = 0;
-		for (auto [index,value] : input.bounds)
-		{
-			min[index] = value.first;	 // * 0.9;
-			max[index] = value.second; // *1.1;
-			i += 1;
-			//max[index] = input.bounds.at((ParameterID)index).second; // *1.1;
-		}
-		// double power = std::floor(std::log10(min[(ParameterID)I0]));
-		// min[I0] = std::pow(10, power);
-		// max[I0] = 9 * std::pow(10, power);
+		std::vector<double> min, max;
+		min.reserve(parameter_size);
+		max.reserve(parameter_size);
+		// Convert unordered_map to a vector for sorting
+		std::vector<std::pair<unsigned int, double>> sortedMinBounds,sortedMaxBounds;
 
-		setUp.simplexMin = min;
-		setUp.simplexMax = max;
+		// Fix: Ensure the correct type conversion when inserting into sortedBounds
+		for (const auto& [index,item] : input.bounds) 
+		{
+			sortedMinBounds.emplace_back(index ,item.first);
+			sortedMaxBounds.emplace_back(index ,item.second );
+		}
+		std::sort(sortedMinBounds.begin(), sortedMinBounds.end(), [](const auto& a, const auto& b) {
+			return a.first < b.first;
+			});
+		std::sort(sortedMaxBounds.begin(), sortedMaxBounds.end(), [](const auto& a, const auto& b) {
+			return a.first < b.first;
+			});
+
+		for (size_t i = 0; i < sortedMinBounds.size() && i < sortedMaxBounds.size(); ++i)
+		{
+			min.emplace_back(sortedMinBounds[i].second);
+			max.emplace_back(sortedMaxBounds[i].second);
+		}
+		std::array<double, parameter_size> minArray,maxArray;
+		std::copy(min.begin(), min.end(), minArray.begin());
+		std::copy(max.begin(), max.end(), maxArray.begin());
+		setUp.simplexMin = { minArray };
+		setUp.simplexMax = {maxArray};
+
 		return setUp;
 	}
 	template <size_t parameter_size>
