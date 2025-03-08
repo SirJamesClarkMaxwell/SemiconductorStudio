@@ -176,7 +176,7 @@ namespace JFMService
 		double contract_coeff{ 0.5 };
 		double shrink_coeff{ 0.5 };
 		int numberOfFits{ 1 };
-		double minError{ 5e-4 };
+		double minError{ 5e-5 };
 		long int maxIteration{ 500 };
 	};
 

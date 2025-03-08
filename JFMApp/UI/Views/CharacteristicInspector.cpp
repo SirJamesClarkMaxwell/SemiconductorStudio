@@ -318,7 +318,7 @@ namespace JFMApp::Views {
 					col = true;
 				}
 				if (ImGui::BeginCombo("##Model", data.paramConfig->models[data.globalModelID].c_str(), ImGuiComboFlags_WidthFitPreview)) {
-					for (auto& [id, name] : data.paramConfig->models) {
+					for (const auto& [id, name] : data.paramConfig->models) {
 						if (ImGui::Selectable(name.c_str(), id == data.globalModelID)) {
 							data.globalModelID = id;
 						}

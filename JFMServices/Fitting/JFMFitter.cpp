@@ -101,7 +101,7 @@ namespace JFMService::Fitters
 			bool negativeValueParameters = std::ranges::any_of(parameters, [](double value)
 			{ return value < 0; });
 			bool bigError = result.getError() > 1 || result.getError() < 0;
-			bool iterationCondition = fittingIterationRuns < 5;
+			bool iterationCondition = fittingIterationRuns < 1;
 			return (negativeValueParameters || bigError) && iterationCondition;
 		};
 	

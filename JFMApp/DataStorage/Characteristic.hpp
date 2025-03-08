@@ -130,7 +130,7 @@ namespace JFMApp::Data {
 
 
 		//fitting configuration
-		ModelID modelID{};
+		ModelID modelID{ 3};
 		double ShortCircuitCurrent{-1.0};
 		CharacteristicType characteristicType = 0;
 		std::unordered_map<ParameterID, bool> fixedParameterIDs{};

@@ -944,6 +944,8 @@ namespace JFMApp {
 				auto eParams = m_numerics->Estimate(active.getEstimateInput());
 
 				active.fittedParameters = eParams;
+				active.savedInitialGuess = eParams;
+				active.savedBounds.clear();
 				for (const auto& [k, v] : eParams)
 				{
 					if (k != 1)

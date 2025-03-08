@@ -9,7 +9,7 @@ namespace JFMApp::Views {
 		ImGui::PushItemWidth(size.x * 0.20f);
 		if (ImGui::BeginCombo("Model", data.m_genModelID ? data.nConfig->models[data.m_genModelID].c_str() : "Select Model"))
 		{
-			for (auto& [id, model] : data.nConfig->models)
+			for (const auto& [id, model] : data.nConfig->models)
 			{
 				if (ImGui::Selectable(model.c_str(), id == data.m_genModelID))
 					data.m_genModelID = id;

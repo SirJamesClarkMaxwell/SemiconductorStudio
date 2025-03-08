@@ -44,7 +44,7 @@ namespace JFMService::FittingService
 	{
 		std::span<double> voltageData{};
 		std::span<double> currentData{};
-	};
+	};  
 	struct CalculatingData
 	{
 		PlotData characteristic{};

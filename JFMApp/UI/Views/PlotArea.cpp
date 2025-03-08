@@ -392,6 +392,30 @@ namespace JFMApp::Views {
 
 						act.m_tuneCallback();
 					}
+					ImGui::SameLine();
+					//if (ImGui::BeginCombo("ModelCombo", data.paramConfig->models[act.modelID].c_str(), ImGuiComboFlags_WidthFitPreview)) 
+					//{
+					//
+					//	for (auto& [id, name] : data.paramConfig->models)
+					//	{
+					//		if (ImGui::Selectable(data.paramConfig->models[id].c_str(), id ==act.modelID))
+					//			act.modelID = id;
+					//		
+					//	}
+					//	ImGui::EndCombo();
+					//}
+					if (ImGui::BeginCombo("##CurrentModel", data.paramConfig->models[act.modelID].c_str(), ImGuiComboFlags_WidthFitPreview)) {
+						for (const auto& [id, name] : data.paramConfig->models) 
+						{
+							if (ImGui::Selectable(name.c_str(), id )) 
+							{
+								act.modelID = id;
+								act.savedModelID = id;
+							}
+						}
+
+						ImGui::EndCombo();
+					}
 
 					ImGui::EndGroup();
 				}
