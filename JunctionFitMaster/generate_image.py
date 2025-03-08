@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import sys
 
-colors = ["#fc0000", "#f58402", "#66fffc"]
+colors = ["#fc0000", "#FFFF00FF", "#00FF00FF"]
 ErrorOneSigma = [1.00, 2.30, 3.53, 4.72, 5.89, 7.04]
 ErrorTwoSigma = [4.00, 6.17, 8.02, 9.70, 11.3, 12.8]
 ErrorThreeSigma = [9.00, 11.8, 14.2, 16.3, 18.2, 20.1]
@@ -49,6 +49,7 @@ def generate_image(path: str):
     plt.xlabel(f"{x_label}")
     plt.ylabel(f"{y_label}")
     plt.title(f"{title}")
+    plt.grid(True)
 
     # Save the plot as a PNG file
     plt.savefig(f"{path[:-4]}.png")

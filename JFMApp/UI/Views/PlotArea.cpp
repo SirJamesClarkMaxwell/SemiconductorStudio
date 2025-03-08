@@ -274,36 +274,8 @@ namespace JFMApp::Views {
 					}
 					*/
 					ImGui::Separator();
-					if(ImGui::Button("Print Parameters"))
-					{
-						std::stringstream stringStream;
-						stringStream << "Name\tTemperature\t1/T\t";
-
-						// Add parameter headers
-                        for (const auto& [id, name] : data.paramConfig->parameters) {
-							stringStream << name << "\t";
-						}
-						stringStream << std::endl;
-
-						// Serialize each characteristic
-						for (const auto& characteristic : *data.characteristics) {
-							if (!characteristic.isFitted) continue;
-
-							stringStream << characteristic.name << "\t";
-							stringStream << characteristic.T << "\t" << 1 / characteristic.T << "\t";
-
-							for (const auto& [id, value] : characteristic.fittedParameters)
-							{
-								stringStream << value << "\t";
-							}
-							if (characteristic.characteristicType == JFMService::Fitters::CharacteristicType::Light)
-								stringStream << "I_sc" << "\t"<<characteristic.ShortCircuitCurrent<<"\t";
-							stringStream << std::endl;
-						}
-
-						// Print to console
-						std::cout << stringStream.str();
-					}
+					if(ImGui::Button("Save Parameters"))
+						data.m_saveParametersCallback(*data.characteristics);
 					ImGui::Separator();
 				}
 
@@ -392,18 +364,7 @@ namespace JFMApp::Views {
 
 						act.m_tuneCallback();
 					}
-					ImGui::SameLine();
-					//if (ImGui::BeginCombo("ModelCombo", data.paramConfig->models[act.modelID].c_str(), ImGuiComboFlags_WidthFitPreview)) 
-					//{
-					//
-					//	for (auto& [id, name] : data.paramConfig->models)
-					//	{
-					//		if (ImGui::Selectable(data.paramConfig->models[id].c_str(), id ==act.modelID))
-					//			act.modelID = id;
-					//		
-					//	}
-					//	ImGui::EndCombo();
-					//}
+					
 					if (ImGui::BeginCombo("##CurrentModel", data.paramConfig->models[act.modelID].c_str(), ImGuiComboFlags_WidthFitPreview)) {
 						for (const auto& [id, name] : data.paramConfig->models) 
 						{
@@ -416,7 +377,8 @@ namespace JFMApp::Views {
 
 						ImGui::EndCombo();
 					}
-
+					ImGui::SameLine();
+					ImGui::Checkbox("Is Fitted", &act.fitted);
 					ImGui::EndGroup();
 				}
 

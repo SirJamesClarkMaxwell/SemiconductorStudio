@@ -113,7 +113,7 @@ namespace JFMApp::Data {
 		//fitted
 		ParameterMap fittedParameters{};
 		std::vector<double> fittedI{};
-
+		bool fitted{0};
 		double fitError{ -1.0 };
 
 

@@ -1,86 +1,85 @@
 #include "pch.hpp"
 #include "App.hpp"
 
-std::vector<std::pair<std::vector<double>, std::vector<double>> >globalNoisyI{};
+std::vector<std::pair<std::vector<double>, std::vector<double>>> globalNoisyI{};
 std::vector<std::pair<std::vector<double>, std::vector<double>>> globalErrors{};
 
-namespace JFMApp {
+namespace JFMApp
+{
 
 	using namespace JFMService::DataManagementService;
 	using namespace JFMService::FittingService;
 
-	App::App(const AppServiceBundle& services)
+	App::App(const AppServiceBundle &services)
 	{
 		m_numerics = services.numerics;
 		m_dataLoader = services.dataLoader;
 
-
 		init();
 	}
 
-	void App::init() {
-		//if (!m_numerics || !m_dataLoader) return;
+	void App::init()
+	{
+		// if (!m_numerics || !m_dataLoader) return;
 
-		//get the numerics config
+		// get the numerics config
 		m_state.nConfig = m_numerics->GetConfiguration();
 
 		ImGui::CreateContext();
-		ImGuiIO& io = ImGui::GetIO();
-
+		ImGuiIO &io = ImGui::GetIO();
 
 		m_state.plotData.mcTabs.push_back(1);
-
 
 		// Disable the .ini file by setting IniFilename to nullptr
 		io.IniFilename = nullptr;
 
-		//setup all of the pointers
-		//plot data
+		// setup all of the pointers
+		// plot data
 		m_state.plotData.characteristics = &m_state.browserData.m_characteristics;
 		m_state.plotData.paramConfig = &m_state.nConfig;
 
-		//browser data
+		// browser data
 		m_state.browserData.nConfig = &m_state.nConfig;
 
-		//provide the callbacks
+		// provide the callbacks
 		setUpCallbacks();
 
-		//init the root path
+		// init the root path
 		m_state.browserData.rootPath = std::filesystem::current_path();
 		m_state.browserData.currentPath = m_state.browserData.rootPath;
 
-		//init the selection vector for the file browser
+		// init the selection vector for the file browser
 		m_state.browserData.m_selection.resize(std::distance(std::filesystem::directory_iterator(m_state.browserData.rootPath), std::filesystem::directory_iterator{}));
-
 
 		m_state.plotData.globalModelID = 3;
 		m_state.plotData.savedGlobalModelID = 3;
 	}
 
-	void App::draw() {
-		//if (!m_numerics || !m_dataLoader) return;
-		std::scoped_lock lk{ m_charMutex };
-		//get the mainviewport dockspace
+	void App::draw()
+	{
+		// if (!m_numerics || !m_dataLoader) return;
+		std::scoped_lock lk{m_charMutex};
+		// get the mainviewport dockspace
 
 		ImGuiID mainDockID = Views::Widgets::mDS;
 
-		//dock prograpatically the main window
+		// dock prograpatically the main window
 		ImGui::SetNextWindowDockID(mainDockID, ImGuiCond_Once);
 		ImGuiWindowFlags JFMWFlags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoCollapse;
 
 		ImGuiID jfmID = ImGui::GetID("JFM");
 		ImGui::Begin("JFM", nullptr, JFMWFlags);
 
-		//ViewMenu is the menu of the main window
+		// ViewMenu is the menu of the main window
 
 		Views::Widgets::ViewMenu(m_state.uiState);
 
 		ImGui::DockSpace(jfmID, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_PassthruCentralNode);
 
-
 		ImGui::End();
 		static bool docked = false;
-		if (!docked) {
+		if (!docked)
+		{
 			docked = true;
 			ImGui::DockBuilderRemoveNode(jfmID);
 			ImGui::DockBuilderAddNode(jfmID, ImGuiDockNodeFlags_DockSpace);
@@ -104,28 +103,27 @@ namespace JFMApp {
 			ImGui::DockBuilderDockWindow("File Explorer", cbBottom);
 			ImGui::DockBuilderDockWindow("Characteristic Inspector", rbottom);
 
-
 			ImGui::DockBuilderFinish(jfmID);
 
 			std::string id = "MC Tab Dock" + std::to_string(1);
 			m_state.plotData.tabsIDs.push_back(ImGui::GetID(id.c_str()));
 		}
 
-
-		//Next plotting area
-		if (m_state.uiState.m_showPlottingArea) {
+		// Next plotting area
+		if (m_state.uiState.m_showPlottingArea)
+		{
 
 			Views::Widgets::PlottingArea(m_state.plotData);
-
 		}
-		//next content browser
-		if (m_state.uiState.m_showBrowserArea) {
+		// next content browser
+		if (m_state.uiState.m_showBrowserArea)
+		{
 			Views::Widgets::BrowserArea(m_state.browserData);
-
 		}
 
 		//	Characteristics inspector - by default
-		if (m_state.uiState.m_showCharacteristicInspector) {
+		if (m_state.uiState.m_showCharacteristicInspector)
+		{
 			ImGui::Begin("Characteristic Inspector");
 			Views::Widgets::CharacteristicInspector(m_state.plotData);
 			ImGui::End();
@@ -135,7 +133,7 @@ namespace JFMApp {
 		if (ImGui::Begin("RT MC"))
 		{
 			static int curr_c = 0;
-			ImVec2 s = { ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y };
+			ImVec2 s = {ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y};
 			if (ImPlot::BeginPlot("RT MC", s))
 			{
 				ImPlot::SetupAxes("V", "I", Data::PlotData::plotSettings.xFlags, Data::PlotData::plotSettings.yFlags);
@@ -158,12 +156,12 @@ namespace JFMApp {
 		if (ImGui::Begin("RT Error"))
 		{
 			static int curr_c = 0;
-			ImVec2 s = { ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y };
+			ImVec2 s = {ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y};
 			if (ImPlot::BeginPlot("RT Error", s))
 			{
 				ImPlot::SetupAxes("LOG(V)", "d(LOG(I))", Data::PlotData::plotSettings.xFlags, Data::PlotData::plotSettings.yFlags);
 
-				//ImPlot::SetupAxisScale(ImAxis_Y1, Data::Characteristic::TFL, Data::Characteristic::TFNL);
+				// ImPlot::SetupAxisScale(ImAxis_Y1, Data::Characteristic::TFL, Data::Characteristic::TFNL);
 
 				if (globalErrors.size())
 					ImPlot::PlotLine("D", globalErrors[0].first.data(), globalErrors[0].second.data(), globalErrors[0].first.size());
@@ -173,86 +171,93 @@ namespace JFMApp {
 			}
 			ImPlot::EndPlot();
 
-			//ImGui::SliderInt("Char", &curr_c, 0, globalErrors.size() - 1);
+			// ImGui::SliderInt("Char", &curr_c, 0, globalErrors.size() - 1);
 		}
 		ImGui::End();
 
-
-		//displaying MC as a separate window
-		if (m_state.uiState.m_showMonteCarloInspector) {
+		// displaying MC as a separate window
+		if (m_state.uiState.m_showMonteCarloInspector)
+		{
 			ImGui::SetNextWindowDockID(mainDockID, ImGuiCond_Once);
-			if (ImGui::Begin("MC Inspector"), nullptr, ImGuiWindowFlags_NoDocking) {
+			if (ImGui::Begin("MC Inspector"), nullptr, ImGuiWindowFlags_NoDocking)
+			{
 				Views::Widgets::MonteCarloInspector(m_state.plotData);
 			}
 			ImGui::End();
 		}
-		//ImGui::ShowDemoWindow();
-
+		// ImGui::ShowDemoWindow();
 
 		ImGui::SetNextWindowDockID(mainDockID, ImGuiCond_Once);
-		if (ImGui::Begin("Generate")) {
+		if (ImGui::Begin("Generate"))
+		{
 			Views::Widgets::DataGenerator(m_state.browserData);
 		}
 		ImGui::End();
-
 	}
 
-	void App::update() {
-		//if (!m_numerics && !m_dataLoader) return;
-		std::scoped_lock lk{ m_charMutex };
+	void App::update()
+	{
+		// if (!m_numerics && !m_dataLoader) return;
+		std::scoped_lock lk{m_charMutex};
 
-
-
-		//update the characteristic list and active characteristic
-		if (m_state.plotData.active && !(m_state.plotData.active->checked)) {
+		// update the characteristic list and active characteristic
+		if (m_state.plotData.active && !(m_state.plotData.active->checked))
+		{
 			m_state.plotData.active = nullptr;
-			for (auto& ch : m_state.browserData.m_characteristics) {
-				if (ch.checked) {
+			for (auto &ch : m_state.browserData.m_characteristics)
+			{
+				if (ch.checked)
+				{
 					m_state.plotData.active = &ch;
 					break;
 				}
 			}
 		}
 
-		//update the parameters according to the model of the active characteristic for MC choice
+		// update the parameters according to the model of the active characteristic for MC choice
 		//?
-
 	}
 
-	void App::setUpCallbacks() {
+	void App::setUpCallbacks()
+	{
 
-		//browser callbacks
+		// browser callbacks
 
 		{
-			m_state.browserData.m_singleShot = [&]() {
+			m_state.browserData.m_singleShot = [&]()
+			{
+				auto &genData = m_state.browserData.m_paramGenData;
 
-				auto& genData = m_state.browserData.m_paramGenData;
+				auto &data = m_state.browserData;
 
-				auto& data = m_state.browserData;
-
-				auto& conf = m_state.nConfig;
+				auto &conf = m_state.nConfig;
 
 				std::vector<double> V{};
 
-				if (data.m_byStepN) {
+				if (data.m_byStepN)
+				{
 					V.resize(data.m_nSteps);
 					double v = data.m_voltageGenRange[0];
 					double step = (data.m_voltageGenRange[1] - data.m_voltageGenRange[0]) / (data.m_nSteps - 1);
-					for (auto& val : V) {
+					for (auto &val : V)
+					{
 						val = v;
 						v += step;
 					}
 				}
-				else {
+				else
+				{
 					double step = data.m_voltageGenStep;
 					double val = data.m_voltageGenRange[0];
-					while (val <= data.m_voltageGenRange[1]) {
+					while (val <= data.m_voltageGenRange[1])
+					{
 						V.push_back(val);
 						val += step;
 					}
 				}
 
-				if (V.size() == 0) return;
+				if (V.size() == 0)
+					return;
 
 				Data::Characteristic ch{};
 				ch.V = V;
@@ -261,17 +266,18 @@ namespace JFMApp {
 				ch.T = data.m_genT;
 				ch.modelID = data.m_genModelID;
 				ch.savedModelID = data.m_genModelID;
-				ch.dataRange = { 0, ch.V.size() - 2 };
-				ch.m_tuneCallback = [&]() {
+				ch.dataRange = {0, ch.V.size() - 2};
+				ch.m_tuneCallback = [&]()
+				{
 					ch.fittedParameters = ch.tunedParameters;
 					CalculatingData cData = ch.getCalculatingData();
 
 					m_numerics->CalculateData(cData);
 
 					ch.fitError = m_numerics->CalculateError(cData.characteristic.currentData, ch.getEstimateInput().characteristic.currentData);
-					};
+				};
 
-				for (auto& [id, d] : genData)
+				for (auto &[id, d] : genData)
 					ch.fittedParameters[id] = d.singleValue;
 
 				ch.I.resize(V.size());
@@ -279,10 +285,11 @@ namespace JFMApp {
 				m_numerics->CalculateData(cData);
 				ch.I = ch.fittedI;
 
-				static std::mt19937 rand_generator{ std::random_device{}() };
-				std::normal_distribution<double> distribution{ 0, 1 };
+				static std::mt19937 rand_generator{std::random_device{}()};
+				std::normal_distribution<double> distribution{0, 1};
 
-				for (auto& i : ch.I) {
+				for (auto &i : ch.I)
+				{
 					double noise = (i * data.m_noise / 100.0);
 
 					i += distribution(rand_generator) * noise;
@@ -291,20 +298,21 @@ namespace JFMApp {
 				ch.checked = true;
 				ch.useBounds = true;
 				ch.savedUseBounds = true;
-				ch.dataRange = { 0,ch.I.size() - 1 };
+				ch.dataRange = {0, ch.I.size() - 1};
 				auto eParams = m_numerics->Estimate(ch.getEstimateInput());
 				ch.savedInitialGuess = eParams;
 				ch.savedUseInitial = true;
 				ch.savedUseInitial = true;
 				ch.fittedParameters = eParams;
-				for (const auto& [k, v] : eParams)
+				for (const auto &[k, v] : eParams)
 				{
 					if (k != 0 && k != 4)
 					{
 						ch.savedBounds[k].first = 1.0 * std::pow(10.0, std::floor(std::log10(v)) - 1);
 						ch.savedBounds[k].second = 9.0 * std::pow(10.0, std::floor(std::log10(v)) + 1);
 					}
-					else if (k == 4) {
+					else if (k == 4)
+					{
 						ch.savedBounds[k].first = 1;
 						ch.savedBounds[k].second = 5;
 					}
@@ -316,7 +324,8 @@ namespace JFMApp {
 				}
 				ch.savedUseBounds = true;
 				ch.useBounds = true;
-				m_numerics->Fit(ch.getFittingInput(), [&](ParameterMap&& output) {
+				m_numerics->Fit(ch.getFittingInput(), [&](ParameterMap &&output)
+								{
 
 
 					CalculatingData cData = ch.getCalculatingData();
@@ -333,38 +342,39 @@ namespace JFMApp {
 					ch.bounds = ch.savedBounds;
 
 					m_state.browserData.m_characteristics.push_back(ch);
-					m_state.plotData.active = &m_state.browserData.m_characteristics.back();
-					});
-
+					m_state.plotData.active = &m_state.browserData.m_characteristics.back(); });
 
 				m_state.browserData.m_characteristics.push_back(ch);
 				m_state.plotData.active = &m_state.browserData.m_characteristics.back();
-				};
+			};
 
+			m_state.browserData.m_generateCallback = [&]()
+			{
+				auto &genData = m_state.browserData.m_paramGenData;
 
-			m_state.browserData.m_generateCallback = [&]() {
+				auto &data = m_state.browserData;
 
-				auto& genData = m_state.browserData.m_paramGenData;
-
-				auto& data = m_state.browserData;
-
-				auto& conf = m_state.nConfig;
+				auto &conf = m_state.nConfig;
 
 				std::vector<double> V{};
 
-				if (data.m_byStepN) {
+				if (data.m_byStepN)
+				{
 					V.resize(data.m_nSteps);
 					double v = data.m_voltageGenRange[0];
 					double step = (data.m_voltageGenRange[1] - data.m_voltageGenRange[0]) / (data.m_nSteps - 1);
-					for (auto& val : V) {
+					for (auto &val : V)
+					{
 						val = v;
 						v += step;
 					}
 				}
-				else {
+				else
+				{
 					double step = data.m_voltageGenStep;
 					double val = data.m_voltageGenRange[0];
-					while (val <= data.m_voltageGenRange[1]) {
+					while (val <= data.m_voltageGenRange[1])
+					{
 						V.push_back(val);
 						val += step;
 					}
@@ -374,11 +384,13 @@ namespace JFMApp {
 
 				if (data.m_tempN == 1)
 					T.push_back(data.m_genT);
-				else {
+				else
+				{
 					T.resize(data.m_tempN);
 					double v = data.m_tempRange[0];
 					double step = (data.m_tempRange[1] - data.m_tempRange[0]) / (data.m_tempN - 1);
-					for (auto& val : T) {
+					for (auto &val : T)
+					{
 						val = v;
 						v += step;
 					}
@@ -388,25 +400,28 @@ namespace JFMApp {
 
 				if (data.m_noiseN == 1)
 					noise.push_back(data.m_noise / 100.0);
-				else {
+				else
+				{
 					noise.resize(data.m_noiseN);
 					double v = data.m_noiseRange[0] / 100.0;
 					double step = (data.m_noiseRange[1] / 100.0 - data.m_noiseRange[0] / 100.0) / (data.m_noiseN - 1);
-					for (auto& val : noise) {
+					for (auto &val : noise)
+					{
 						val = v;
 						v += step;
 					}
 				}
 
-
-				if (V.size() == 0) return;
+				if (V.size() == 0)
+					return;
 
 				std::unordered_map<ParameterID, std::vector<double>> params{};
 
-
-				auto generateRange = [&](double start, double end, bool byNumber, size_t N, double step, Data::BrowserData::GenType type) {
+				auto generateRange = [&](double start, double end, bool byNumber, size_t N, double step, Data::BrowserData::GenType type)
+				{
 					std::vector<double> vals{};
-					if (byNumber) {
+					if (byNumber)
+					{
 						vals.resize(N);
 						double v = start;
 						double step = (end - start) / (N - 1);
@@ -417,21 +432,25 @@ namespace JFMApp {
 
 						double log_step = double(end_pow - start_pow) / double(N - 1);
 
-						switch (type) {
+						switch (type)
+						{
 						case Data::BrowserData::GenType::Linear:
-							for (auto& val : vals) {
+							for (auto &val : vals)
+							{
 								val = v;
 								v += step;
 							}
 							break;
 						case Data::BrowserData::GenType::Log:
-							for (int i = 0; i < N; ++i) {
+							for (int i = 0; i < N; ++i)
+							{
 								double log_value = start_pow + i * log_step;
 								vals[i] = std::pow(10, log_value);
 							}
 							break;
 						case Data::BrowserData::GenType::Exponential:
-							for (int i = 0; i < N; ++i) {
+							for (int i = 0; i < N; ++i)
+							{
 								double exponent_value = start + i * step;
 								vals[i] = std::exp(exponent_value);
 							}
@@ -445,44 +464,41 @@ namespace JFMApp {
 									vals[(i - start_pow) * N + p++] = j * std::pow(10, i);
 							}
 							break;
-
 						}
-
 					}
-					else {
+					else
+					{
 						double v = start;
-						while (v <= end) {
+						while (v <= end)
+						{
 							vals.push_back(v);
 							v += step;
 						}
 					}
 					return vals;
+				};
 
-					};
-
-
-
-				for (auto& [id, d] : genData) {
+				for (auto &[id, d] : genData)
+				{
 					if (d.singleShot)
 						params[id] = generateRange(d.start, d.end, data.m_byStepN, d.nSteps, d.step, d.type);
 					else
-						params[id] = { d.singleValue };
+						params[id] = {d.singleValue};
 				}
 
 				std::vector<std::pair<ParameterMap, double>> pMaps{};
 				std::vector<double> noises{};
 
-				size_t numOfCombinations = std::accumulate(params.begin(), params.end(), 1, [](size_t acc, const auto& p) 
-					{ return acc * p.second.size(); });
+				size_t numOfCombinations = std::accumulate(params.begin(), params.end(), 1, [](size_t acc, const auto &p)
+														   { return acc * p.second.size(); });
 
 				numOfCombinations *= T.size();
 				numOfCombinations *= noise.size();
 
 				std::unordered_map<ParameterID, size_t> indices{};
 
-				
-
-				for (const auto& [id, vals] : params) {
+				for (const auto &[id, vals] : params)
+				{
 					indices[id] = 0;
 				}
 
@@ -497,22 +513,22 @@ namespace JFMApp {
 				pMaps.resize(numOfCombinations);
 				noises.resize(numOfCombinations);
 
-
-				for (size_t i = 0; i < numOfCombinations; i++) {
+				for (size_t i = 0; i < numOfCombinations; i++)
+				{
 					std::pair<ParameterMap, double> pMap{};
-					for (auto& [id, s] : indices)
-						if (id != noiseID) pMap.first[id == tempID ? id - 1 : id] = 0.0;
+					for (auto &[id, s] : indices)
+						if (id != noiseID)
+							pMap.first[id == tempID ? id - 1 : id] = 0.0;
 
-					for (auto& [id, val] : pMap.first)
+					for (auto &[id, val] : pMap.first)
 						val = params[id][indices[id]];
-
-
 
 					pMap.second = T[indices[tempID]];
 					if (data.m_noiseN > 0)
 						noises[i] = noise[indices[noiseID]];
 
-					for (auto& [p, i] : indices) {
+					for (auto &[p, i] : indices)
+					{
 						i++;
 						if (p == tempID && i >= T.size())
 							i = 0;
@@ -524,30 +540,31 @@ namespace JFMApp {
 							break;
 					}
 
-
 					pMaps[i] = pMap;
 				}
 
-				static std::mt19937 rand_generator{ std::random_device{}() };
-			
-				for (const auto& [pMap, ns] : std::views::zip(pMaps, noises)) {
+				static std::mt19937 rand_generator{std::random_device{}()};
+
+				for (const auto &[pMap, ns] : std::views::zip(pMaps, noises))
+				{
 					Data::Characteristic ch{};
 					ch.V = V;
 					ch.I.resize(V.size());
-					ch.dataRange = { 0,ch.I.size() - 1 };
+					ch.dataRange = {0, ch.I.size() - 1};
 					ch.name = "Generated";
 					ch.T = pMap.second;
 					ch.modelID = data.m_genModelID;
 					ch.savedModelID = data.m_genModelID;
-					ch.dataRange = { 0, ch.V.size() - 1  };
-					ch.m_tuneCallback = [&]() {
+					ch.dataRange = {0, ch.V.size() - 1};
+					ch.m_tuneCallback = [&]()
+					{
 						ch.fittedParameters = ch.tunedParameters;
 						CalculatingData cData = ch.getCalculatingData();
 
 						m_numerics->CalculateData(cData);
 
 						ch.fitError = m_numerics->CalculateError(cData.characteristic.currentData, ch.getEstimateInput().characteristic.currentData);
-						};
+					};
 
 					ch.fittedParameters = pMap.first;
 
@@ -555,37 +572,39 @@ namespace JFMApp {
 					m_numerics->CalculateData(cData);
 					ch.I = ch.fittedI;
 
-					std::normal_distribution<double> distribution{ 0, 1 };
+					std::normal_distribution<double> distribution{0, 1};
 
 					if (data.m_noiseN > 0)
-						for (auto& i : ch.I) {
+						for (auto &i : ch.I)
+						{
 							double noise = (i * ns);
 
 							i += distribution(rand_generator) * noise;
 						}
 
 					ch.checked = true;
-					ch.dataRange = { 0,ch.I.size() - 1 };
+					ch.dataRange = {0, ch.I.size() - 1};
 					auto eParams = m_numerics->Estimate(ch.getEstimateInput());
 					ch.savedInitialGuess = eParams;
 					ch.savedUseInitial = true;
 					ch.fittedParameters = eParams;
-					for (const auto& [k, v] : eParams)
+					for (const auto &[k, v] : eParams)
 					{
 						if (k != 1 or k != 4)
 						{
 							ch.savedBounds[k].first = 1.0 * std::pow(10.0, std::floor(std::log10(v)) - 1);
 							ch.savedBounds[k].second = 9.0 * std::pow(10.0, std::floor(std::log10(v)) + 1);
 						}
-						else {
+						else
+						{
 							ch.savedBounds[k].first = 1;
 							ch.savedBounds[k].second = 5;
 						}
-
 					}
 					ch.savedUseBounds = true;
 					ch.useBounds = true;
-					m_numerics->Fit(ch.getFittingInput(), [&](ParameterMap&& output) {
+					m_numerics->Fit(ch.getFittingInput(), [&](ParameterMap &&output)
+									{
 
 
 						CalculatingData cData = ch.getCalculatingData();
@@ -602,62 +621,54 @@ namespace JFMApp {
 						ch.bounds = ch.savedBounds;
 
 						m_state.browserData.m_characteristics.push_back(ch);
-						m_state.plotData.active = &m_state.browserData.m_characteristics.back();
-						});
+						m_state.plotData.active = &m_state.browserData.m_characteristics.back(); });
 					m_state.browserData.m_characteristics.push_back(ch);
 					m_state.plotData.active = &m_state.browserData.m_characteristics.back();
 				}
-
-
-				};
-
-			auto fittingFunction = [&](Data::Characteristic& temp, const auto& numerics )
-			{
-					using ParametersID = JFMService::Fitters::ParameterID;
-					auto eParams = numerics->Estimate(temp.getEstimateInput());
-					if(temp.savedInitialGuess[ParametersID::I_sc])
-						eParams[ParametersID::I_sc] = temp.savedInitialGuess[ParametersID::I_sc];
-
-					temp.savedInitialGuess = eParams;
-					temp.savedUseInitial = true;
-					//fit
-					temp.savedUseBounds = true;
-					for (const auto& [k, v] : eParams)
-					{
-						if (k != 1 or k!=4)
-						{
-							temp.savedBounds[k].first = 1.0 * std::pow(10.0, std::floor(std::log10(v)) - 1);
-							temp.savedBounds[k].second = 9.0 * std::pow(10.0, std::floor(std::log10(v)) + 1);
-						}
-						else {
-							temp.savedBounds[k].first = 1;
-							temp.savedBounds[k].second = 20;
-						}
-					}
-
-
-					numerics->Fit(temp.getFittingInput(), [&](ParameterMap&& output) {
-
-
-						CalculatingData cData = temp.getCalculatingData();
-						cData.parameters = output;
-
-						numerics->CalculateData(cData);
-
-						double fitError = numerics->CalculateError(cData.characteristic.currentData, temp.getEstimateInput().characteristic.currentData);
-						temp.submitFitting(output, fitError);
-						//std::scoped_lock lk{ m_charMutex };
-						temp.savedUseInitial = false;
-						temp.savedUseBounds = false;
-
-						temp.bounds = temp.savedBounds;
-
-
-						});
-
 			};
 
-			m_state.browserData.m_loadSingleCharacteristic = [&](Data::Characteristic& temp)
+			auto fittingFunction = [&](Data::Characteristic &temp, const auto &numerics)
+			{
+				using ParametersID = JFMService::Fitters::ParameterID;
+				auto eParams = numerics->Estimate(temp.getEstimateInput());
+				if (temp.savedInitialGuess[ParametersID::I_sc])
+					eParams[ParametersID::I_sc] = temp.savedInitialGuess[ParametersID::I_sc];
+
+				temp.savedInitialGuess = eParams;
+				temp.savedUseInitial = true;
+				// fit
+				temp.savedUseBounds = true;
+				for (const auto &[k, v] : eParams)
+				{
+					if (k != 1 or k != 4)
+					{
+						temp.savedBounds[k].first = 1.0 * std::pow(10.0, std::floor(std::log10(v)) - 1);
+						temp.savedBounds[k].second = 9.0 * std::pow(10.0, std::floor(std::log10(v)) + 1);
+					}
+					else
+					{
+						temp.savedBounds[k].first = 1;
+						temp.savedBounds[k].second = 20;
+					}
+				}
+
+				numerics->Fit(temp.getFittingInput(), [&](ParameterMap &&output)
+							  {
+								  CalculatingData cData = temp.getCalculatingData();
+								  cData.parameters = output;
+
+								  numerics->CalculateData(cData);
+
+								  double fitError = numerics->CalculateError(cData.characteristic.currentData, temp.getEstimateInput().characteristic.currentData);
+								  temp.submitFitting(output, fitError);
+								  // std::scoped_lock lk{ m_charMutex };
+								  temp.savedUseInitial = false;
+								  temp.savedUseBounds = false;
+
+								  temp.bounds = temp.savedBounds; });
+			};
+
+			m_state.browserData.m_loadSingleCharacteristic = [&](Data::Characteristic &temp)
 			{
 				using ModelID = JFMService::Fitters::JFMModelID;
 				using CharacteristicType = JFMService::Fitters::CharacteristicType;
@@ -665,116 +676,153 @@ namespace JFMApp {
 				bool light = false;
 				auto modelID = ModelID::Model4P;
 				auto copiedI = temp.I;
-				if(m_state.browserData.m_characteristicType == CharacteristicType::Light)
+				if (m_state.browserData.m_characteristicType == CharacteristicType::Light)
 				{
 					light = true;
-					unsigned int index = ModelID::Model4P;  
+					unsigned int index = ModelID::Model4P;
 					temp.modelID = index;
 					temp.savedModelID = index;
 					auto minValue = std::abs(temp.I[*std::ranges::find(temp.V, 0)]);
-					//temp.savedInitialGuess[ParameterID::I_sc] = minValue;
-					temp.ShortCircuitCurrent = minValue;	
-					std::ranges::for_each(copiedI, [&](auto& item) { item += minValue; });
-					temp.dataRange = m_numerics->RangeData({ temp.V, copiedI });
+					// temp.savedInitialGuess[ParameterID::I_sc] = minValue;
+					temp.ShortCircuitCurrent = minValue;
+					std::ranges::for_each(copiedI, [&](auto &item)
+										  { item += minValue; });
+					temp.dataRange = m_numerics->RangeData({temp.V, copiedI});
 					temp.I = copiedI;
 				}
 				else
-					temp.dataRange = m_numerics->RangeData({ temp.V,copiedI });// temp.I });
-							
+					temp.dataRange = m_numerics->RangeData({temp.V, copiedI}); // temp.I });
+
 				// Model Auto-Detection
-				fittingFunction(temp,m_numerics);
+				fittingFunction(temp, m_numerics);
 				if (temp.fitError > 1e-3)
 				{
 					modelID = /*light == true ? ModelID::Model6PLight :*/ ModelID::Model6P;
 					temp.modelID = modelID;
 					temp.savedModelID = modelID;
-					fittingFunction(temp,m_numerics);
+					fittingFunction(temp, m_numerics);
 				}
 			};
 
+			m_state.plotData.m_saveParametersCallback = [&](std::vector<JFMApp::Data::Characteristic> &characteristics)
+			{
+				std::stringstream stringStream;
+				std::filesystem::path filePath = m_state.browserData.currentPath / "parameters.csv";
+				stringStream << "Name\tTemperature\t";
 
-			m_state.browserData.m_loadCallback = [&]() {
+				for (const auto &[id, name] : m_state.plotData.paramConfig->parameters)
+					stringStream << name + "\t";
+				stringStream << std::endl;
+				for (const auto &characteristic : characteristics)
+				{
+					if (characteristic.isFitted)
+					{	
+						stringStream << characteristic.name << "\t";
+						for (const auto &[id, value] : characteristic.fittedParameters)
+							stringStream << std::scientific << std::setprecision(3) <<value << "\t";
 
+						if (characteristic.characteristicType == JFMService::Fitters::CharacteristicType::Light)
+							stringStream << std::to_string(characteristic.ShortCircuitCurrent) << std::endl;
+						else	
+							stringStream<<std::endl;
+					}
+				}
+
+				std::ofstream file(filePath, std::ios::out | std::ios::trunc);
+				file << stringStream.str();
+				file.close();
+
+			};
+
+			m_state.browserData.m_loadCallback = [&]()
+			{
 				std::vector<std::filesystem::path> paths{};
 
-				for (const auto& [index, selected] : std::views::enumerate(std::filesystem::directory_iterator(m_state.browserData.currentPath))) {
-					if (m_state.browserData.m_selection[index] && !selected.is_directory()) {
+				for (const auto &[index, selected] : std::views::enumerate(std::filesystem::directory_iterator(m_state.browserData.currentPath)))
+				{
+					if (m_state.browserData.m_selection[index] && !selected.is_directory())
+					{
 						paths.push_back(selected.path());
 					}
 				}
 
-				if (paths.empty()) return;
+				if (paths.empty())
+					return;
 
-				m_dataLoader->Load(paths, [&](std::vector<LoaderOutput> characteristics) {
+				m_dataLoader->Load(paths, [&](std::vector<LoaderOutput> characteristics)
+								   {
+									   for (auto &c : characteristics)
+									   {
+										   if (!c.success)
+											   continue;
+										   // loading a characteristic
+										   if (c.data)
+										   {
 
+											   Data::Characteristic temp{*c.data};
+											   temp.nConfig = m_state.nConfig;
+											   temp.checked = true;
+											   const auto &p = std::find_if(paths.begin(), paths.end(), [&](const std::filesystem::path &path)
+																			{ return path.string().contains(temp.name); });
 
-					for (auto& c : characteristics) {
-						if (!c.success) continue;
-						//loading a characteristic
-						if (c.data) {
+											   if (p != paths.end())
+											   {
+												   temp.path = *p;
+											   }
 
+											   temp.m_tuneCallback = [&]()
+											   {
+												   // assuming the tuned parameters are copied into fitted
+												   CalculatingData cData = temp.getCalculatingData();
 
-							Data::Characteristic temp{ *c.data };
-							temp.nConfig = m_state.nConfig;
-							temp.checked = true;
-							const auto& p = std::find_if(paths.begin(), paths.end(), [&](const std::filesystem::path& path) {
-								return path.string().contains(temp.name);
-								});
+												   m_numerics->CalculateData(cData);
 
-							if (p != paths.end()) {
-								temp.path = *p;
-							}
+												   temp.fitError = m_numerics->CalculateError(cData.characteristic.currentData, temp.getEstimateInput().characteristic.currentData);
+											   };
+											   m_state.browserData.m_loadSingleCharacteristic(temp);
+											   m_state.browserData.m_characteristics.push_back(temp);
+											   m_state.plotData.active = &m_state.browserData.m_characteristics.back();
+										   }
+									   }
 
-							temp.m_tuneCallback = [&]() {
-								//assuming the tuned parameters are copied into fitted
-								CalculatingData cData = temp.getCalculatingData();
+									   for (auto &c : characteristics)
+									   {
+										   if (!c.success)
+											   continue;
+										   // loading a monte carlo
+										   //  check if the characteristic is already loaded
+										   //  if not, load the characteristic
+										   //
+										   //  if yes, check if montecalro data is already loaded(distinguish by the fitting config)
+										   //  if not, load the montecarlo data
+										   //      --put montecarlo data into th echaracteristic
+										   //  if yes, do nothing
+										   if (c.mcData)
+										   {
+											   auto cc = std::find_if(m_state.browserData.m_characteristics.begin(), m_state.browserData.m_characteristics.end(), [&](Data::Characteristic &ch)
+																	  { return ch.path == c.mcData->inputData.startingData.name; });
 
-								m_numerics->CalculateData(cData);
+											   Data::Characteristic *ch{nullptr};
 
-								temp.fitError = m_numerics->CalculateError(cData.characteristic.currentData, temp.getEstimateInput().characteristic.currentData);
-								};
-							m_state.browserData.m_loadSingleCharacteristic(temp);
-							m_state.browserData.m_characteristics.push_back(temp);
-							m_state.plotData.active = &m_state.browserData.m_characteristics.back();
-						}
-					}
+											   auto loadMC = [&]()
+											   {
+												   auto &mc = *c.mcData;
+												   auto &cha = *ch;
 
-					for (auto& c : characteristics) {
-						if (!c.success) continue;
-						//loading a monte carlo
-						// check if the characteristic is already loaded
-						// if not, load the characteristic
-						//	   
-						// if yes, check if montecalro data is already loaded(distinguish by the fitting config)
-						// if not, load the montecarlo data
-						//     --put montecarlo data into th echaracteristic
-						// if yes, do nothing
-						if (c.mcData) {
-							auto cc = std::find_if(m_state.browserData.m_characteristics.begin(), m_state.browserData.m_characteristics.end(), [&](Data::Characteristic& ch) {
-								return ch.path == c.mcData->inputData.startingData.name;
-								});
+												   auto mcs = std::find_if(cha.mcData.begin(), cha.mcData.end(), [&](Data::Characteristic::MCSimulation &m)
+																		   { return m.fixConfig == mc.inputData.startingData.fixConfig; });
 
-							Data::Characteristic* ch{ nullptr };
+												   if (mcs == cha.mcData.end())
+												   {
+													   cha.submitMC(mc);
+												   }
+											   };
 
-							auto loadMC = [&]() {
-								auto& mc = *c.mcData;
-								auto& cha = *ch;
-
-
-								auto mcs = std::find_if(cha.mcData.begin(), cha.mcData.end(), [&](Data::Characteristic::MCSimulation& m) {
-									return m.fixConfig == mc.inputData.startingData.fixConfig;
-									});
-
-
-								if (mcs == cha.mcData.end()) {
-									cha.submitMC(mc);
-								}
-								};
-
-
-							if (cc == m_state.browserData.m_characteristics.end()) {
-								{
-									m_dataLoader->Load(c.mcData->inputData.relPath, [&](LoaderOutput cdata) {
+											   if (cc == m_state.browserData.m_characteristics.end())
+											   {
+												   {
+													   m_dataLoader->Load(c.mcData->inputData.relPath, [&](LoaderOutput cdata)
+																		  {
 										if (cdata.success && cdata.data) {
 											Data::Characteristic temp{ *cdata.data };
 											temp.nConfig = m_state.nConfig;
@@ -802,151 +850,153 @@ namespace JFMApp {
 											m_state.browserData.m_characteristics.push_back(temp);
 											ch = &m_state.browserData.m_characteristics.back();
 											loadMC();
-										}
-										});
-								}
-							}
-							else {
-								ch = &(*cc);
-								loadMC();
-							}
-
-						}
-					}
-
-					});
-
-
-				};
-			m_state.browserData.m_loadAllCallback = [&]() {
-
+										} });
+												   }
+											   }
+											   else
+											   {
+												   ch = &(*cc);
+												   loadMC();
+											   }
+										   }
+									   } });
+			};
+			m_state.browserData.m_loadAllCallback = [&]()
+			{
 				std::vector<std::filesystem::path> paths{};
 
-				for (const auto& [index, selected] : std::views::enumerate(std::filesystem::directory_iterator(m_state.browserData.currentPath))) {
-					if (!selected.is_directory()) {
+				for (const auto &[index, selected] : std::views::enumerate(std::filesystem::directory_iterator(m_state.browserData.currentPath)))
+				{
+					if (!selected.is_directory())
+					{
 						paths.push_back(selected.path());
 					}
 				}
 
-				m_dataLoader->Load(paths, [&](std::vector<LoaderOutput> characteristics) {
+				m_dataLoader->Load(paths, [&](std::vector<LoaderOutput> characteristics)
+								   {
+									   for (auto &c : characteristics)
+									   {
+										   if (!c.success)
+											   continue;
+										   if (c.data)
+										   {
+											   Data::Characteristic temp{*c.data};
+											   temp.nConfig = m_state.nConfig;
+											   temp.checked = true;
+											   const auto &p = std::find_if(paths.begin(), paths.end(), [&](const std::filesystem::path &path)
+																			{ return path.string().contains(temp.name); });
 
+											   if (p != paths.end())
+											   {
+												   temp.path = *p;
+											   }
 
-					for (auto& c : characteristics) {
-						if (!c.success) continue;
-						if (c.data) {
-							Data::Characteristic temp{ *c.data };
-							temp.nConfig = m_state.nConfig;
-							temp.checked = true;
-							const auto& p = std::find_if(paths.begin(), paths.end(), [&](const std::filesystem::path& path) {
-								return path.string().contains(temp.name);
-								});
+											   temp.m_tuneCallback = [&]()
+											   {
+												   // assuming the tuned parameters are copied into fitted
+												   CalculatingData cData = temp.getCalculatingData();
+												   m_numerics->CalculateData(cData);
+												   temp.fitError = m_numerics->CalculateError(cData.characteristic.currentData, temp.getEstimateInput().characteristic.currentData);
+											   };
 
-							if (p != paths.end()) {
-								temp.path = *p;
-							}
+											   m_state.browserData.m_loadSingleCharacteristic(temp);
+											   m_state.browserData.m_characteristics.push_back(temp);
+											   m_state.plotData.active = &m_state.browserData.m_characteristics.back();
+										   }
+									   } });
+			};
 
-							temp.m_tuneCallback = [&]() {
-								//assuming the tuned parameters are copied into fitted
-								CalculatingData cData = temp.getCalculatingData();
-								m_numerics->CalculateData(cData);
-								temp.fitError = m_numerics->CalculateError(cData.characteristic.currentData, temp.getEstimateInput().characteristic.currentData);
-								};
-
-							m_state.browserData.m_loadSingleCharacteristic(temp);
-							m_state.browserData.m_characteristics.push_back(temp);
-							m_state.plotData.active = &m_state.browserData.m_characteristics.back();
-						}
-					}
-
-					});
-
-
-				};
-
-			m_state.browserData.m_updateColorsCallback = [&]() {
-
-				auto& startColor = m_state.browserData.startColor;
-				auto& endColor = m_state.browserData.endColor;
+			m_state.browserData.m_updateColorsCallback = [&]()
+			{
+				auto &startColor = m_state.browserData.startColor;
+				auto &endColor = m_state.browserData.endColor;
 
 				size_t cn = m_state.browserData.m_characteristics.size();
 
-				for (const auto& [i, c] : std::views::enumerate(m_state.browserData.m_characteristics)) {
+				for (const auto &[i, c] : std::views::enumerate(m_state.browserData.m_characteristics))
+				{
 
 					ImVec4 col{};
 					col.w = 1.0f;
 
 					float t = static_cast<float>(i) / static_cast<float>(cn);
 
-					for (size_t i = 0; i < 3; i++) {
-						auto& r = *(reinterpret_cast<float*>(&col) + i);
-						auto& s = *(reinterpret_cast<float*>(&startColor) + i);
-						auto& e = *(reinterpret_cast<float*>(&endColor) + i);
+					for (size_t i = 0; i < 3; i++)
+					{
+						auto &r = *(reinterpret_cast<float *>(&col) + i);
+						auto &s = *(reinterpret_cast<float *>(&startColor) + i);
+						auto &e = *(reinterpret_cast<float *>(&endColor) + i);
 
 						r = s * (1.0f - t) + e * t;
 					}
 					col.w = c.color.w;
 					c.color = col;
 				}
+			};
 
-				};
-
-			m_state.browserData.m_invertSelectionCallback = [&]() {
-				auto& active = m_state.plotData.active;
-				for (auto& ch : m_state.browserData.m_characteristics) {
-					if (active == &ch) active = nullptr;
-					if (!ch.checked && !active) active = &ch;
+			m_state.browserData.m_invertSelectionCallback = [&]()
+			{
+				auto &active = m_state.plotData.active;
+				for (auto &ch : m_state.browserData.m_characteristics)
+				{
+					if (active == &ch)
+						active = nullptr;
+					if (!ch.checked && !active)
+						active = &ch;
 					ch.checked = !ch.checked;
 				}
+			};
 
-				};
-
-			m_state.browserData.m_selectAllCallback = [&]() {
-				for (auto& ch : m_state.browserData.m_characteristics) {
+			m_state.browserData.m_selectAllCallback = [&]()
+			{
+				for (auto &ch : m_state.browserData.m_characteristics)
+				{
 					ch.checked = true;
 				}
-
-				};
-
+			};
 
 			{
-				for (auto& ch : m_state.browserData.m_characteristics) {
+				for (auto &ch : m_state.browserData.m_characteristics)
+				{
 					ch.checked = false;
 				}
 				m_state.plotData.active = nullptr;
-				};
+			};
 
-			m_state.browserData.m_removeSelectedCallback = [&]() {
-				//remove characteristics that are checked
+			m_state.browserData.m_removeSelectedCallback = [&]()
+			{
+				// remove characteristics that are checked
 
-				std::erase_if(m_state.browserData.m_characteristics, [&](Data::Characteristic& ch) {
-					return ch.checked;
-					});
+				std::erase_if(m_state.browserData.m_characteristics, [&](Data::Characteristic &ch)
+							  { return ch.checked; });
 
 				m_state.plotData.active = nullptr;
+			};
 
-				};
-
-			m_state.browserData.m_removeUnselectedCallback = [&]() {
-				std::erase_if(m_state.browserData.m_characteristics, [](Data::Characteristic& ch) {
-					return !ch.checked;
-					});
-				};
+			m_state.browserData.m_removeUnselectedCallback = [&]()
+			{
+				std::erase_if(m_state.browserData.m_characteristics, [](Data::Characteristic &ch)
+							  { return !ch.checked; });
+			};
 		}
 
-		//plot area callbacks
+		// plot area callbacks
 
 		{
-			m_state.plotData.m_estimateCallback = [&]() {
-				if (!m_state.plotData.active) return;
+			m_state.plotData.m_estimateCallback = [&]()
+			{
+				if (!m_state.plotData.active)
+					return;
 
-				auto& active = *m_state.plotData.active;
+				auto &active = *m_state.plotData.active;
 
 				auto eParams = m_numerics->Estimate(active.getEstimateInput());
 
 				active.fittedParameters = eParams;
 				active.savedInitialGuess = eParams;
 				active.savedBounds.clear();
-				for (const auto& [k, v] : eParams)
+				for (const auto &[k, v] : eParams)
 				{
 					if (k != 1)
 					{
@@ -962,117 +1012,122 @@ namespace JFMApp {
 				active.savedUseBounds = true;
 				active.useBounds = true;
 				active.savedUseInitial = true;
-				};
+			};
 
-			m_state.plotData.m_fitCallback = [&]() {
-				if (!m_state.plotData.active) return;
+			m_state.plotData.m_fitCallback = [&]()
+			{
+				if (!m_state.plotData.active)
+					return;
 
-				auto& active = *m_state.plotData.active;
+				auto &active = *m_state.plotData.active;
 
-				m_numerics->Fit(active.getFittingInput(), [&](ParameterMap&& output) {
-					if (!&active) return;
+				m_numerics->Fit(active.getFittingInput(), [&](ParameterMap &&output)
+								{
+									if (!&active)
+										return;
 
-					active.fittedParameters = output;
-					CalculatingData cData = active.getCalculatingData();
+									active.fittedParameters = output;
+									CalculatingData cData = active.getCalculatingData();
 
+									m_numerics->CalculateData(cData);
 
-					m_numerics->CalculateData(cData);
+									double fitError = m_numerics->CalculateError(cData.characteristic.currentData, active.getEstimateInput().characteristic.currentData);
+									active.submitFitting(output, fitError); });
+			};
 
-					double fitError = m_numerics->CalculateError(cData.characteristic.currentData, active.getEstimateInput().characteristic.currentData);
-					active.submitFitting(output, fitError);
+			m_state.plotData.m_tuneCallback = [&]()
+			{
+				if (!m_state.plotData.active)
+					return;
 
-					});
-
-
-				};
-
-			m_state.plotData.m_tuneCallback = [&]() {
-				if (!m_state.plotData.active) return;
-
-				auto& active = *m_state.plotData.active;
+				auto &active = *m_state.plotData.active;
 
 				auto tData = active.getTuningData();
 
 				m_numerics->CalculateData(tData);
 
 				active.tuneError = m_numerics->CalculateError(tData.characteristic.currentData, active.getEstimateInput().characteristic.currentData);
-				};
+			};
 
-			//m_state.plotData.m_changeModelCallback
-			
-			
-			//Monte Carlo callbacks
+			// m_state.plotData.m_changeModelCallback
 
-			m_state.plotData.m_saveMCConfCallback = [&]() {
+			// Monte Carlo callbacks
 
-				for (auto& ch : m_state.browserData.m_characteristics) {
-					if (!ch.checked) continue;
-					MCOutput out{ ch.getMCConfig(), {} };
+			m_state.plotData.m_saveMCConfCallback = [&]()
+			{
+				for (auto &ch : m_state.browserData.m_characteristics)
+				{
+					if (!ch.checked)
+						continue;
+					MCOutput out{ch.getMCConfig(), {}};
 					LoaderOutput lOut{};
 					lOut.mcData = std::make_unique<MCOutput>(std::move(out));
 
 					m_dataLoader->Save(ch.path.parent_path() / "MC" / lOut.mcData->inputData.relPath, lOut, [&](LoaderOutput out) {
 
-						});
+					});
 				}
+			};
 
-				};
+			m_state.plotData.m_performMCCallback = [&]()
+			{
+				if (!m_state.plotData.active)
+					return;
 
-			m_state.plotData.m_performMCCallback = [&]() {
-				if (!m_state.plotData.active) return;
-
-				auto& active = *m_state.plotData.active;
+				auto &active = *m_state.plotData.active;
 
 				auto mcData = active.getMCConfig();
 
-				m_numerics->Simulate(mcData, [&](MCOutput&& output) {
-					if (!&active) return;
-					//std::scoped_lock lk{ *active.mcMutex };
-					m_state.plotData.activeMC = nullptr;
-					active.submitMC(output);
+				m_numerics->Simulate(mcData, [&](MCOutput &&output)
+									 {
+										 if (!&active)
+											 return;
+										 // std::scoped_lock lk{ *active.mcMutex };
+										 m_state.plotData.activeMC = nullptr;
+										 active.submitMC(output); });
+			};
 
-
-					});
-				};
-
-			m_state.plotData.m_performMCOnAllCallback = [&]() {
-
-				for (auto& ch : m_state.browserData.m_characteristics) {
-					if (!ch.checked) continue;
+			m_state.plotData.m_performMCOnAllCallback = [&]()
+			{
+				for (auto &ch : m_state.browserData.m_characteristics)
+				{
+					if (!ch.checked)
+						continue;
 					ch.savedUseBounds = true;
 					auto mcData = ch.getMCConfig();
 					mcData.iterations = m_state.plotData.savedGlobalMCConfig.n;
 					mcData.noise = m_state.plotData.savedGlobalMCConfig.sigma;
-					
 
-					m_numerics->Simulate(mcData, [&](MCOutput&& output) {
-						ch.submitMC(output);
-						});
+					m_numerics->Simulate(mcData, [&](MCOutput &&output)
+										 { ch.submitMC(output); });
 				}
+			};
 
-				};
-
-			m_state.plotData.m_saveMCPlot = [&](size_t index) {
+			m_state.plotData.m_saveMCPlot = [&](size_t index)
+			{
 				MCSave toSave{};
-				auto& saved = m_state.plotData.mcPlots[index];
+				auto &saved = m_state.plotData.mcPlots[index];
 				toSave.x_label = saved.parameters.first;
 				toSave.y_label = saved.parameters.second;
 				toSave.title = saved.name;
 				toSave.degreesOfFreedom = m_state.nConfig.modelParameters[saved.mc.modelID].size() - saved.mc.fixConfig.size();
 				toSave.pathToSave = saved.mc.relPath / saved.name;
 
-				for (auto& res : saved.mc.data)
-					toSave.results.push_back({ res.parameters, res.error });
+				for (auto &res : saved.mc.data)
+					toSave.results.push_back({res.parameters, res.error});
 
 				m_numerics->SaveMCPlot(toSave);
-				};
+			};
 
-
-			m_state.plotData.m_saveMCUncertainty = [&]() {
-				std::vector<UncertaintySave > toSave{};
-				for (auto& c : m_state.browserData.m_characteristics) {
-					if (!c.checked) continue;
-					for (auto& mc : c.mcData) {
+			m_state.plotData.m_saveMCUncertainty = [&]()
+			{
+				std::vector<UncertaintySave> toSave{};
+				for (auto &c : m_state.browserData.m_characteristics)
+				{
+					if (!c.checked)
+						continue;
+					for (auto &mc : c.mcData)
+					{
 						UncertaintySave u{};
 						u.paramPair = c.fittedParameters;
 						u.T = c.T;
@@ -1084,25 +1139,23 @@ namespace JFMApp {
 						out.inputData = in;
 
 						out.mcResult.clear();
-						for (auto& res : mc.data)
-							out.mcResult.push_back({ res.parameters, res.error });
+						for (auto &res : mc.data)
+							out.mcResult.push_back({res.parameters, res.error});
 
 						u.uncertainty.resize(3);
-						for (size_t i = 0; i < 3; i++) 
+						for (size_t i = 0; i < 3; i++)
 						{
-							for (const auto& [key, value] : c.fittedParameters)
+							for (const auto &[key, value] : c.fittedParameters)
 								u.uncertainty[i][key] = m_numerics->GetUncertainty(out, i, m_state.plotData.mcTempParams.first);
 						}
 						toSave.push_back(u);
-
 					}
 				}
-				auto& ch = m_state.browserData.m_characteristics[0];
+				auto &ch = m_state.browserData.m_characteristics[0];
 				std::string name = m_state.plotData.mcTempName + ".csv";
 				m_numerics->SaveUncertanties(toSave, ch.path.parent_path() / name);
-				//save the uncertainties
-
-				};
+				// save the uncertainties
+			};
 		}
 	}
 };
