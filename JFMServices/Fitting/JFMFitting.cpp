@@ -130,7 +130,8 @@ namespace JFMService::FittingService
 	void Fitting::SaveMCPlot(const MCSave &toSave)
 	{
 		std::string fname = toSave.pathToSave.filename().string() + ".txt";
-		const std::filesystem::path path = toSave.pathToSave.parent_path() / fname;
+		auto parentPath = toSave.pathToSave.parent_path();
+		const std::filesystem::path path = parentPath / fname;
 
 		std::vector<double> xSave, ySave, errors;
 		ParameterID xID{toSave.x_label}, yID{toSave.y_label};
@@ -164,14 +165,14 @@ namespace JFMService::FittingService
 
 		for (const auto &[x, y, e] : std::views::zip(xSave, ySave, errors))
 			dataToSave += formatData(x, y, e);
-		if (!std::filesystem::exists(path))
-			std::filesystem::create_directories(path);
-		std::ofstream file(path);
+		if (!std::filesystem::exists(parentPath))
+			std::filesystem::create_directories(parentPath);
+		std::ofstream file(path, std::ios::out | std::ios::trunc);
 		file << dataToSave;
 		file.close();
 		std::string command = "python ./generate_image.py " + path.string();
 		std::system(command.c_str());
-#if 1		
+#if 0	
 		std::cout << path.string();
 		try {
 			// Attempt to remove the file
