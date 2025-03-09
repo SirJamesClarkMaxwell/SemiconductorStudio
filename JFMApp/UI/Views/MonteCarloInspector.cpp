@@ -78,7 +78,7 @@ namespace JFMApp::Views {
 
 		ImGui::SameLine();
 		if (ImGui::Button("Save") && mc.save)
-			mc.save();
+			mc.save(mc.id);
 
 
 		ImGui::SameLine();
@@ -201,12 +201,12 @@ namespace JFMApp::Views {
 							mcData.parameters = data.mcTempParams;
 							mcData.mc = *data.activeMC;
 							mcData.tab = tab;
-
-							
+							mcData.id = ++data.mcCount;
+							//data.mcCount += 1;
 
 							data.mcPlots.push_back(mcData);
-							data.mcPlots.back().save = [&data]() {
-								data.m_saveMCPlot(data.mcPlots.size() - 1);
+							data.mcPlots.back().save = [&data](int Id) {
+								data.m_saveMCPlot(Id);
 								};
 
 						}

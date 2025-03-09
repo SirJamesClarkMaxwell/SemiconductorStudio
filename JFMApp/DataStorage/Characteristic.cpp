@@ -136,7 +136,7 @@ namespace JFMApp::Data
 		sim.iterations = out.inputData.iterations;
 		sim.fixConfig = out.inputData.startingData.fixConfig;
 		sim.sim_name = out.inputData.relPath.filename().string();
-		sim.relPath = path.parent_path() / "MC";
+		sim.relPath = path.parent_path();
 		sim.trueParameters = out.inputData.trueParameters;
 		sim.modelID = modelID;
 		std::scoped_lock lk{*mcMutex};

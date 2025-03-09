@@ -121,9 +121,10 @@ namespace JFMService::FittingService
 	}
 	void Fitting::SaveMCPlot(const MCSave &toSave)
 	{
-		std::string fname = toSave.pathToSave.filename().string() + ".txt";
-		auto parentPath = toSave.pathToSave.parent_path();
-		const std::filesystem::path path = parentPath / fname;
+		std::string fname = toSave.pathToSave.filename().string();
+		auto parentPath = toSave.pathToSave.parent_path() / "Analysis" / "MC" ;
+		const std::filesystem::path path = (parentPath / fname).concat(".csv");
+
 
 		std::vector<double> xSave, ySave, errors;
 		ParameterID xID{toSave.x_label}, yID{toSave.y_label};
@@ -157,11 +158,18 @@ namespace JFMService::FittingService
 
 		for (const auto &[x, y, e] : std::views::zip(xSave, ySave, errors))
 			dataToSave += formatData(x, y, e);
-		if (!std::filesystem::exists(parentPath))
+		bool e = std::filesystem::exists(parentPath);
+		std::cout << parentPath.string() << std::endl;
+		if (!e)
 			std::filesystem::create_directories(parentPath);
 		std::ofstream file(path, std::ios::out | std::ios::trunc);
+		if (!file) {
+			std::cerr << "Error: Could not open file: " << path << std::endl;
+			return;
+		}
 		file << dataToSave;
 		file.close();
+		std::cout << std::filesystem::current_path()<<std::endl;
 		std::string command = "python ./generate_image.py " + path.string();
 		std::system(command.c_str());
 #if 0	

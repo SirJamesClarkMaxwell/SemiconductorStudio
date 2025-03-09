@@ -45,8 +45,8 @@ namespace JFMApp::Data
 			std::pair<ParameterID, ParameterID> parameters{};
 			std::string name{};
 			int tab{-1};
-
-			std::function<void()> save{};
+			int id;
+			std::function<void(int id)> save{};
 		};
 
 		std::vector<MCPlotsData> mcPlots{};
@@ -58,6 +58,7 @@ namespace JFMApp::Data
 		ImVector<ImGuiID> tabsIDs{};
 
 		Characteristic::MCSimulation *activeMC{nullptr};
+		int mcCount{ -1 };
 
 		bool configAll{false};
 
@@ -83,7 +84,7 @@ namespace JFMApp::Data
 		std::function<void()> m_performMCOnAllCallback{};
 
 		std::function<void()> m_saveMCUncertainty{};
-		std::function<void(size_t)> m_saveMCPlot{};
+		std::function<void(int size)> m_saveMCPlot{};
 
 		struct PlotSettings
 		{

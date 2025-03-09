@@ -714,7 +714,7 @@ std::vector<std::pair<std::vector<double>, std::vector<double>>> globalErrors{};
 			m_state.plotData.m_saveParametersCallback = [&](std::vector<JFMApp::Data::Characteristic> &characteristics)
 			{
 					std::stringstream stringStream;
-					std::filesystem::path filePath = m_state.browserData.currentPath / "parameters.csv";
+					std::filesystem::path filePath = m_state.browserData.currentPath/"Analysis" / "parameters.csv";
 
 					
 					stringStream << "Name\tTemperature\t";
@@ -1102,7 +1102,7 @@ std::vector<std::pair<std::vector<double>, std::vector<double>>> globalErrors{};
 					LoaderOutput lOut{};
 					lOut.mcData = std::make_unique<MCOutput>(std::move(out));
 
-					m_dataLoader->Save(ch.path.parent_path() / "MC" / lOut.mcData->inputData.relPath, lOut, [&](LoaderOutput out) {
+					m_dataLoader->Save(ch.path.parent_path() /*lOut.mcData->inputData.relPath*/, lOut, [&](LoaderOutput out) {
 
 					});
 				}
@@ -1142,10 +1142,10 @@ std::vector<std::pair<std::vector<double>, std::vector<double>>> globalErrors{};
 				}
 			};
 
-			m_state.plotData.m_saveMCPlot = [&](size_t index)
+			m_state.plotData.m_saveMCPlot = [&](int size)
 			{
 				MCSave toSave{};
-				auto &saved = m_state.plotData.mcPlots[index];
+				auto &saved = m_state.plotData.mcPlots[size];
 				toSave.x_label = saved.parameters.first;
 				toSave.y_label = saved.parameters.second;
 				toSave.title = saved.name;
