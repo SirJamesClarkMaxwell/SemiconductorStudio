@@ -33,6 +33,27 @@ namespace JFMApp::Views {
 				}
 				ImGui::EndCombo();
             }
+			if (ImGui::BeginCombo("##ForcedModel", 
+				data.forcedModelID == 0 ? "None" : data.nConfig->models[data.forcedModelID].c_str(),
+				ImGuiComboFlags_WidthFitPreview)) 
+			{
+				// Add "None" option with ID 0
+				bool isSelected = (data.forcedModelID == 0);
+				if (ImGui::Selectable("None", isSelected)) 
+					data.forcedModelID = 0;
+				
+
+				// Iterate through available models
+				for (const auto& [id, name] : data.nConfig->models) 
+				{
+					isSelected = (id == data.forcedModelID);
+					if (ImGui::Selectable(name.c_str(), isSelected)) 
+						data.forcedModelID = id;
+					
+				}
+
+				ImGui::EndCombo();
+			}
 			ImGui::EndMenuBar();
 		}
 

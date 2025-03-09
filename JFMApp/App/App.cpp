@@ -1,10 +1,10 @@
-#include "pch.hpp"
+﻿#include "pch.hpp"
 #include "App.hpp"
 
 std::vector<std::pair<std::vector<double>, std::vector<double>>> globalNoisyI{};
 std::vector<std::pair<std::vector<double>, std::vector<double>>> globalErrors{};
 
-namespace JFMApp
+ namespace JFMApp
 {
 
 	using namespace JFMService::DataManagementService;
@@ -676,6 +676,7 @@ namespace JFMApp
 				bool light = false;
 				auto modelID = ModelID::Model4P;
 				auto copiedI = temp.I;
+
 				if (m_state.browserData.m_characteristicType == CharacteristicType::Light)
 				{
 					light = true;
@@ -683,7 +684,6 @@ namespace JFMApp
 					temp.modelID = index;
 					temp.savedModelID = index;
 					auto minValue = std::abs(temp.I[*std::ranges::find(temp.V, 0)]);
-					// temp.savedInitialGuess[ParameterID::I_sc] = minValue;
 					temp.ShortCircuitCurrent = minValue;
 					std::ranges::for_each(copiedI, [&](auto &item)
 										  { item += minValue; });
@@ -691,13 +691,20 @@ namespace JFMApp
 					temp.I = copiedI;
 				}
 				else
-					temp.dataRange = m_numerics->RangeData({temp.V, copiedI}); // temp.I });
+					temp.dataRange = m_numerics->RangeData({temp.V, copiedI});
 
-				// Model Auto-Detection
+				if (temp.forcedModelID)
+				{
+					temp.modelID = temp.forcedModelID;
+					temp.savedModelID = temp.forcedModelID;
+					fittingFunction(temp, m_numerics);
+					return;
+				}
+
 				fittingFunction(temp, m_numerics);
 				if (temp.fitError > 1e-3)
 				{
-					modelID = /*light == true ? ModelID::Model6PLight :*/ ModelID::Model6P;
+					modelID = ModelID::Model6P;
 					temp.modelID = modelID;
 					temp.savedModelID = modelID;
 					fittingFunction(temp, m_numerics);
@@ -706,31 +713,61 @@ namespace JFMApp
 
 			m_state.plotData.m_saveParametersCallback = [&](std::vector<JFMApp::Data::Characteristic> &characteristics)
 			{
-				std::stringstream stringStream;
-				std::filesystem::path filePath = m_state.browserData.currentPath / "parameters.csv";
-				stringStream << "Name\tTemperature\t";
+					std::stringstream stringStream;
+					std::filesystem::path filePath = m_state.browserData.currentPath / "parameters.csv";
 
-				for (const auto &[id, name] : m_state.plotData.paramConfig->parameters)
-					stringStream << name + "\t";
-				stringStream << std::endl;
-				for (const auto &characteristic : characteristics)
-				{
-					if (characteristic.isFitted)
-					{	
-						stringStream << characteristic.name << "\t";
-						for (const auto &[id, value] : characteristic.fittedParameters)
-							stringStream << std::scientific << std::setprecision(3) <<value << "\t";
+					
+					stringStream << "Name\tTemperature\t";
+					for (const auto& [id, name] : m_state.plotData.paramConfig->parameters)
+						stringStream << name << "\t";
 
-						if (characteristic.characteristicType == JFMService::Fitters::CharacteristicType::Light)
-							stringStream << std::to_string(characteristic.ShortCircuitCurrent) << std::endl;
-						else	
-							stringStream<<std::endl;
+					
+					bool hasLight = std::any_of(characteristics.begin(), characteristics.end(),
+						[](const auto& c) { return c.characteristicType == JFMService::Fitters::CharacteristicType::Light; });
+
+					if (hasLight)
+						stringStream << "Isc";
+
+					stringStream << std::endl; 
+					for (const auto& characteristic : characteristics)
+					{
+						if (characteristic.fitted)
+						{
+							stringStream << characteristic.name << "\t"<<characteristic.T<<"\t";
+
+							for (const auto& [id, value] : m_state.plotData.paramConfig->parameters)
+							{
+								
+								auto it = characteristic.fittedParameters.find(id);
+								if (it != characteristic.fittedParameters.end())
+									stringStream << std::scientific << std::setprecision(3) << it->second << "\t";
+								else
+									stringStream << "--\t";
+							}
+							if (hasLight)
+							{
+								if (characteristic.characteristicType == JFMService::Fitters::CharacteristicType::Light)
+									stringStream << std::scientific << std::setprecision(3) << characteristic.ShortCircuitCurrent;
+								else
+									stringStream << "--"; 
+							}
+
+							stringStream << std::endl; // ✅ Ensure a newline after every row
+						}
 					}
-				}
 
-				std::ofstream file(filePath, std::ios::out | std::ios::trunc);
-				file << stringStream.str();
-				file.close();
+					// Write to file
+					std::ofstream file(filePath, std::ios::out | std::ios::trunc);
+					if (!file)
+					{
+						std::cerr << "Error: Unable to open file " << filePath << std::endl;
+						return;
+					}
+
+					file << stringStream.str();
+					file.close();
+
+					std::cout << "File saved successfully to: " << filePath << std::endl;
 
 			};
 
@@ -751,39 +788,39 @@ namespace JFMApp
 
 				m_dataLoader->Load(paths, [&](std::vector<LoaderOutput> characteristics)
 								   {
-									   for (auto &c : characteristics)
-									   {
-										   if (!c.success)
-											   continue;
+									for (auto &c : characteristics)
+									{
+										if (!c.success)
+											continue;
 										   // loading a characteristic
-										   if (c.data)
-										   {
+											if (c.data)
+											{
 
-											   Data::Characteristic temp{*c.data};
-											   temp.nConfig = m_state.nConfig;
-											   temp.checked = true;
-											   const auto &p = std::find_if(paths.begin(), paths.end(), [&](const std::filesystem::path &path)
+												Data::Characteristic temp{*c.data};
+												temp.nConfig = m_state.nConfig;
+												temp.checked = true;
+												temp.characteristicType = m_state.browserData.m_characteristicType;
+												temp.forcedModelID = m_state.browserData.forcedModelID;
+												const auto &p = std::find_if(paths.begin(), paths.end(), [&](const std::filesystem::path &path)
 																			{ return path.string().contains(temp.name); });
 
-											   if (p != paths.end())
-											   {
-												   temp.path = *p;
-											   }
+												if (p != paths.end())
+												{
+													   temp.path = *p;
+												}
 
-											   temp.m_tuneCallback = [&]()
-											   {
-												   // assuming the tuned parameters are copied into fitted
-												   CalculatingData cData = temp.getCalculatingData();
-
-												   m_numerics->CalculateData(cData);
-
-												   temp.fitError = m_numerics->CalculateError(cData.characteristic.currentData, temp.getEstimateInput().characteristic.currentData);
-											   };
-											   m_state.browserData.m_loadSingleCharacteristic(temp);
-											   m_state.browserData.m_characteristics.push_back(temp);
-											   m_state.plotData.active = &m_state.browserData.m_characteristics.back();
-										   }
-									   }
+												temp.m_tuneCallback = [&]()
+												{
+													// assuming the tuned parameters are copied into fitted
+													CalculatingData cData = temp.getCalculatingData();
+													m_numerics->CalculateData(cData);
+													temp.fitError = m_numerics->CalculateError(cData.characteristic.currentData, temp.getEstimateInput().characteristic.currentData);
+												};
+												m_state.browserData.m_loadSingleCharacteristic(temp);
+												m_state.browserData.m_characteristics.push_back(temp);
+												m_state.plotData.active = &m_state.browserData.m_characteristics.back();
+											}
+									}
 
 									   for (auto &c : characteristics)
 									   {
@@ -884,6 +921,8 @@ namespace JFMApp
 											   Data::Characteristic temp{*c.data};
 											   temp.nConfig = m_state.nConfig;
 											   temp.checked = true;
+											   temp.characteristicType = m_state.browserData.m_characteristicType;
+											   temp.forcedModelID = m_state.browserData.forcedModelID;
 											   const auto &p = std::find_if(paths.begin(), paths.end(), [&](const std::filesystem::path &path)
 																			{ return path.string().contains(temp.name); });
 

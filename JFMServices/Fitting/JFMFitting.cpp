@@ -58,10 +58,6 @@ namespace JFMService::FittingService
 					return "FourParameterModel";
 				case Fitters::JFMModelID::Model6P:
 					return "SixParameterModel";
-				case Fitters::JFMModelID::Model4PLight:
-					return "FiveParameterModel";
-				case Fitters::JFMModelID::Model6PLight:
-					return "SevenParameterModel";
 				default:
 					break;
 				}
@@ -69,8 +65,6 @@ namespace JFMService::FittingService
 			ModelParameters map;
 			map[Fitters::JFMModelID::Model4P] = intRange(0, Fitters::JFMModelID::Model4P, 1);
 			map[Fitters::JFMModelID::Model6P] = intRange(0, Fitters::JFMModelID::Model6P, 1);
-			map[Fitters::JFMModelID::Model4PLight] = intRange(0, Fitters::JFMModelID::Model4PLight, 1);
-			map[Fitters::JFMModelID::Model6PLight] = intRange(0, Fitters::JFMModelID::Model6PLight, 1);
 
 			return map;
 		};
@@ -78,7 +72,7 @@ namespace JFMService::FittingService
 		{
 			JFMService::FittingService::Parameters map;
 			std::string name;
-			for (auto index : std::ranges::iota_view(0, Fitters::ParameterID::p_size))
+			for (auto index : std::ranges::iota_view(0, Fitters::ParameterID::p_size-1))
 				map[index] = DataManagementService::parameterIdToString((Fitters::ParameterID)index);
 			return map;
 		};
@@ -87,8 +81,6 @@ namespace JFMService::FittingService
 			ModelParameters map;
 			map[Fitters::JFMModelID::Model4P] = intRange(0, Fitters::JFMModelID::Model4P, 1);
 			map[Fitters::JFMModelID::Model6P] = intRange(0, Fitters::JFMModelID::Model6P, 1);
-			map[Fitters::JFMModelID::Model4PLight] = intRange(0, Fitters::JFMModelID::Model4PLight, 1);
-			map[Fitters::JFMModelID::Model6PLight] = intRange(0, Fitters::JFMModelID::Model6PLight, 1);
 			return map;
 		};
 		auto createGeneralBounds = [&]()

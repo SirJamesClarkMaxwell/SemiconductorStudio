@@ -372,6 +372,8 @@ namespace JFMApp::Views {
 							{
 								act.modelID = id;
 								act.savedModelID = id;
+								data.m_estimateCallback();
+								data.m_fitCallback();
 							}
 						}
 

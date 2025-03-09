@@ -66,6 +66,7 @@ namespace JFMApp::Data {
 		bool isFitted{ false };
 		bool isSimulated{ false };
 		bool checked{ false };
+		Data::ModelID forcedModelID{0};
 
 		ImVec4 color{ 0.96f, 0.53f, 0.26f, 1.0f };
 		float weight{ 1.0 };
