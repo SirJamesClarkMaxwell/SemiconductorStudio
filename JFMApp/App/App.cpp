@@ -1021,8 +1021,8 @@ std::vector<std::pair<std::vector<double>, std::vector<double>>> globalErrors{};
 		}
 
 		// plot area callbacks
-
 		{
+
 			m_state.plotData.m_estimateCallback = [&]()
 			{
 				if (!m_state.plotData.active)
@@ -1194,6 +1194,28 @@ std::vector<std::pair<std::vector<double>, std::vector<double>>> globalErrors{};
 				std::string name = m_state.plotData.mcTempName + ".csv";
 				m_numerics->SaveUncertanties(toSave, ch.path.parent_path() / name);
 				// save the uncertainties
+			};
+			
+			m_state.plotData.m_saveMCData = [&]()
+			{
+			// - TODO: If there are no MonteCarlo directory $\rightarrow$ create it
+				std::filesystem::path rootPath = m_state.browserData.currentPath;
+				std::filesystem::path directoryPath =rootPath/ "Analysis"/"MC";
+				if(!std::filesystem::exists(directoryPath))
+					std::filesystem::create_directories(directoryPath);
+
+				// - **NOTE**: In for loop for all mc data
+				for(const auto& characteristic: *m_state.plotData.characteristics)
+					m_state.plotData.saveOneSimulation(directoryPath,characteristic);
+
+				//std::jthread workerThread([this, directoryPath]() {
+				//	for (const auto& characteristic : *m_state.plotData.characteristics)
+				//	{
+				//		m_state.plotData.saveOneSimulation(directoryPath, characteristic);
+				//	}
+				//	});
+
+
 			};
 		}
 	}

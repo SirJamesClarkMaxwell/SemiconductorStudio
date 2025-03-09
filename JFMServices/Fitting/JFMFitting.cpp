@@ -172,7 +172,7 @@ namespace JFMService::FittingService
 		std::cout << std::filesystem::current_path()<<std::endl;
 		std::string command = "python ./generate_image.py " + path.string();
 		std::system(command.c_str());
-#if 0	
+#if 1
 		std::cout << path.string();
 		try {
 			// Attempt to remove the file

@@ -85,7 +85,8 @@ namespace JFMApp::Data
 
 		std::function<void()> m_saveMCUncertainty{};
 		std::function<void(int size)> m_saveMCPlot{};
-
+		std::function<void()> m_saveMCData{};
+		void saveOneSimulation(const std::filesystem::path& path, const JFMApp::Data::Characteristic& characteristic);
 		struct PlotSettings
 		{
 			ImPlotFlags flags = ImPlotFlags_NoLegend;
@@ -94,5 +95,6 @@ namespace JFMApp::Data
 		};
 
 		static inline PlotSettings plotSettings;
+
 	};
 }

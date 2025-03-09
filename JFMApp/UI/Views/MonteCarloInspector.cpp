@@ -211,6 +211,9 @@ namespace JFMApp::Views {
 
 						}
 						ImGui::SameLine();
+						if(ImGui::Button("Save all MC Data"))
+							data.m_saveMCData();
+						ImGui::SameLine();
 						if (ImGui::Button("Save Uncertainty")) {
 							data.m_saveMCUncertainty();
 						}
