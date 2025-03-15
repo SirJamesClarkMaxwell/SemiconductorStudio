@@ -138,7 +138,7 @@ namespace JFMApp::Views {
 
 							//fitted characteristics
 							if (act.isFitted && data.plotFitted) {
-								ImPlot::SetNextLineStyle(data.colorFitted);
+								ImPlot::SetNextLineStyle(data.colorFitted,2.0);
 								ImPlot::PlotLine(act.name.c_str(), act.V.data() + act.dataRange.first, act.fittedI.data(), act.fittedI.size());
 							}
 
@@ -172,7 +172,7 @@ namespace JFMApp::Views {
 
 								//fitted characteristics
 								if (ch.isFitted && data.plotFitted) {
-									ImPlot::SetNextLineStyle(data.colorFitted);
+									ImPlot::SetNextLineStyle(data.colorFitted,2.0);
 									ImPlot::PlotLine(ch.name.c_str(), ch.V.data() + ch.dataRange.first, ch.fittedI.data(), ch.fittedI.size());
 								}
 
@@ -352,13 +352,14 @@ namespace JFMApp::Views {
 					ImGui::SameLine(0.0f, 20.0f);
 
 					if (ImGui::Button("Update characteristic")) {
+						act.tunedParameters.clear();
 						for (auto& [key, val] : act.fittedParameters) 
 						{
 							if (act.tempParametersActive[key]) 
 								val = act.tunedParameters[key];
-
-						}
-
+							act.tunedParameters[key] = val;
+						} 
+						act.tunedI = act.fittedI;
 						act.m_tuneCallback();
 					}
 					
@@ -455,7 +456,7 @@ namespace JFMApp::Views {
 							// Normalize the value
 							int power = std::floor(std::log10(param_value));
 							float value = param_value / std::pow(10, power);
-							bool checked = act.fixedParametersValues.contains(id);
+							bool checked = act.fixedParameterIDs[id];
 
 							// Unique widget ID
 							std::string uniqueID = "##" + std::to_string(id);
@@ -470,7 +471,7 @@ namespace JFMApp::Views {
 								act.toTunne = true;
 							
 							ImGui::SameLine();
-							if (ImGui::SliderInt((uniqueID + "_power").c_str(), &power, -10, 10))
+							if (ImGui::SliderInt((uniqueID + "_power").c_str(), &power, power -5 , power + 5))
 								act.toTunne = true;
 
 							ImGui::PopItemWidth();
@@ -478,13 +479,21 @@ namespace JFMApp::Views {
 							ImGui::SameLine();
 							if (ImGui::Checkbox((uniqueID + "_fixed").c_str(), &checked)) {
 								if (checked) 
+								{
+									act.savedFixedParametersValues[id] = value * std::pow(10, power);
+									act.savedFixedParameterIDs[id] = true;
+									act.fixedParameterIDs[id] = true;
 									act.fixedParametersValues[id] = value * std::pow(10, power);
+								}
 								else 
-									act.fixedParametersValues.erase(id);
+								{
+									act.savedFixedParameterIDs[id] = false;
+									act.fixedParameterIDs[id] = false;
+								}
 								
 							}
 							
-							if (act.toTunne) 
+							if (act.toTunne and act.tempParametersActive[id])
 							{
 								// Update the tuned parameter value
 								act.tunedParameters[id] = value * std::pow(10, power);

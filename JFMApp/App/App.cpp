@@ -269,12 +269,14 @@ std::vector<std::pair<std::vector<double>, std::vector<double>>> globalErrors{};
 				ch.dataRange = {0, ch.V.size() - 2};
 				ch.m_tuneCallback = [&]()
 				{
+					const auto tmpP = ch.fittedParameters;
 					ch.fittedParameters = ch.tunedParameters;
 					CalculatingData cData = ch.getCalculatingData();
 
 					m_numerics->CalculateData(cData);
 
 					ch.fitError = m_numerics->CalculateError(cData.characteristic.currentData, ch.getEstimateInput().characteristic.currentData);
+					ch.fittedParameters = tmpP;
 				};
 
 				for (auto &[id, d] : genData)
@@ -821,6 +823,8 @@ std::vector<std::pair<std::vector<double>, std::vector<double>>> globalErrors{};
 												m_state.browserData.m_loadSingleCharacteristic(temp);
 												m_state.browserData.m_characteristics.push_back(temp);
 												m_state.plotData.active = &m_state.browserData.m_characteristics.back();
+												m_state.plotData.active->tunedI = m_state.plotData.active->fittedI;
+												m_state.plotData.active->tunedParameters = m_state.plotData.active->fittedParameters;
 											}
 									}
 
@@ -944,6 +948,8 @@ std::vector<std::pair<std::vector<double>, std::vector<double>>> globalErrors{};
 											   m_state.browserData.m_loadSingleCharacteristic(temp);
 											   m_state.browserData.m_characteristics.push_back(temp);
 											   m_state.plotData.active = &m_state.browserData.m_characteristics.back();
+											   m_state.plotData.active->tunedI = m_state.plotData.active->fittedI;
+											   m_state.plotData.active->tunedParameters = m_state.plotData.active->fittedParameters;
 										   }
 									   } });
 			};
@@ -1074,6 +1080,7 @@ std::vector<std::pair<std::vector<double>, std::vector<double>>> globalErrors{};
 
 									double fitError = m_numerics->CalculateError(cData.characteristic.currentData, active.getEstimateInput().characteristic.currentData);
 									active.submitFitting(output, fitError); });
+
 			};
 
 			m_state.plotData.m_tuneCallback = [&]()

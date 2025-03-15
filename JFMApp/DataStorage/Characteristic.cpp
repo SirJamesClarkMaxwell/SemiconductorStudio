@@ -63,7 +63,7 @@ namespace JFMApp::Data
 	void Characteristic::submitFitting(const ParameterMap &parameters, double error)
 	{
 		fittedParameters = parameters;
-		tunedParameters = parameters;
+		//tunedParameters = parameters;
 		fixedParametersValues = parameters;
 		savedFixedParametersValues = parameters;
 		for (const auto &[k, v] : parameters)
@@ -73,7 +73,7 @@ namespace JFMApp::Data
 		}
 		initialGuess = parameters;
 		savedInitialGuess = parameters;
-		tunedI = fittedI;
+		//tunedI = fittedI;
 		isFitted = true;
 		fitError = error;
 	}
