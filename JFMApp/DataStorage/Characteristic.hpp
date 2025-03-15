@@ -66,6 +66,8 @@ namespace JFMApp::Data {
 		bool isFitted{ false };
 		bool isSimulated{ false };
 		bool checked{ false };
+		bool plotTunned{ false };
+		bool toTunne{ false };
 		Data::ModelID forcedModelID{0};
 
 		ImVec4 color{ 0.96f, 0.53f, 0.26f, 1.0f };
@@ -114,6 +116,7 @@ namespace JFMApp::Data {
 		//fitted
 		ParameterMap fittedParameters{};
 		std::vector<double> fittedI{};
+		ImVec4 tunnedColor{ 1,1,0,1 };
 		bool fitted{0};
 		double fitError{ -1.0 };
 

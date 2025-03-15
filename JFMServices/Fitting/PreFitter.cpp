@@ -43,7 +43,7 @@ namespace JFMService
     {
 		size_t start{ 0 };
 		for (const auto& [V, I] : std::views::zip(characteristic.voltageData, characteristic.currentData))
-			if (I < 0.0 or V<0)
+			if (I < 0.0 or V<0.1)
 				start++;
 		start += 3;
 		return start;

@@ -143,14 +143,14 @@ namespace JFMApp::Views {
 							}
 
 							//tuned characteristics
-							if (act.isFitted && data.plotFitted) {
+							if (data.plotTunned) {
 								ImVec4 invColor{};
 
 								invColor.x = 1 - data.colorFitted.x;
 								invColor.y = 1 - data.colorFitted.y;
 								invColor.z = 1 - data.colorFitted.z;
 								invColor.w = 1;
-								ImPlot::SetNextLineStyle(data.colorFitted, 2.0);
+								ImPlot::SetNextLineStyle(data.colorTunned, 2.0);
 								ImPlot::PlotLine(act.name.c_str(), act.V.data() + act.dataRange.first, act.tunedI.data(), act.tunedI.size());
 							}
 
@@ -177,15 +177,14 @@ namespace JFMApp::Views {
 								}
 
 								//tuned characteristics
-								if (ch.isFitted && data.plotFitted) {
+								if (data.plotTunned) {
 									ImVec4 invColor{};
 
 									invColor.x = 1 - data.colorFitted.x;
 									invColor.y = 1 - data.colorFitted.y;
 									invColor.z = 1 - data.colorFitted.z;
 									invColor.w = 1;
-									ImPlot::SetNextLineStyle(invColor, 2.0);
-
+									ImPlot::SetNextLineStyle(data.colorTunned, 2.0);
 									ImPlot::PlotLine(ch.name.c_str(), ch.V.data() + ch.dataRange.first, ch.tunedI.data(), ch.tunedI.size());
 								}
 
@@ -267,12 +266,7 @@ namespace JFMApp::Views {
 					ImGui::SameLine(0.0, 20.0);
 					ImGui::Checkbox("Plot Original", &data.plotOriginal);
 					ImGui::SameLine(0.0, 20.0);
-					/*
-					if(ImGui::BeginCombo())
-					{
-					
-					}
-					*/
+					ImGui::Checkbox("Plot Tunned", &data.plotTunned);
 					ImGui::Separator();
 					if(ImGui::Button("Save Parameters"))
 						data.m_saveParametersCallback(*data.characteristics);
@@ -358,8 +352,11 @@ namespace JFMApp::Views {
 					ImGui::SameLine(0.0f, 20.0f);
 
 					if (ImGui::Button("Update characteristic")) {
-						for (auto& [key, val] : act.fittedParameters) {
-							if (act.tempParametersActive[key]) val = act.tunedParameters[key];
+						for (auto& [key, val] : act.fittedParameters) 
+						{
+							if (act.tempParametersActive[key]) 
+								val = act.tunedParameters[key];
+
 						}
 
 						act.m_tuneCallback();
@@ -449,53 +446,67 @@ namespace JFMApp::Views {
 
 				//draw the parameter sliders
 				{
-
 					ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
-					if (ImGui::BeginTable("Tuned parameters", 3, ImGuiTableFlags_SizingStretchProp)) {
+
+					if (ImGui::BeginTable("Tuned parameters", 4, ImGuiTableFlags_SizingStretchProp)) {
 						ImGui::TableNextRow();
-						for (auto& [id, value] : act.tunedParameters) {
-							float val = value;
-							float min = act.fittedParameters[id] / 100.0;
-							float max = act.fittedParameters[id] * 100.0;
 
+						for (auto& [id, param_value] : act.tunedParameters) {
+							// Normalize the value
+							int power = std::floor(std::log10(param_value));
+							float value = param_value / std::pow(10, power);
+							bool checked = act.fixedParametersValues.contains(id);
+
+							// Unique widget ID
+							std::string uniqueID = "##" + std::to_string(id);
+
+							// First column: Checkbox for activation
 							ImGui::TableNextColumn();
-							std::string cname = "##" + data.paramConfig->parameters[id];
-							if (ImGui::Checkbox(cname.c_str(), &act.tempParametersActive[id]))
-								if (act.tempParametersActive[id]) data.m_tuneCallback();
-
+							ImGui::Checkbox(data.paramConfig->parameters[id].c_str(), &act.tempParametersActive[id]);
+							ImGui::PushItemWidth(400);
+							// Second column: Value slider
 							ImGui::SameLine();
-							ImGuiSliderFlags flags = ImGuiSliderFlags_Logarithmic & ImGuiSliderFlags_None;
+							if (ImGui::SliderFloat((uniqueID + "_slider").c_str(), &value, 0.1f, 10.0f))
+								act.toTunne = true;
+							
+							ImGui::SameLine();
+							if (ImGui::SliderInt((uniqueID + "_power").c_str(), &power, -10, 10))
+								act.toTunne = true;
 
-							//and data.paramConfig->parameters[id] != std::string{ "A" }
-							//if (data.paramConfig->parameters[id] == std::string{ "I0" } )
-							//{
-							//	float deciMin{ 1 }, deciMax{ 9 }, powMin{ -20 }, powMax{ -3 }, powValue{std::floor(std::log10(value))}, deciValue{value/std::pow(10,powValue)};
-							//	if(ImGui::SliderFloat("I0 decimal", &deciValue, deciMin, deciMax, "%e"))
-							//	{
-							//		value = deciValue * std::pow(10, powValue);
-							//		if (act.tempParametersActive[id]) data.m_tuneCallback();
-							//	}
-							//	//ImGui::SameLine();
-							//	if (ImGui::SliderFloat("I0 pow", &powValue, powMin, powMax, "%e"))
-							//	{
-							//		value = deciValue * std::pow(10, powValue);
-							//		if (act.tempParametersActive[id]) data.m_tuneCallback();
-							//	}
-							//}
-							//else 
-							if (ImGui::SliderFloat(data.paramConfig->parameters[id].c_str(), &val, min, max, "%e", flags))
-							{
-								value = val;
-								if (act.tempParametersActive[id]) data.m_tuneCallback();
+							ImGui::PopItemWidth();
+							// Fourth column: Fixed parameter checkbox
+							ImGui::SameLine();
+							if (ImGui::Checkbox((uniqueID + "_fixed").c_str(), &checked)) {
+								if (checked) 
+									act.fixedParametersValues[id] = value * std::pow(10, power);
+								else 
+									act.fixedParametersValues.erase(id);
+								
 							}
-							ImGui::SameLine(0.0f, 10.0f);
+							
+							if (act.toTunne) 
+							{
+								// Update the tuned parameter value
+								act.tunedParameters[id] = value * std::pow(10, power);
+								act.toTunne = false;
+								const auto tmpParameters = act.fittedParameters;
+								const auto tmpCurrent = act.fittedI;
+								act.fittedParameters = act.tunedParameters;
+								// Trigger callback if active
+								act.m_tuneCallback();
+								act.fittedParameters = tmpParameters;
+								act.tunedI = act.fittedI;
+								act.fittedI = tmpCurrent;
+							}
 
+							ImGui::TableNextRow();
 						}
+
 						ImGui::EndTable();
 						ImGui::PopItemWidth();
 					}
-
 				}
+
 				ImGui::EndChild();
 
 

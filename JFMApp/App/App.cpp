@@ -702,7 +702,7 @@ std::vector<std::pair<std::vector<double>, std::vector<double>>> globalErrors{};
 				}
 
 				fittingFunction(temp, m_numerics);
-				if (temp.fitError > 1e-3)
+				if (temp.fitError > 1e-4)
 				{
 					modelID = ModelID::Model6P;
 					temp.modelID = modelID;
@@ -714,7 +714,8 @@ std::vector<std::pair<std::vector<double>, std::vector<double>>> globalErrors{};
 			m_state.plotData.m_saveParametersCallback = [&](std::vector<JFMApp::Data::Characteristic> &characteristics)
 			{
 					std::stringstream stringStream;
-					std::filesystem::path filePath = m_state.browserData.currentPath/"Analysis" / "parameters.csv";
+					std::filesystem::path directoryPath = m_state.browserData.currentPath / "Analysis";
+					std::filesystem::path filePath = directoryPath/"parameters.csv";
 
 					
 					stringStream << "Name\tTemperature\t";
@@ -756,7 +757,8 @@ std::vector<std::pair<std::vector<double>, std::vector<double>>> globalErrors{};
 						}
 					}
 
-					// Write to file
+					if (!std::filesystem::exists(directoryPath))
+						std::filesystem::create_directories(directoryPath);
 					std::ofstream file(filePath, std::ios::out | std::ios::trunc);
 					if (!file)
 					{
@@ -812,9 +814,9 @@ std::vector<std::pair<std::vector<double>, std::vector<double>>> globalErrors{};
 												temp.m_tuneCallback = [&]()
 												{
 													// assuming the tuned parameters are copied into fitted
-													CalculatingData cData = temp.getCalculatingData();
+													CalculatingData cData = m_state.plotData.active->getCalculatingData();
 													m_numerics->CalculateData(cData);
-													temp.fitError = m_numerics->CalculateError(cData.characteristic.currentData, temp.getEstimateInput().characteristic.currentData);
+													temp.fitError = m_numerics->CalculateError(cData.characteristic.currentData, m_state.plotData.active->getEstimateInput().characteristic.currentData);
 												};
 												m_state.browserData.m_loadSingleCharacteristic(temp);
 												m_state.browserData.m_characteristics.push_back(temp);

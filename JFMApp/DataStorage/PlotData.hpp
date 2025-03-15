@@ -30,8 +30,9 @@ namespace JFMApp::Data
 		bool plotRanged{false};
 		bool plotFitted{false};
 		bool plotOriginal{true};
+		bool plotTunned{ false };
 
-		ImVec4 colorRanged{0.61f, 0.26f, 0.96f, 1.0f}, colorFitted{0.0f, 1.0f, 0.0f, 1.0f};
+		ImVec4 colorRanged{ 0.61f, 0.26f, 0.96f, 1.0f }, colorFitted{ 0.0f, 1.0f, 0.0f, 1.0f }, colorTunned{1,1,0,1};
 
 		bool hideNonActive{false};
 
