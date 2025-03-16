@@ -4,7 +4,7 @@
 std::vector<std::pair<std::vector<double>, std::vector<double>>> globalNoisyI{};
 std::vector<std::pair<std::vector<double>, std::vector<double>>> globalErrors{};
 
- namespace JFMApp
+namespace JFMApp
 {
 
 	using namespace JFMService::DataManagementService;
@@ -715,64 +715,62 @@ std::vector<std::pair<std::vector<double>, std::vector<double>>> globalErrors{};
 
 			m_state.plotData.m_saveParametersCallback = [&](std::vector<JFMApp::Data::Characteristic> &characteristics)
 			{
-					std::stringstream stringStream;
-					std::filesystem::path directoryPath = m_state.browserData.currentPath / "Analysis";
-					std::filesystem::path filePath = directoryPath/"parameters.csv";
+				std::stringstream stringStream;
+				std::filesystem::path directoryPath = m_state.browserData.currentPath / "Analysis";
+				std::filesystem::path filePath = directoryPath / "parameters.csv";
 
-					
-					stringStream << "Name\tTemperature\t";
-					for (const auto& [id, name] : m_state.plotData.paramConfig->parameters)
-						stringStream << name << "\t";
+				stringStream << "Name\tTemperature\t";
+				for (const auto &[id, name] : m_state.plotData.paramConfig->parameters)
+					stringStream << name << "\t";
 
-					
-					bool hasLight = std::any_of(characteristics.begin(), characteristics.end(),
-						[](const auto& c) { return c.characteristicType == JFMService::Fitters::CharacteristicType::Light; });
+				bool hasLight = std::any_of(characteristics.begin(), characteristics.end(),
+											[](const auto &c)
+											{ return c.characteristicType == JFMService::Fitters::CharacteristicType::Light; });
 
-					if (hasLight)
-						stringStream << "Isc";
+				if (hasLight)
+					stringStream << "Isc";
 
-					stringStream << std::endl; 
-					for (const auto& characteristic : characteristics)
+				stringStream << std::endl;
+				for (const auto &characteristic : characteristics)
+				{
+					if (characteristic.fitted)
 					{
-						if (characteristic.fitted)
+						stringStream << characteristic.name << "\t" << characteristic.T << "\t";
+
+						for (const auto &[id, value] : m_state.plotData.paramConfig->parameters)
 						{
-							stringStream << characteristic.name << "\t"<<characteristic.T<<"\t";
 
-							for (const auto& [id, value] : m_state.plotData.paramConfig->parameters)
-							{
-								
-								auto it = characteristic.fittedParameters.find(id);
-								if (it != characteristic.fittedParameters.end())
-									stringStream << std::scientific << std::setprecision(3) << it->second << "\t";
-								else
-									stringStream << "--\t";
-							}
-							if (hasLight)
-							{
-								if (characteristic.characteristicType == JFMService::Fitters::CharacteristicType::Light)
-									stringStream << std::scientific << std::setprecision(3) << characteristic.ShortCircuitCurrent;
-								else
-									stringStream << "--"; 
-							}
-
-							stringStream << std::endl; // ✅ Ensure a newline after every row
+							auto it = characteristic.fittedParameters.find(id);
+							if (it != characteristic.fittedParameters.end())
+								stringStream << std::scientific << std::setprecision(3) << it->second << "\t";
+							else
+								stringStream << "--\t";
 						}
+						if (hasLight)
+						{
+							if (characteristic.characteristicType == JFMService::Fitters::CharacteristicType::Light)
+								stringStream << std::scientific << std::setprecision(3) << characteristic.ShortCircuitCurrent;
+							else
+								stringStream << "--";
+						}
+
+						stringStream << std::endl; // ✅ Ensure a newline after every row
 					}
+				}
 
-					if (!std::filesystem::exists(directoryPath))
-						std::filesystem::create_directories(directoryPath);
-					std::ofstream file(filePath, std::ios::out | std::ios::trunc);
-					if (!file)
-					{
-						std::cerr << "Error: Unable to open file " << filePath << std::endl;
-						return;
-					}
+				if (!std::filesystem::exists(directoryPath))
+					std::filesystem::create_directories(directoryPath);
+				std::ofstream file(filePath, std::ios::out | std::ios::trunc);
+				if (!file)
+				{
+					std::cerr << "Error: Unable to open file " << filePath << std::endl;
+					return;
+				}
 
-					file << stringStream.str();
-					file.close();
+				file << stringStream.str();
+				file.close();
 
-					std::cout << "File saved successfully to: " << filePath << std::endl;
-
+				std::cout << "File saved successfully to: " << filePath << std::endl;
 			};
 
 			m_state.browserData.m_loadCallback = [&]()
@@ -1043,6 +1041,7 @@ std::vector<std::pair<std::vector<double>, std::vector<double>>> globalErrors{};
 				active.fittedParameters = eParams;
 				active.savedInitialGuess = eParams;
 				active.savedBounds.clear();
+				active.bounds.clear();
 				for (const auto &[k, v] : eParams)
 				{
 					if (k != 1)
@@ -1056,6 +1055,7 @@ std::vector<std::pair<std::vector<double>, std::vector<double>>> globalErrors{};
 						active.savedBounds[k].second = 5;
 					}
 				}
+				active.bounds = active.savedBounds;
 				active.savedUseBounds = true;
 				active.useBounds = true;
 				active.savedUseInitial = true;
@@ -1070,17 +1070,16 @@ std::vector<std::pair<std::vector<double>, std::vector<double>>> globalErrors{};
 
 				m_numerics->Fit(active.getFittingInput(), [&](ParameterMap &&output)
 								{
-									if (!&active)
-										return;
+							if (!&active)
+								return;
 
-									active.fittedParameters = output;
-									CalculatingData cData = active.getCalculatingData();
+							active.fittedParameters = output;
+							CalculatingData cData = active.getCalculatingData();
 
-									m_numerics->CalculateData(cData);
+							m_numerics->CalculateData(cData);
 
-									double fitError = m_numerics->CalculateError(cData.characteristic.currentData, active.getEstimateInput().characteristic.currentData);
-									active.submitFitting(output, fitError); });
-
+							double fitError = m_numerics->CalculateError(cData.characteristic.currentData, active.getEstimateInput().characteristic.currentData);
+							active.submitFitting(output, fitError); });
 			};
 
 			m_state.plotData.m_tuneCallback = [&]()
@@ -1128,11 +1127,11 @@ std::vector<std::pair<std::vector<double>, std::vector<double>>> globalErrors{};
 
 				m_numerics->Simulate(mcData, [&](MCOutput &&output)
 									 {
-										 if (!&active)
-											 return;
-										 // std::scoped_lock lk{ *active.mcMutex };
-										 m_state.plotData.activeMC = nullptr;
-										 active.submitMC(output); });
+							if (!&active)
+								return;
+							// std::scoped_lock lk{ *active.mcMutex };
+							m_state.plotData.activeMC = nullptr;
+							active.submitMC(output); });
 			};
 
 			m_state.plotData.m_performMCOnAllCallback = [&]()
@@ -1204,27 +1203,67 @@ std::vector<std::pair<std::vector<double>, std::vector<double>>> globalErrors{};
 				m_numerics->SaveUncertanties(toSave, ch.path.parent_path() / name);
 				// save the uncertainties
 			};
-			
+
 			m_state.plotData.m_saveMCData = [&]()
 			{
-			// - TODO: If there are no MonteCarlo directory $\rightarrow$ create it
+				// - TODO: If there are no MonteCarlo directory $\rightarrow$ create it
 				std::filesystem::path rootPath = m_state.browserData.currentPath;
-				std::filesystem::path directoryPath =rootPath/ "Analysis"/"MC";
-				if(!std::filesystem::exists(directoryPath))
+				std::filesystem::path directoryPath = rootPath / "Analysis" / "MC";
+				if (!std::filesystem::exists(directoryPath))
 					std::filesystem::create_directories(directoryPath);
 
 				// - **NOTE**: In for loop for all mc data
-				for(const auto& characteristic: *m_state.plotData.characteristics)
-					m_state.plotData.saveOneSimulation(directoryPath,characteristic);
+				for (const auto &characteristic : *m_state.plotData.characteristics)
+					m_state.plotData.saveOneSimulation(directoryPath, characteristic);
 
-				//std::jthread workerThread([this, directoryPath]() {
+				// std::jthread workerThread([this, directoryPath]() {
 				//	for (const auto& characteristic : *m_state.plotData.characteristics)
 				//	{
 				//		m_state.plotData.saveOneSimulation(directoryPath, characteristic);
 				//	}
 				//	});
+			};
+			m_state.plotData.m_plotAllMC = [&]()
+			{
+				using PId = JFMService::Fitters::ParameterID;
+				std::vector<std::pair<PId, PId>> ids{{PId::I0, PId::A}, {PId::Rsh, PId::Rs}, {PId::Rsh, PId::Rsh2}};
+				// for (auto& [mcTab, [xId, yId]] : {m_state.plotData.mcTabs,ids)
+				for (int idx = 0; idx < m_state.plotData.mcTabs.size(); idx++)
+				{
+					auto &mcTab = m_state.plotData.mcTabs[idx];
+					auto &[xId, yId] = ids[idx];
+					for (auto &characteristic : *m_state.plotData.characteristics)
+					{
+						if (characteristic.mcData.size() == 0)
+							continue;
+						for (const auto &simulation : characteristic.mcData)
+						{
 
+							if (!simulation.trueParameters.contains(xId) || !simulation.trueParameters.contains(yId))
+								continue;
+							Data::PlotData::MCPlotsData mcData;
+							mcData.mc = simulation;
+							mcData.name = characteristic.buildMCPlotName(xId, yId, simulation.iterations, simulation.sigma);
+							mcData.parameters = {xId, yId};
+							mcData.tab = mcTab;
+							mcData.id = ++m_state.plotData.mcCount;
+							mcData.save = [this](int Id)
+							{ m_state.plotData.m_saveMCPlot(Id); };
+							m_state.plotData.mcPlots.push_back(mcData);
+						}
+					}
+				}
+			};
 
+			m_state.plotData.m_saveAllMCPlots = [&]() 
+			{
+				for(int index=0;index<m_state.plotData.mcPlots.size();index++)
+					m_state.plotData.m_saveMCPlot(index);
+			};
+			m_state.plotData.m_clearAllPlots = [&]()
+			{
+				m_state.plotData.mcPlots.clear();
+				m_state.plotData.mcCount = 0;
 			};
 		}
 	}

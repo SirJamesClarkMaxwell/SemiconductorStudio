@@ -178,6 +178,7 @@ namespace JFMApp::Data {
 		static double TFNL(double v, void*) {
 			return std::exp(v);
 		}
+		std::string buildMCPlotName(ParameterID xId, ParameterID yId, int iterations, double noise);
 	};
 
 	

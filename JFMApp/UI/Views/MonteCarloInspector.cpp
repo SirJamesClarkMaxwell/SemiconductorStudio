@@ -116,13 +116,15 @@ namespace JFMApp::Views {
 		if (ImGui::BeginTabBar("MC Tabs", tabFlags)) {
 
 
-			if (ImGui::TabItemButton("Add", ImGuiTabItemFlags_Trailing | ImGuiTabItemFlags_NoTooltip)) {
+			if (ImGui::TabItemButton("Add", ImGuiTabItemFlags_Trailing | ImGuiTabItemFlags_NoTooltip)) 
+			{
 				data.mcTabs.push_back(data.mcTabs.back() + 1);
 				std::string id = "MC Tab Dock" + std::to_string(data.mcTabs.back());
 				data.tabsIDs.push_back(ImGui::GetID(id.c_str()));
 			}
 			int activeTab = data.mcTabs[0];
-			for (auto& tab : data.mcTabs) {
+			for (auto& tab : data.mcTabs) 
+			{
 				std::string name = "MC group " + std::to_string(tab);
 				if (ImGui::BeginTabItem(name.c_str(), nullptr, ImGuiTabItemFlags_None))
 				{
@@ -130,9 +132,10 @@ namespace JFMApp::Views {
 					ImVec2 s = ImVec2(ImGui::GetContentRegionAvail().x * 0.75f, ImGui::GetContentRegionAvail().y);
 					ImGuiChildFlags cf = ImGuiChildFlags_Border;
 					ImGui::BeginChild("PlotsArea", s, cf);
-
 					{
 						//auto& name = data.mcTempName;
+						if (data.activeMC) 
+						{
 						auto& name = data.active->name;
 						ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x * 0.25f);
 						ImGui::InputTextWithHint("##Name", "Name",
@@ -146,32 +149,27 @@ namespace JFMApp::Views {
 
 						auto& tempParams = data.mcTempParams;
 
-						if (data.activeMC) {
+							ImGui::PushItemWidth(100);
 							auto& mc = *(data.activeMC);
-
 							std::string& prX = nConf.parameters[tempParams.first];
-
-
 							auto& params = nConf.modelParameters[mc.modelID];
+							if (ImGui::BeginCombo("X", prX.c_str())) 
+							{
 
-							if (ImGui::BeginCombo("X", prX.c_str())) {
-
-								for (auto& param : params) {
+								for (auto& param : params) 
+								{
 									if (param != tempParams.second)
 										if (ImGui::Selectable(nConf.parameters[param].c_str(), param == data.mcTempParams.first))
 											data.mcTempParams.first = param;
 								}
-
 								ImGui::EndCombo();
 							}
-
 							ImGui::SameLine();
-
 							std::string& prY = nConf.parameters[tempParams.second];
-
-							if (ImGui::BeginCombo("Y", prY.c_str())) {
-
-								for (auto& param : params) {
+							if (ImGui::BeginCombo("Y", prY.c_str())) 
+							{
+								for (auto& param : params) 
+								{
 									if (param != tempParams.first)
 										if (ImGui::Selectable(nConf.parameters[param].c_str(), param == data.mcTempParams.second))
 											data.mcTempParams.second = param;
@@ -179,6 +177,7 @@ namespace JFMApp::Views {
 
 								ImGui::EndCombo();
 							}
+							ImGui::PopItemWidth();
 						}
 
 						ImGui::SameLine();
@@ -190,10 +189,21 @@ namespace JFMApp::Views {
 							});
 
 						//if (str != data.mcPlots.end() || data.mcTempName.size() == 0) cond = false;
+						if (ImGui::Button("Save all MC Data"))
+							data.m_saveMCData();
+						ImGui::SameLine();
+						if (ImGui::Button("Plot all MC"))
+							data.m_plotAllMC();
+						ImGui::SameLine();
+						if (ImGui::Button("Save all MC"))
+							data.m_saveAllMCPlots();
+						ImGui::SameLine();
+						if (ImGui::Button("Clear All Plots"))
+							data.m_clearAllPlots();
 
 						if (!cond)
 							ImGui::BeginDisabled();
-
+						ImGui::SameLine();
 						if (ImGui::Button("Add plot")) {
 							Data::PlotData::MCPlotsData mcData{};
 
@@ -211,19 +221,15 @@ namespace JFMApp::Views {
 
 						}
 						ImGui::SameLine();
-						if(ImGui::Button("Save all MC Data"))
-							data.m_saveMCData();
-						ImGui::SameLine();
-						if (ImGui::Button("Save Uncertainty")) {
+						if (ImGui::Button("Save Uncertainty")) 
 							data.m_saveMCUncertainty();
-						}
 
 						if (!cond)
 							ImGui::EndDisabled();
 
 
+					//ImGui::PopItemWidth();
 					}
-					ImGui::PopItemWidth();
 					//dockspace
 					{
 

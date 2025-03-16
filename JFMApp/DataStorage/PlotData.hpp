@@ -87,6 +87,9 @@ namespace JFMApp::Data
 		std::function<void()> m_saveMCUncertainty{};
 		std::function<void(int size)> m_saveMCPlot{};
 		std::function<void()> m_saveMCData{};
+		std::function<void()> m_plotAllMC{};
+		std::function<void()> m_saveAllMCPlots{};
+		std::function<void()> m_clearAllPlots{};
 		void saveOneSimulation(const std::filesystem::path& path, const JFMApp::Data::Characteristic& characteristic);
 		struct PlotSettings
 		{

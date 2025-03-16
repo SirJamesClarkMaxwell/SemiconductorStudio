@@ -148,5 +148,11 @@ namespace JFMApp::Data
 		else
 			*d = sim;
 	}
-
+	std::string Characteristic::buildMCPlotName(ParameterID xId,ParameterID yId, int iterations,double noise)
+	{
+		std::string toReturn = name;
+		toReturn +="_"+ nConfig.parameters[xId] +"_"+ nConfig.parameters[yId];
+		toReturn += "_" + std::to_string(iterations) +"_"+std::to_string(noise);
+		return toReturn;
+	}
 }
