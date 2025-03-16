@@ -16,7 +16,7 @@ namespace JFMApp::Data
 
 		std::vector<Characteristic> m_characteristics{};
 		Data::NumericsConfig* nConfig{ nullptr };
-		Data::ModelID forcedModelID{JFMService::Fitters::Model4P};
+		Data::ModelID forcedModelID{0};
 
 		CharacteristicType m_characteristicType = JFMService::Fitters::CharacteristicType::Dark;
 		CharacteristicTypeMap m_characteristicTypeMap{

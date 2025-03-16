@@ -79,7 +79,9 @@ namespace JFMApp::Views {
 					ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 1.0f, 0.0f, 1.0f));
 
 				std::string name = entry.path().filename().string();
-				bool t = data.m_selection[sel_index++];
+				bool t = false;
+				if(data.m_selection.size()>sel_index)
+					t = data.m_selection[sel_index++];
 				if (ImGui::Selectable(name.c_str(), t, 0, selSize)) {
 					if (!ImGui::GetIO().KeyCtrl || entry.is_directory()) {
 						for (const auto& sel : data.m_selection)

@@ -467,11 +467,11 @@ namespace JFMApp::Views {
 							ImGui::PushItemWidth(400);
 							// Second column: Value slider
 							ImGui::SameLine();
-							if (ImGui::SliderFloat((uniqueID + "_slider").c_str(), &value, 0.1f, 10.0f))
+							if (ImGui::SliderFloat((uniqueID + "_slider").c_str(), &value, 1.0f, 9.999f))
 								act.toTunne = true;
 							
 							ImGui::SameLine();
-							if (ImGui::SliderInt((uniqueID + "_power").c_str(), &power, power -5 , power + 5))
+							if (ImGui::SliderInt((uniqueID + "_power").c_str(), &power,  -20 , 20))
 								act.toTunne = true;
 
 							ImGui::PopItemWidth();
@@ -485,11 +485,11 @@ namespace JFMApp::Views {
 									act.fixedParameterIDs[id] = true;
 									act.fixedParametersValues[id] = value * std::pow(10, power);
 								}
-								else 
+					/*			else 
 								{
 									act.savedFixedParameterIDs[id] = false;
 									act.fixedParameterIDs[id] = false;
-								}
+								}*/
 								
 							}
 							
