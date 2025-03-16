@@ -1249,6 +1249,14 @@ namespace JFMApp
 							mcData.id = ++m_state.plotData.mcCount;
 							mcData.save = [this](int Id)
 							{ m_state.plotData.m_saveMCPlot(Id); };
+
+							mcData.remove = [this](int Id)
+							{
+								auto it = std::find_if(m_state.plotData.mcPlots.begin(), m_state.plotData.mcPlots.end(), [Id](const auto& mcPlot) { return mcPlot.id == Id; });
+								if (it != m_state.plotData.mcPlots.end()) 
+									m_state.plotData.mcPlots.erase(it);
+								
+							};
 							m_state.plotData.mcPlots.push_back(mcData);
 						}
 					}

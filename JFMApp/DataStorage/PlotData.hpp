@@ -48,6 +48,7 @@ namespace JFMApp::Data
 			int tab{-1};
 			int id;
 			std::function<void(int id)> save{};
+			std::function<void(int id)> remove{};
 		};
 
 		std::vector<MCPlotsData> mcPlots{};

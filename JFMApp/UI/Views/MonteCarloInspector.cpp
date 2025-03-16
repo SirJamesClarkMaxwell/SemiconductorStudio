@@ -79,7 +79,14 @@ namespace JFMApp::Views {
 		ImGui::SameLine();
 		if (ImGui::Button("Save") && mc.save)
 			mc.save(mc.id);
-
+		ImGui::SameLine();
+		if (ImGui::Button("Remove"))
+		{
+			mc.remove(mc.id);
+			return;
+		}
+		
+		
 
 		ImGui::SameLine();
 		ImGui::Value("Iterations: ", (int)mc.mc.iterations);
@@ -189,18 +196,25 @@ namespace JFMApp::Views {
 							});
 
 						//if (str != data.mcPlots.end() || data.mcTempName.size() == 0) cond = false;
-						if (ImGui::Button("Save all MC Data"))
-							data.m_saveMCData();
-						ImGui::SameLine();
 						if (ImGui::Button("Plot all MC"))
 							data.m_plotAllMC();
+						ImGui::SameLine();
+						if (ImGui::Button("Clear All Plots"))
+							data.m_clearAllPlots();
+						ImGui::SameLine();
+						if (ImGui::Button("Save all MC Data"))
+							data.m_saveMCData();
 						ImGui::SameLine();
 						if (ImGui::Button("Save all MC"))
 							data.m_saveAllMCPlots();
 						ImGui::SameLine();
-						if (ImGui::Button("Clear All Plots"))
-							data.m_clearAllPlots();
-
+						if (ImGui::Button("Clear Simulations"))
+						{
+							data.mcPlots.clear();
+							data.mcCount = 0;
+							for (auto& ch : *data.characteristics)
+								ch.mcData.clear();
+						}
 						if (!cond)
 							ImGui::BeginDisabled();
 						ImGui::SameLine();
@@ -215,10 +229,13 @@ namespace JFMApp::Views {
 							//data.mcCount += 1;
 
 							data.mcPlots.push_back(mcData);
-							data.mcPlots.back().save = [&data](int Id) {
-								data.m_saveMCPlot(Id);
-								};
-
+							data.mcPlots.back().save = [&data](int Id) {data.m_saveMCPlot(Id);};
+                            data.mcPlots.back().remove = [&data](int Id) { 
+                                auto it = std::find_if(data.mcPlots.begin(), data.mcPlots.end(), [Id](const auto& mcPlot) { return mcPlot.id == Id; });
+                                if (it != data.mcPlots.end()) {
+                                    data.mcPlots.erase(it);
+                                }
+                            };
 						}
 						ImGui::SameLine();
 						if (ImGui::Button("Save Uncertainty")) 
@@ -313,21 +330,23 @@ namespace JFMApp::Views {
 									ImGui::Text("--");
 									ImGui::TableNextColumn();
 									ImGui::Text("--");
-									if (open) {
-
-										for (auto& mc : ch.mcData) {
+									if (open) 
+									{
+										for (auto& mc : ch.mcData) 
+										{
 											ImGui::TableNextRow();
 											ImGui::TableNextColumn();
-											if (ImGui::Selectable(mc.sim_name.c_str(), data.activeMC == &mc)) {
+											if (ImGui::Selectable(mc.sim_name.c_str(), data.activeMC == &mc)) 
+											{
 												data.activeMC = &mc;
-
 												auto& tempParams = data.mcTempParams;
 												data.active = &ch;
 												tempParams.first = nConf.modelParameters[ch.modelID][0];
 												tempParams.second = nConf.modelParameters[ch.modelID][1];
 											}
 											ImGui::TableNextColumn();
-											for (auto& [key, value] : mc.fixConfig) {
+											for (auto& [key, value] : mc.fixConfig) 
+											{
 												ImGui::Text(nConf.parameters[key].c_str());
 												ImGui::SameLine();
 												ImGui::Text(": ");
@@ -379,9 +398,13 @@ namespace JFMApp::Views {
 
 
 					ImGui::SetNextWindowDockID(data.tabsIDs[mc.tab - 1], ImGuiCond_Once);
-					ImGui::Begin(mc.name.c_str(), nullptr, ImGuiWindowFlags_NoCollapse);
-					drawPlot(mc, nConf);
-					ImGui::End();
+					if (!mc.name.empty())
+					{
+						ImGui::Begin(mc.name.c_str(), nullptr, ImGuiWindowFlags_NoCollapse);
+						drawPlot(mc, nConf);
+						ImGui::End();
+					}
+					
 
 				}
 			}

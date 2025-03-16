@@ -141,12 +141,12 @@ namespace JFMApp::Data
 		sim.modelID = modelID;
 		std::scoped_lock lk{*mcMutex};
 
-		auto d = std::find_if(mcData.begin(), mcData.end(), [&](MCSimulation &d)
-							  { return d.fixConfig == sim.fixConfig; });
-		if (d == mcData.end())
-			mcData.push_back(sim);
-		else
-			*d = sim;
+		//auto d = std::find_if(mcData.begin(), mcData.end(), [&](MCSimulation &d)
+		//					  { return d.fixConfig == sim.fixConfig; });
+		//if (d == mcData.end())
+		mcData.push_back(sim);
+		//else
+		//	*d = sim;
 	}
 	std::string Characteristic::buildMCPlotName(ParameterID xId,ParameterID yId, int iterations,double noise)
 	{
