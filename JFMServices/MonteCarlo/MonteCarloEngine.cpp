@@ -4,6 +4,7 @@
 #include "../Models/CalculateData.hpp"
 #include <compare>
 //#define MULTITHREAD
+#define FOR_LOOP_IMPLEMENTATION
 extern std::vector<std::pair<std::vector<double>, std::vector<double>>> globalNoisyI;
 std::mutex g_mutex;
 static int blockNumber = 0;
@@ -48,7 +49,7 @@ namespace JFMService
 				output.mcResult.resize(input.iterations);
 
 
-				std::vector<MCResult> finalResults(input.iterations);
+				std::vector<MCResult> finalResults/*input.iterations*/;
 #ifdef MULTITHREAD
 				std::vector<std::future<std::vector<MCResult>>> futures;
 				int numChunks = (input.iterations + chunkSize - 1) / chunkSize; // 25
@@ -70,16 +71,67 @@ namespace JFMService
 					std::copy(localResults.begin(), localResults.end(), output.mcResult.begin() + (chunk * chunkSize));
 				}
 #endif
-#ifndef MULTITHREAD
+#ifndef FOR_LOOP_IMPLEMENTATION
+#ifndef MULTITHREAD 
 				for (int i=0;i<output.inputData.iterations;i++)
 				{
 					simulate(preFitter, fitter, output.inputData, finalResults, i);
 					output.mcResult = finalResults;
 				}
 #endif
+#endif
+#ifdef  FOR_LOOP_IMPLEMENTATION
+				auto idealParameters = input.trueParameters;
+				std::vector<ParameterMap> parameters;
+				ParameterMap stepSizes;
+				int steps_per_param = input.iterations;
+
+				// Calculate step sizes based on range
+				ParameterMap currentParameters = idealParameters;
+				std::vector<std::vector<double>> pSets(idealParameters.size()); // Pre-size the vector
+				for (size_t i = 0; i < idealParameters.size(); ++i)
+				{
+					double start = input.trueParameters.at(i) * 0.90;
+					double end = input.trueParameters.at(i) * 1.1;
+					stepSizes[i] = (end - start) / steps_per_param;
+
+					for (double j = start; j <= end; j += stepSizes[i]) 
+						pSets[i].push_back(j);
+					
+				}
+
+				// If you're on C++23 or using a compatible range library
+				auto cartesian = std::views::cartesian_product(pSets[0], pSets[1], pSets[2], pSets[3]);
+
+				// Convert to parameters vector (optional step)
+				for (auto&& tuple : cartesian) 
+				{
+					ParameterMap param;
+					param[0] = std::get<0>(tuple);
+					param[1] = std::get<1>(tuple);
+					param[2] = std::get<2>(tuple);
+					param[3] = std::get<3>(tuple);
+					parameters.push_back(param);
+				}
+				std::vector<double> calculated;
+				size_t it = 0;
+				size_t size = parameters.size();
+				for (const auto& [it,item]: std::ranges::enumerate_view(parameters))
+				{
+					MCResult result;
+					result.foundParameters = item;
+					calculateFittingError(input, result, calculated);
+					std::cout << "Iteration: " << it << "/" << size << " has finished!" << std::endl;
+					if (result.error > 23.5)
+						continue;
+					else
+						finalResults.push_back(result);
+				}
+#endif //  FOR_LOOP_IMPLEMENTATION
+				output.mcResult = finalResults;
 				auto end = std::chrono::high_resolution_clock().now();
 				auto miliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
-				auto perIteration = miliseconds / input.iterations;
+				auto perIteration = miliseconds /size;
 				auto seconds = miliseconds / 1000;
 				std::cout << "time: " << seconds << " s "
 						  << perIteration << " ms per fit" << std::endl;
