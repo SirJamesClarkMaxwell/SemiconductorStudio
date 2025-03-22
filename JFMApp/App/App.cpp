@@ -98,10 +98,12 @@ namespace JFMApp
 			ImGui::DockBuilderSplitNode(rtop, ImGuiDir_Up, 0.5f, &cbTop, &cbBottom);
 
 			ImGui::DockBuilderDockWindow("Plot Area", ltop);
-			ImGui::DockBuilderDockWindow("Characteristic Settings", lbottom);
+			ImGui::DockBuilderDockWindow("Characteristic Settings", cbBottom);
 			ImGui::DockBuilderDockWindow("Characteristic List", cbTop);
 			ImGui::DockBuilderDockWindow("File Explorer", cbBottom);
 			ImGui::DockBuilderDockWindow("Characteristic Inspector", rbottom);
+			ImGui::DockBuilderDockWindow("Arrhenius Plots", rbottom);
+			ImGui::DockBuilderDockWindow("Generator", ltop);
 
 			ImGui::DockBuilderFinish(jfmID);
 
@@ -124,11 +126,13 @@ namespace JFMApp
 		//	Characteristics inspector - by default
 		if (m_state.uiState.m_showCharacteristicInspector)
 		{
-			ImGui::Begin("Characteristic Inspector");
-			Views::Widgets::CharacteristicInspector(m_state.plotData);
-			ImGui::End();
+			if(ImGui::Begin("Characteristic Inspector"));
+			{
+				Views::Widgets::CharacteristicInspector(m_state.plotData);
+			}
+				ImGui::End();
 		}
-
+		/*
 		ImGui::SetNextWindowDockID(mainDockID, ImGuiCond_Once);
 		if (ImGui::Begin("RT MC"))
 		{
@@ -137,9 +141,9 @@ namespace JFMApp
 			if (ImPlot::BeginPlot("RT MC", s))
 			{
 				ImPlot::SetupAxes("V", "I", Data::PlotData::plotSettings.xFlags, Data::PlotData::plotSettings.yFlags);
-
+				
 				ImPlot::SetupAxisScale(ImAxis_Y1, Data::Characteristic::TFL, Data::Characteristic::TFNL);
-
+				
 				if (m_state.browserData.m_characteristics.size() >= 1 && globalNoisyI.size())
 				{
 					ImPlot::PlotLine("I", m_state.browserData.m_characteristics[0].V.data() + m_state.browserData.m_characteristics[0].dataRange.first, globalNoisyI[curr_c].first.data(), globalNoisyI[curr_c].first.size());
@@ -147,11 +151,11 @@ namespace JFMApp
 				}
 			}
 			ImPlot::EndPlot();
-
+			
 			ImGui::SliderInt("Char", &curr_c, 0, globalNoisyI.size() - 1);
 		}
 		ImGui::End();
-
+		
 		ImGui::SetNextWindowDockID(mainDockID, ImGuiCond_Once);
 		if (ImGui::Begin("RT Error"))
 		{
@@ -160,20 +164,21 @@ namespace JFMApp
 			if (ImPlot::BeginPlot("RT Error", s))
 			{
 				ImPlot::SetupAxes("LOG(V)", "d(LOG(I))", Data::PlotData::plotSettings.xFlags, Data::PlotData::plotSettings.yFlags);
-
+				
 				// ImPlot::SetupAxisScale(ImAxis_Y1, Data::Characteristic::TFL, Data::Characteristic::TFNL);
-
+				
 				if (globalErrors.size())
-					ImPlot::PlotLine("D", globalErrors[0].first.data(), globalErrors[0].second.data(), globalErrors[0].first.size());
-
+				ImPlot::PlotLine("D", globalErrors[0].first.data(), globalErrors[0].second.data(), globalErrors[0].first.size());
+				
 				if (globalErrors.size())
-					ImPlot::PlotLine("O", globalErrors[1].first.data(), globalErrors[1].second.data(), globalErrors[1].first.size());
+				ImPlot::PlotLine("O", globalErrors[1].first.data(), globalErrors[1].second.data(), globalErrors[1].first.size());
 			}
 			ImPlot::EndPlot();
-
+			ImGui::End();
+			
 			// ImGui::SliderInt("Char", &curr_c, 0, globalErrors.size() - 1);
 		}
-		ImGui::End();
+		*/
 
 		// displaying MC as a separate window
 		if (m_state.uiState.m_showMonteCarloInspector)
@@ -183,17 +188,30 @@ namespace JFMApp
 			{
 				Views::Widgets::MonteCarloInspector(m_state.plotData);
 			}
-			ImGui::End();
+				ImGui::End();
 		}
 		// ImGui::ShowDemoWindow();
-
-		ImGui::SetNextWindowDockID(mainDockID, ImGuiCond_Once);
-		if (ImGui::Begin("Generate"))
+		if(m_state.uiState.m_showGenerator)
 		{
-			Views::Widgets::DataGenerator(m_state.browserData);
+			ImGui::SetNextWindowDockID(mainDockID, ImGuiCond_Once);
+			if (ImGui::Begin("Generate"))
+			{
+				Views::Widgets::DataGenerator(m_state.browserData);
+			}
+				ImGui::End();
 		}
-		ImGui::End();
-	}
+		//ImGui::SetNextWindowDockID(mainDockID, ImGuiCond_Once);
+		if (m_state.uiState.m_showArrheniusViewer)
+		{
+			//ImGui::SetNextWindowDockID(mainDockID, ImGuiCond_Once);
+			if (ImGui::Begin("Arrhenius Plots"))
+			{
+				Views::Widgets::ArrheniusViewer(m_state.plotData);
+			}
+				ImGui::End();
+		}
+		}
+	
 
 	void App::update()
 	{
@@ -938,9 +956,9 @@ namespace JFMApp
 											   temp.m_tuneCallback = [&]()
 											   {
 												   // assuming the tuned parameters are copied into fitted
-												   CalculatingData cData = temp.getCalculatingData();
+												   CalculatingData cData = m_state.plotData.active->getCalculatingData();
 												   m_numerics->CalculateData(cData);
-												   temp.fitError = m_numerics->CalculateError(cData.characteristic.currentData, temp.getEstimateInput().characteristic.currentData);
+												   m_state.plotData.active->fitError = m_numerics->CalculateError(cData.characteristic.currentData, m_state.plotData.active->getEstimateInput().characteristic.currentData);
 											   };
 
 											   m_state.browserData.m_loadSingleCharacteristic(temp);

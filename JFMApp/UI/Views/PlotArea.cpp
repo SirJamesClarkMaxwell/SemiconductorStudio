@@ -447,7 +447,7 @@ namespace JFMApp::Views {
 
 				//draw the parameter sliders
 				{
-					ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
+					ImGui::PushItemWidth(300);
 
 					if (ImGui::BeginTable("Tuned parameters", 4, ImGuiTableFlags_SizingStretchProp)) {
 						ImGui::TableNextRow();

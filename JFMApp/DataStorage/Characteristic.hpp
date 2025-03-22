@@ -70,6 +70,7 @@ namespace JFMApp::Data {
 		bool toTunne{ false };
 		Data::ModelID forcedModelID{0};
 
+        operator bool() const { return checked; };
 		ImVec4 color{ 0.96f, 0.53f, 0.26f, 1.0f };
 		float weight{ 1.0 };
 

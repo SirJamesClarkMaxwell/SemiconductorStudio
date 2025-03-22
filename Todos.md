@@ -36,3 +36,15 @@
   - <!-- TODO --> iterate through characteristics
     - <!-- TODO --> generate names
     - <!-- TODO --> add plot
+### Arrhenius Viewer
+- <!-- TODO --> possibility to change type of the plot
+- <!-- TODO --> add new plots, when the new plots is added it is automatically docked at the bottom of the space
+- <!-- TODO --> configurable set of predefined plots
+- <!-- TODO --> Button to fix tunned parameters, per plot
+- types of supported plots:
+  - A*ln(I0)
+  - Rs
+  - Rsh
+  - Rsh2
+  - Rsh2
+  - $\alpha$
