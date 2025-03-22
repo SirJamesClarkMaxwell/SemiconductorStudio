@@ -177,7 +177,7 @@ namespace JFMApp::Data
 			std::array<std::vector<float>, 2> yData;
 			void updateStoredData(const std::vector<Characteristic> &characteristics);
 			ArrheniusFunctionType appliedFunction = nullptr;
-			void Plot(const std::string& name,const PlotData::ArrheniusPlotSetting& settings);
+			void Plot(const std::string& name,const PlotData::ArrheniusPlotSetting& settings,ImGuiID dockID);
 			
 		};
 		

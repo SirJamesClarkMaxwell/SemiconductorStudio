@@ -134,7 +134,7 @@ namespace JFMApp::Data
                 yData[PlotType::Tunned].emplace_back(appliedFunction(characteristic.tunedParameters));
         }
     };
-    void PlotData::ArrheniusPlotData::Plot(const std::string &name,const PlotData::ArrheniusPlotSetting& settings)
+    void PlotData::ArrheniusPlotData::Plot(const std::string &name,const PlotData::ArrheniusPlotSetting& settings,ImGuiID dockId)
     {
 		std::array<ImVec4, 2> colors{ settings.fittedColor, settings.tunedColor };
         auto func = [&](auto dType,std::vector<float> data,auto typeName)
@@ -144,7 +144,7 @@ namespace JFMApp::Data
             ImPlot::SetNextLineStyle(colors[dType]);
             ImPlot::PlotLine((name + "Solid"+ typeName).c_str(), settings.Temperature.data(), data.data(), settings.Temperature.size());
         };
-
+        //ImGui::SetNextWindowDockID(dockId);
         if(ImGui::Begin(name.c_str()))
         {
             auto flags = ImPlotAxisFlags_None;

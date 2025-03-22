@@ -38,7 +38,6 @@ namespace JFMApp::Views
         if(ImGui::BeginChild("DockSpace", ImVec2(0, 0), true, ImGuiWindowFlags_AlwaysVerticalScrollbar))
         {
             auto ArrheniusDockId = ImGui::DockSpace(ImGui::GetID("DockSpace"));
-
             // Plot Data
 
             auto settings = data.m_arrheniusPlotSettings;
@@ -48,7 +47,7 @@ namespace JFMApp::Views
                 item.updateStoredData(*data.characteristics);
                 std::string name = ArrheniusPlotSetting::convertTypeToString(item.arrheniusPlotType);
                 //ImGui::SetNextWindowDockID(ArrheniusDockId);
-                item.Plot(name, settings);
+                item.Plot(name, settings,ArrheniusDockId);
 
             }
             ImGui::EndChild();

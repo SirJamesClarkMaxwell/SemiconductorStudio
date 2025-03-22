@@ -349,7 +349,7 @@ namespace JFMApp::Views {
 
 					ImGui::Text("Tune Error: %e", act.tuneError >= 0.0 ? act.tuneError : 0.0);
 
-					ImGui::SameLine(0.0f, 20.0f);
+					
 
 					if (ImGui::Button("Update characteristic")) {
 						act.tunedParameters.clear();
@@ -361,6 +361,14 @@ namespace JFMApp::Views {
 						} 
 						act.tunedI = act.fittedI;
 						act.m_tuneCallback();
+					}
+					ImGui::SameLine(0.0f, 20.0f);
+					if (ImGui::Button("Reset Tunning"))
+					{
+						act.tunedParameters.clear();
+						act.tunedI.clear();
+						act.tunedParameters = act.fittedParameters;
+						act.tunedI = act.fittedI;
 					}
 					
 					if (ImGui::BeginCombo("##CurrentModel", data.paramConfig->models[act.modelID].c_str(), ImGuiComboFlags_WidthFitPreview)) {
