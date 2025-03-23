@@ -129,9 +129,27 @@ namespace JFMApp::Data
             if (not characteristic)
                 continue;
             if (characteristic.isFitted)
-                yData[PlotType::Fit].emplace_back(appliedFunction(characteristic.fittedParameters));
+            {
+                try
+                {
+                    yData[PlotType::Fit].emplace_back(appliedFunction(characteristic.fittedParameters));
+                }
+                catch (std::exception& e)
+                {
+                    yData[PlotType::Fit].emplace_back(0);
+                }
+            }
             if (not characteristic.toTunne)
-                yData[PlotType::Tunned].emplace_back(appliedFunction(characteristic.tunedParameters));
+            {
+                try
+                {
+                    yData[PlotType::Tunned].emplace_back(appliedFunction(characteristic.tunedParameters));
+                }
+                catch(std::exception& e)
+                {
+                    yData[PlotType::Tunned].emplace_back(0);
+                }
+            }
         }
     };
     void PlotData::ArrheniusPlotData::Plot(const std::string &name,const PlotData::ArrheniusPlotSetting& settings,ImGuiID dockId)

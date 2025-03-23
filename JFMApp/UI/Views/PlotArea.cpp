@@ -365,6 +365,8 @@ namespace JFMApp::Views {
 					ImGui::SameLine(0.0f, 20.0f);
 					if (ImGui::Button("Reset Tunning"))
 					{
+						data.m_estimateCallback();
+						data.m_fitCallback();
 						act.tunedParameters.clear();
 						act.tunedI.clear();
 						act.tunedParameters = act.fittedParameters;
