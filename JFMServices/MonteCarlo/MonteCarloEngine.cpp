@@ -3,6 +3,7 @@
 #include "../Fitting/JFMFitter.hpp"
 #include "../Models/CalculateData.hpp"
 #include <compare>
+#include <thread>
 //#define MULTITHREAD
 extern std::vector<std::pair<std::vector<double>, std::vector<double>>> globalNoisyI;
 std::mutex g_mutex;
@@ -37,7 +38,7 @@ namespace JFMService
 	void MonteCarloEngine::Simulate(const MCInput& input, std::function<void(MCOutput&&)> callback)
 	{
 		int chunkSize = input.iterations / 2; // 41
-		std::jthread thread{
+		std::jthread workerThread {
 			[=]()
 			{
 				MCOutput output;
@@ -88,7 +89,7 @@ namespace JFMService
 					callback(std::move(output));
 			} };
 
-		thread.detach();
+		workerThread.detach();
 	}
 
 	void MonteCarloEngine::generateNoise(double& value, double factor)
