@@ -1,6 +1,7 @@
 #pragma once
 #include "pch.hpp"
 #include "Characteristic.hpp"
+#include "implot.h"
 
 namespace JFMApp::Data
 {
@@ -99,7 +100,7 @@ namespace JFMApp::Data
 			ImPlotAxisFlags yFlags = ImPlotAxisFlags_None;
 		};
 
-		static inline PlotSettings plotSettings;
+		static PlotSettings plotSettings;
 
 	};
 }

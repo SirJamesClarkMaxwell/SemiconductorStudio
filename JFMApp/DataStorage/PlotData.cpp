@@ -1,8 +1,11 @@
+#include <format>
 #include "pch.hpp"
 #include "PlotData.hpp"
 
 namespace JFMApp::Data
 {
+    PlotData::PlotSettings PlotData::plotSettings;
+
 	void PlotData::submitMC(const MCOutput& mcData, Characteristic& ch) {
 		
 
