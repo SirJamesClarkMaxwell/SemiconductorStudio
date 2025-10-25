@@ -30,6 +30,16 @@ foreach sub : subs
     endforeach
 endforeach
 
+project_root = meson.source_root()
+
+linked_deps = [
+    '-L' + join_paths(project_root, 'Vendor/imgui/build'), '-limgui',
+    '-L' + join_paths(project_root, 'Vendor/implot/build'), '-limplot',
+    '-L' + join_paths(project_root, 'Vendor/LambertW/build'), '-lLambertW',
+    '-L' + join_paths(project_root, 'Vendor/yaml-cpp/build'), '-lyaml-cpp',
+]
+
+message(project_root)
 
 executable('JFM',
     sources: JFM_sources,
@@ -37,5 +47,5 @@ executable('JFM',
     cpp_args: ['-std=c++23','-fexperimental-library',
                '-DJFM_PLATFORM_NIX',
                '-Wno-unused-variable', '-Wno-unused-function', '-Wno-unused-but-set-variable'],
-    link_args: [ '-LVendor/imgui/build', '-LVendor/implot', '-limgui', '-limplot', '-lglfw', '-lGL', '-lyaml-cpp', '-llambertW', '-LVendor/LambertW'],
+    link_args: [ linked_deps, '-lglfw', '-lGL'],
     install: true)
