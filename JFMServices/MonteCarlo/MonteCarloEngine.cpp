@@ -3,6 +3,7 @@
 #include "../Fitting/JFMFitter.hpp"
 #include "../Models/CalculateData.hpp"
 #include <compare>
+#include <assert.h>
 #include <thread>
 //#define MULTITHREAD
 extern std::vector<std::pair<std::vector<double>, std::vector<double>>> globalNoisyI;
@@ -80,6 +81,7 @@ namespace JFMService
 #endif
 				auto end = std::chrono::high_resolution_clock().now();
 				auto miliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+ 				assert(input.iterations);
 				auto perIteration = miliseconds / input.iterations;
 				auto seconds = miliseconds / 1000;
 				std::cout << "time: " << seconds << " s "
