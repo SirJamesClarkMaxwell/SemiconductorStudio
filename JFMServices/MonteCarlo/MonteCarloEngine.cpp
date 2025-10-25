@@ -2,6 +2,7 @@
 #include "../Models/JFMErrorModel.hpp"
 #include "../Fitting/JFMFitter.hpp"
 #include "../Models/CalculateData.hpp"
+#include <utils.hpp>
 #include <compare>
 #include <assert.h>
 #include <thread>
@@ -30,7 +31,7 @@ namespace JFMService
 			MCResult result;
 			simulate(preFitter, fitter, input, localResults, i);
 			// if(i%20 == 0)
-			//std::cout << "block:" << localNumeber << " idx: " << i << std::endl;
+			//Info() << "block:" << localNumeber << " idx: " << i << std::endl;
 		}
 	};
 
@@ -75,7 +76,9 @@ namespace JFMService
 #ifndef MULTITHREAD
 				for (int i=0;i<output.inputData.iterations;i++)
 				{
+                MEASURE_TIME("simulate",
 					simulate(preFitter, fitter, output.inputData, finalResults, i);
+                );
 					output.mcResult = finalResults;
 				}
 #endif
@@ -84,7 +87,7 @@ namespace JFMService
  				assert(input.iterations);
 				auto perIteration = miliseconds / input.iterations;
 				auto seconds = miliseconds / 1000;
-				std::cout << "time: " << seconds << " s "
+				Info() << "time: " << seconds << " s "
 						  << perIteration << " ms per fit" << std::endl;
 
 				if (callback)
@@ -100,10 +103,10 @@ namespace JFMService
 		double copy = value;
 		// std::uniform_real_distribution<double> distribution{ -1,1 };
 		std::normal_distribution<double> distribution{ 0, 1 };
-		// std::cout << distribution(m_generator)*sigma << std::endl;
-		//std::cout << value << " ";
+		// Info() << distribution(m_generator)*sigma << std::endl;
+		//Info() << value << " ";
 		value += distribution(m_generator) * noise;
-		//std::cout << value << std::endl;
+		//Info() << value << std::endl;
 		// value = value +  distribution(m_generator)*(factor / 100) * value ;
 		// value = std::abs(value);
 	}
@@ -139,13 +142,15 @@ namespace JFMService
 			for (auto& I : copiedCurrent)
 				generateNoise(I, copied.noise);
 			copied.startingData.initialValues = preFitter->Estimate(copied.startingData.initialData);
+        MEASURE_TIME("fit",
 			fitter->Fit(copied.startingData, callback);
+        );
 			calculateFittingError(input, result, calculated);
 		} while (result.error > 23.5 or outOfBounds(result.foundParameters, input.startingData.bounds));
 		
 		results[i] = result;
 		num += 1;
-		std::cout << "iteration: " << i << std::endl;
+		Info() << "iteration: " << i << std::endl;
 	}
 	void MonteCarloEngine::calculateFittingError(const MCInput& input, MCResult& result, std::vector<double>& calculated)
 	{

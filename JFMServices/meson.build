@@ -1,4 +1,5 @@
 JFMServices_sources = [
+'./utils.cpp',
 './Fitting/PreFitter.cpp',
 './Fitting/JFMFitter.cpp',
 './Fitting/JFMFitting.cpp',
