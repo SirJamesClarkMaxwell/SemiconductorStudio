@@ -1,0 +1,39 @@
+From c8ee4526ec085d368c6e170353d01185aef021cf Mon Sep 17 00:00:00 2001
+From: cyberCuber07 <n.eigocuber@gmail.com>
+Date: Sat, 25 Oct 2025 11:09:00 +0200
+Subject: [feat] Build using meson
+
+Adding some script that enables automatic building
+on unix systems.
+
+Signed-off-by: cyberCuber07 <n.eigocuber@gmail.com>
+---
+ meson.build | 16 ++++++++++++++++
+ 1 file changed, 16 insertions(+)
+ create mode 100644 meson.build
+
+diff --git a/meson.build b/meson.build
+new file mode 100644
+index 0000000..ab89ce3
+--- /dev/null
++++ b/meson.build
+@@ -0,0 +1,16 @@
++project('implot', 'cpp',
++      version: '1.0.0')
++
++cpp = meson.get_compiler('cpp')
++
++shared_library('implot',
++      sources: [
++          'implot_items.cpp',
++          'implot.cpp',
++          'implot_demo.cpp',
++      ],
++      include_directories: [
++        '../imgui',
++      ],
++      link_args: ['-limgui', '-L../imgui/build'],
++      install: true)
+-- 
+2.43.0
+

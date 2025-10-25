@@ -1,0 +1,32 @@
+From ed64224a1d7d319872810fb9dd4066b025a51cb9 Mon Sep 17 00:00:00 2001
+From: cyberCuber07 <n.eigocuber@gmail.com>
+Date: Sat, 25 Oct 2025 11:14:28 +0200
+Subject: [feat] Add build script
+
+This makes _this_ project buildable on unix systems.
+
+Signed-off-by: cyberCuber07 <n.eigocuber@gmail.com>
+---
+ meson.build | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+ create mode 100644 meson.build
+
+diff --git a/meson.build b/meson.build
+new file mode 100644
+index 0000000..0139441
+--- /dev/null
++++ b/meson.build
+@@ -0,0 +1,10 @@
++project('LambertW', 'cpp',
++      version: '1.0.0')
++
++cpp = meson.get_compiler('cpp')
++
++shared_library('LambertW',
++      sources: ['LambertW.cc',
++                'FukushimaLambertW.cc'],
++      include_directories: ['./'],
++      install: true)
+-- 
+2.43.0
+
