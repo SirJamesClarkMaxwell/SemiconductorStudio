@@ -92,10 +92,9 @@ namespace JFMApp::Data
         std::array<std::vector<Characteristic::MCData>, 3> points{ sigmaOne,sigmaTwo,sigmaThree };
         for (int i = 0; i < 3;i++)
         {
-            std::cout << "Saving to: " << path << std::endl; 
-            for (const auto& point : points[i])
-                serializeMCPoint(point); 
-
+            Info() << "Saving to: " << path << std::endl;
+            for (const auto &point : points[i])
+                serializeMCPoint(point);
 
             if (!std::filesystem::exists(path.parent_path()))
                 std::filesystem::create_directories(path.parent_path());
@@ -104,8 +103,8 @@ namespace JFMApp::Data
             std::ofstream file(paths[i], std::ios::out | std::ios::trunc);
             if (!file)
             {
-                std::cerr << "Error: Could not open file: " << path << std::endl;
-                continue; 
+                Err() << "Error: Could not open file: " << path << std::endl;
+                continue;
             }
 
             file << stream.str();

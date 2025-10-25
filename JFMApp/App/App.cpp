@@ -764,14 +764,14 @@ namespace JFMApp
 				std::ofstream file(filePath, std::ios::out | std::ios::trunc);
 				if (!file)
 				{
-					std::cerr << "Error: Unable to open file " << filePath << std::endl;
+					Err() << "Error: Unable to open file " << filePath << std::endl;
 					return;
 				}
 
 				file << stringStream.str();
 				file.close();
 
-				std::cout << "File saved successfully to: " << filePath << std::endl;
+				Info() << "File saved successfully to: " << filePath << std::endl;
 			};
 
 			m_state.browserData.m_loadCallback = [&]()
