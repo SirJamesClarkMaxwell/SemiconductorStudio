@@ -1,0 +1,76 @@
+From 44f9cbddcfb327dde6467b98d662b2fc569eb0bb Mon Sep 17 00:00:00 2001
+From: cyberCuber07 <n.eigocuber@gmail.com>
+Date: Sat, 25 Oct 2025 11:03:07 +0200
+Subject: [fix] Make compile on unix systems
+
+imgui is aimed for Windows systems.
+This patch attempts to manually make it buildable
+for unix systems with what has been found as
+sufficient configuration - slight modifications
+in symbol exposure.
+
+Signed-off-by: cyberCuber07 <n.eigocuber@gmail.com>
+---
+ imgui_draw.cpp   |  2 +-
+ imstb_truetype.h |  2 ++
+ meson.build      | 22 ++++++++++++++++++++++
+ 3 files changed, 25 insertions(+), 1 deletion(-)
+ create mode 100644 meson.build
+
+diff --git a/imgui_draw.cpp b/imgui_draw.cpp
+index 6a5a5483..1be5d455 100644
+--- a/imgui_draw.cpp
++++ b/imgui_draw.cpp
+@@ -139,7 +139,7 @@ namespace IMGUI_STB_NAMESPACE
+ #define STBTT_fabs(x)       ImFabs(x)
+ #define STBTT_ifloor(x)     ((int)ImFloor(x))
+ #define STBTT_iceil(x)      ((int)ImCeil(x))
+-#define STBTT_STATIC
++// #define STBTT_STATIC
+ #define STB_TRUETYPE_IMPLEMENTATION
+ #else
+ #define STBTT_DEF extern
+diff --git a/imstb_truetype.h b/imstb_truetype.h
+index 976f09cb..a3af6fd0 100644
+--- a/imstb_truetype.h
++++ b/imstb_truetype.h
+@@ -509,6 +509,8 @@ int main(int arg, char **argv)
+ #else
+ #define STBTT_DEF extern
+ #endif
++#undef STBTT_DEF
++#define STBTT_DEF __attribute__((visibility("default")))
+ 
+ #ifdef __cplusplus
+ extern "C" {
+diff --git a/meson.build b/meson.build
+new file mode 100644
+index 00000000..1804ecf1
+--- /dev/null
++++ b/meson.build
+@@ -0,0 +1,22 @@
++project('imgui', 'cpp',
++      version: '1.0.0')
++
++cpp = meson.get_compiler('cpp')
++
++shared_library('imgui',
++      sources: [
++          'imgui_draw.cpp',
++          'imgui_widgets.cpp',
++          'imgui.cpp',
++          'backends/imgui_impl_glfw.cpp',
++          'backends/imgui_impl_opengl2.cpp',
++          'backends/imgui_impl_opengl3.cpp',
++          'imgui_tables.cpp',
++          'misc/fonts/binary_to_compressed_c.cpp',
++          'misc/freetype/imgui_freetype.cpp',
++          'misc/cpp/imgui_stdlib.cpp',
++          'imgui_demo.cpp',
++        ],
++      include_directories: ['/usr/include/freetype2'],
++      link_args: ['-lGL', '-lglfw', '-lfreetype'],
++      install:true)
+-- 
+2.43.0
+

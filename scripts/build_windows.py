@@ -1,7 +1,5 @@
-import os
-import sys
 import subprocess
 
-
-if __name__ == "__main__":
+def build():
     subprocess.run(("./premake5.exe", "vs2022"))
+    pass
