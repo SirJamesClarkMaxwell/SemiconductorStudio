@@ -40,15 +40,12 @@ namespace JFMService
 	void MonteCarloEngine::Simulate(const MCInput& input, std::function<void(MCOutput&&)> callback)
 	{
 		int chunkSize = input.iterations / 2;
-		std::jthread workerThread {
-			[=]()
-			{
-				MCOutput output;
-				output.inputData = input;
-				std::shared_ptr<Fitters::AbstractFitter> fitter = m_fitter[input.startingData.initialData.modelID];
-				std::shared_ptr<AbstractPreFit> preFitter = m_prefitter[input.startingData.initialData.modelID];
-				auto start = std::chrono::high_resolution_clock().now();
-				output.mcResult.resize(input.iterations);
+		MCOutput output;
+		output.inputData = input;
+		std::shared_ptr<Fitters::AbstractFitter> fitter = m_fitter[input.startingData.initialData.modelID];
+		std::shared_ptr<AbstractPreFit> preFitter = m_prefitter[input.startingData.initialData.modelID];
+		auto start = std::chrono::high_resolution_clock().now();
+		output.mcResult.resize(input.iterations);
 
 
 				std::vector<MCResult> finalResults/*input.iterations*/;
@@ -143,9 +140,6 @@ namespace JFMService
 
 				if (callback)
 					callback(std::move(output));
-			} };
-
-		workerThread.detach();
 	}
 
 	void MonteCarloEngine::generateNoise(double& value, double factor)
