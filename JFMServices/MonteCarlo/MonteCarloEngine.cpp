@@ -36,60 +36,54 @@ namespace JFMService
 	void MonteCarloEngine::Simulate(const MCInput& input, std::function<void(MCOutput&&)> callback)
 	{
 		int chunkSize = input.iterations / 2;
-		std::jthread workerThread {
-			[=]()
-			{
-				MCOutput output;
-				output.inputData = input;
-				std::shared_ptr<Fitters::AbstractFitter> fitter = m_fitter[input.startingData.initialData.modelID];
-				std::shared_ptr<AbstractPreFit> preFitter = m_prefitter[input.startingData.initialData.modelID];
-				auto start = std::chrono::high_resolution_clock().now();
-				output.mcResult.resize(input.iterations);
+		MCOutput output;
+		output.inputData = input;
+		std::shared_ptr<Fitters::AbstractFitter> fitter = m_fitter[input.startingData.initialData.modelID];
+		std::shared_ptr<AbstractPreFit> preFitter = m_prefitter[input.startingData.initialData.modelID];
+		auto start = std::chrono::high_resolution_clock().now();
+		output.mcResult.resize(input.iterations);
 
 
-				std::vector<MCResult> finalResults(input.iterations);
+		std::vector<MCResult> finalResults(input.iterations);
 #ifdef JFM_MULTITHREADED
-				std::vector<std::future<std::vector<MCResult>>> futures;
-				int numChunks = (input.iterations + chunkSize - 1) / chunkSize;
-				for (int chunk = 0; chunk < numChunks; ++chunk)
-				{
-					int startIdx = chunk * chunkSize;
-					futures.push_back(std::async(std::launch::async,
-												 [&, startIdx]()
-												 {
-													 std::vector<MCResult> localResults(chunkSize);
-													 simulateChunk(startIdx, chunkSize, preFitter, fitter, output.inputData, localResults, chunk);
-													 return localResults; // Return local results
-												 }));
-				}
+		std::vector<std::future<std::vector<MCResult>>> futures;
+		int numChunks = (input.iterations + chunkSize - 1) / chunkSize;
+		for (int chunk = 0; chunk < numChunks; ++chunk)
+		{
+			int startIdx = chunk * chunkSize;
+			futures.push_back(std::async(std::launch::async,
+										 [&, startIdx]()
+										 {
+											 std::vector<MCResult> localResults(chunkSize);
+											 simulateChunk(startIdx, chunkSize, preFitter, fitter, output.inputData, localResults, chunk);
+											 return localResults; // Return local results
+										 }));
+		}
 
-				for (int chunk = 0; chunk < numChunks; ++chunk)
-				{
-					auto localResults = futures[chunk].get(); // Wait for and retrieve local results
-					std::copy(localResults.begin(), localResults.end(), output.mcResult.begin() + (chunk * chunkSize));
-				}
+		for (int chunk = 0; chunk < numChunks; ++chunk)
+		{
+			auto localResults = futures[chunk].get(); // Wait for and retrieve local results
+			std::copy(localResults.begin(), localResults.end(), output.mcResult.begin() + (chunk * chunkSize));
+		}
 #else
-				for (int i=0;i<output.inputData.iterations;i++)
-				{
-                MEASURE_TIME("simulate",
-					simulate(preFitter, fitter, output.inputData, finalResults, i);
-                );
-					output.mcResult = finalResults;
-				}
+		for (int i=0;i<output.inputData.iterations;i++)
+		{
+        MEASURE_TIME("simulate",
+			simulate(preFitter, fitter, output.inputData, finalResults, i);
+        );
+			output.mcResult = finalResults;
+		}
 #endif
-				auto end = std::chrono::high_resolution_clock().now();
-				auto miliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
- 				assert(input.iterations);
-				auto perIteration = miliseconds / input.iterations;
-				auto seconds = miliseconds / 1000;
-				Info() << "time: " << seconds << " s "
-						  << perIteration << " ms per fit" << std::endl;
+		auto end = std::chrono::high_resolution_clock().now();
+		auto miliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+ 		assert(input.iterations);
+		auto perIteration = miliseconds / input.iterations;
+		auto seconds = miliseconds / 1000;
+		Info() << "time: " << seconds << " s "
+				  << perIteration << " ms per fit" << std::endl;
 
-				if (callback)
-					callback(std::move(output));
-			} };
-
-		workerThread.detach();
+		if (callback)
+			callback(std::move(output));
 	}
 
 	void MonteCarloEngine::generateNoise(double& value, double factor)
