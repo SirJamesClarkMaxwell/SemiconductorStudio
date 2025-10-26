@@ -6,7 +6,6 @@
 #include <compare>
 #include <assert.h>
 #include <thread>
-//#define MULTITHREAD
 extern std::vector<std::pair<std::vector<double>, std::vector<double>>> globalNoisyI;
 std::mutex g_mutex;
 static int blockNumber = 0;
@@ -52,7 +51,7 @@ namespace JFMService
 
 
 				std::vector<MCResult> finalResults(input.iterations);
-#ifdef MULTITHREAD
+#ifdef JFM_MULTITHREADED
 				std::vector<std::future<std::vector<MCResult>>> futures;
 				int numChunks = (input.iterations + chunkSize - 1) / chunkSize; // 25
 				for (int chunk = 0; chunk < numChunks; ++chunk)
@@ -72,8 +71,7 @@ namespace JFMService
 					auto localResults = futures[chunk].get(); // Wait for and retrieve local results
 					std::copy(localResults.begin(), localResults.end(), output.mcResult.begin() + (chunk * chunkSize));
 				}
-#endif
-#ifndef MULTITHREAD
+#else
 				for (int i=0;i<output.inputData.iterations;i++)
 				{
                 MEASURE_TIME("simulate",

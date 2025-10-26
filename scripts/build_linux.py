@@ -21,11 +21,13 @@ def do_build_yaml_cpp(buildDir='build'):
     do_build(args, buildDir, 'make', builder_env={'PATH': '/usr/bin'})
 
 
-def do_meson_build(buildDir='build'):
+def do_meson_build(isMultithreaded=False, buildDir='build'):
     args = ['meson', buildDir]
 
     if os.path.exists(buildDir):
         args.append('--reconfigure')
+    if isMultithreaded:
+        args.append('-Dmulti=true')
 
     do_build(args, buildDir, 'ninja')
 
@@ -61,8 +63,7 @@ def setup_single_dep(d, abs_patch_path, doClean):
     print(f'{dep} done !')
 
 
-def setup_dependencies(doClean, isMultithreaded):
-    # Note that ordering matters for building (now multithreaded is not supported)
+def setup_dependencies(doClean):
     deps = [
         ['LambertW', 'https://github.com/SirJamesClarkMaxwell/LambertW', 'bf728a4',
             ['0001-feat-Add-build-script.patch'], do_meson_build],
@@ -87,31 +88,18 @@ def setup_dependencies(doClean, isMultithreaded):
 
 
     print('Fetching dependencies')
-    if isMultithreaded:
-        tds = list()
-
-        for d in deps:
-            tds.append( threading.Thread(target=setup_single_dep,
-                                         args=(d, os.path.join(cwd, patch_path), doClean)) )
-
-        for t in tds:
-            t.start()
-        for t in tds:
-            t.join()
-
-    else:
-        for d in deps:
-            setup_single_dep(d, os.path.join(cwd, patch_path), doClean)
+    for d in deps:
+        setup_single_dep(d, os.path.join(cwd, patch_path), doClean)
 
     os.chdir('..')
     print('Setup done !')
 
 
-def build(doClean):
+def build(doClean, isMultithreaded):
     buildDir = 'build'
 
     if doClean:
         subprocess.run(['rm', '-rf', buildDir])
 
-    do_meson_build()
+    do_meson_build(isMultithreaded)
 
