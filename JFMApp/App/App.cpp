@@ -1,6 +1,7 @@
 ﻿#include <map>
 #include "pch.hpp"
 #include "App.hpp"
+#include <thread>
 
 std::vector<std::pair<std::vector<double>, std::vector<double>>> globalNoisyI{};
 std::vector<std::pair<std::vector<double>, std::vector<double>>> globalErrors{};
@@ -58,10 +59,7 @@ namespace JFMApp
 
 	void App::draw()
 	{
-		// if (!m_numerics || !m_dataLoader) return;
-		std::scoped_lock lk{m_charMutex};
 		// get the mainviewport dockspace
-
 		ImGuiID mainDockID = Views::Widgets::mDS;
 
 		// dock prograpatically the main window
@@ -216,9 +214,6 @@ namespace JFMApp
 
 	void App::update()
 	{
-		// if (!m_numerics && !m_dataLoader) return;
-		std::scoped_lock lk{m_charMutex};
-
 		// update the characteristic list and active characteristic
 		if (m_state.plotData.active && !(m_state.plotData.active->checked))
 		{
@@ -356,7 +351,6 @@ namespace JFMApp
 
 					double fitError = m_numerics->CalculateError(cData.characteristic.currentData, ch.getEstimateInput().characteristic.currentData);
 					ch.submitFitting(output, fitError);
-					//std::scoped_lock lk{ m_charMutex };
 					ch.savedUseInitial = false;
 					ch.savedUseBounds = false;
 
@@ -635,7 +629,6 @@ namespace JFMApp
 
 						double fitError = m_numerics->CalculateError(cData.characteristic.currentData, ch.getEstimateInput().characteristic.currentData);
 						ch.submitFitting(output, fitError);
-						//std::scoped_lock lk{ m_charMutex };
 						ch.savedUseInitial = false;
 						ch.savedUseBounds = false;
 
@@ -682,7 +675,6 @@ namespace JFMApp
 
 								  double fitError = numerics->CalculateError(cData.characteristic.currentData, temp.getEstimateInput().characteristic.currentData);
 								  temp.submitFitting(output, fitError);
-								  // std::scoped_lock lk{ m_charMutex };
 								  temp.savedUseInitial = false;
 								  temp.savedUseBounds = false;
 
@@ -906,7 +898,6 @@ namespace JFMApp
 											temp.fitError = m_numerics->CalculateError(temp.getEstimateInput().characteristic.currentData, cd.characteristic.currentData);
 
 
-											std::scoped_lock lk{ m_charMutex };
 											m_state.browserData.m_characteristics.push_back(temp);
 											ch = &m_state.browserData.m_characteristics.back();
 											loadMC();
