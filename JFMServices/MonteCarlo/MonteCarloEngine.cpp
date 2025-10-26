@@ -19,13 +19,13 @@ namespace JFMService
     {
     }
 
-	void MonteCarloEngine::simulateChunk(int startIdx, int chunkSize, const std::shared_ptr<AbstractPreFit>& preFitter,
+	void MonteCarloEngine::simulateChunk(int startIdx, uint32_t chunkSize, const std::shared_ptr<AbstractPreFit>& preFitter,
 		const std::shared_ptr<Fitters::AbstractFitter> fitter, MCInput& input,
 		std::vector<MCResult>& localResults, int numBlock)
 	{
 		m_blockNumber++;
 
-		for (int i = 0; i < chunkSize; ++i)
+		for (uint32_t i = 0; i < chunkSize; ++i)
 		{
 			if ((startIdx+i) >= input.iterations)
 			{
@@ -39,7 +39,8 @@ namespace JFMService
 
 	void MonteCarloEngine::Simulate(const MCInput& input, std::function<void(MCOutput&&)> callback)
 	{
-		int chunkSize = input.iterations / 2;
+		uint32_t chunkSize = input.iterations > 1 ? input.iterations / 2 : 1;
+        assert(chunkSize);
 		MCOutput output;
 		output.inputData = input;
 		std::shared_ptr<Fitters::AbstractFitter> fitter = m_fitter[input.startingData.initialData.modelID];
