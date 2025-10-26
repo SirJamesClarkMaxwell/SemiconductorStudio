@@ -13,34 +13,33 @@ std::mutex g_mutex;
 static int blockNumber = 0;
 namespace JFMService
 {
-	MonteCarloEngine::MonteCarloEngine() {};
+	MonteCarloEngine::MonteCarloEngine()
+        : m_iterationCount(0)
+        , m_blockNumber(0)
+    {
+    }
+
 	void MonteCarloEngine::simulateChunk(int startIdx, int chunkSize, const std::shared_ptr<AbstractPreFit>& preFitter,
 		const std::shared_ptr<Fitters::AbstractFitter> fitter, MCInput& input,
 		std::vector<MCResult>& localResults, int numBlock)
 	{
-		blockNumber += 1;
-		int localNumeber = blockNumber;
-		// int blockNumber = startIdx - chunkSize
+		m_blockNumber++;
+
 		for (int i = 0; i < chunkSize; ++i)
 		{
-			int idx = startIdx + i;
-			if (idx >= input.iterations)
+			if ((startIdx+i) >= input.iterations)
 			{
 				localResults.resize(i);
 				break;
 			}
-			MCResult result;
-			simulate(preFitter, fitter, input, localResults, i);
-			// if(i%20 == 0)
-			//Info() << "block:" << localNumeber << " idx: " << i << std::endl;
-		}
-	};
 
-	static std::mutex mutex;
-	static int num = 0;
+			simulate(preFitter, fitter, input, localResults, i);
+		}
+	}
+
 	void MonteCarloEngine::Simulate(const MCInput& input, std::function<void(MCOutput&&)> callback)
 	{
-		int chunkSize = input.iterations / 2; // 41
+		int chunkSize = input.iterations / 2;
 		std::jthread workerThread {
 			[=]()
 			{
@@ -55,7 +54,7 @@ namespace JFMService
 				std::vector<MCResult> finalResults/*input.iterations*/;
 #ifdef MULTITHREAD
 				std::vector<std::future<std::vector<MCResult>>> futures;
-				int numChunks = (input.iterations + chunkSize - 1) / chunkSize; // 25
+				int numChunks = (input.iterations + chunkSize - 1) / chunkSize;
 				for (int chunk = 0; chunk < numChunks; ++chunk)
 				{
 					int startIdx = chunk * chunkSize;
@@ -153,15 +152,10 @@ namespace JFMService
 	{
 		double noise = (value * factor / 100);
 		double copy = value;
-		// std::uniform_real_distribution<double> distribution{ -1,1 };
 		std::normal_distribution<double> distribution{ 0, 1 };
-		// Info() << distribution(m_generator)*sigma << std::endl;
-		//Info() << value << " ";
-		value += distribution(m_generator) * noise;
-		//Info() << value << std::endl;
-		// value = value +  distribution(m_generator)*(factor / 100) * value ;
-		// value = std::abs(value);
+		value += distribution(generator) * noise;
 	}
+
 	void MonteCarloEngine::simulate(const std::shared_ptr<AbstractPreFit>& preFitter, const std::shared_ptr<Fitters::AbstractFitter> fitter, MCInput& input, std::vector<MCResult>& results, int i)
 	{
 		MCResult result;
@@ -199,11 +193,12 @@ namespace JFMService
         );
 			calculateFittingError(input, result, calculated);
 		} while (result.error > 23.5 or outOfBounds(result.foundParameters, input.startingData.bounds));
-		
+
 		results[i] = result;
-		num += 1;
+		m_iterationCount++;
 		Info() << "iteration: " << i << std::endl;
 	}
+
 	void MonteCarloEngine::calculateFittingError(const MCInput& input, MCResult& result, std::vector<double>& calculated)
 	{
 		CalculatingData data;
@@ -232,7 +227,7 @@ namespace JFMService
 		std::span<double> fittedCurrent = data.characteristic.currentData;
 		double accumulatedError = 0.0;
 		double noise = input.noise / 100.0;
-		
+
 		auto IerrorModel = [&](double trueI, double fittedI)
 		{
 			return std::pow(((std::log(fittedI) - std::log(trueI)) / (noise)), 2);
@@ -264,7 +259,6 @@ namespace JFMService
 			});
 
 		// Extract the max and min values
-
 		double maxValue = maxIt->foundParameters.at(id);
 		double minValue = minIt->foundParameters.at(id);
 		const auto& trueParameter = output.inputData.trueParameters.at(id);
@@ -311,4 +305,4 @@ namespace JFMService
 		return error;
 	}
 
-}
+} // namespace JFMService
