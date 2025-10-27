@@ -67,8 +67,7 @@ def setup_dependencies(doClean):
     deps = [
         ['LambertW', 'https://github.com/SirJamesClarkMaxwell/LambertW', 'bf728a4',
             ['0001-feat-Add-build-script.patch'], do_meson_build],
-        ['NumericStorm', 'https://github.com/SirJamesClarkMaxwell/NumericStorm', 'f80187b',
-            ['0001-fix-Make-compile-on-unix-systems.patch'], None],
+        ['NumericStorm', 'https://github.com/SirJamesClarkMaxwell/NumericStorm', 'f80187b', [], None],
         ['googletest', 'https://github.com/ArnoXX/googletest', 'ff233bd', [], None],
         ['imgui', 'https://github.com/ArnoXX/imgui', 'c795886',
             ['0001-fix-Make-compile-on-unix-systems.patch'], do_meson_build],
