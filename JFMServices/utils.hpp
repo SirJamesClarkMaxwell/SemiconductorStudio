@@ -3,10 +3,12 @@
 #include <fstream>
 #include <sstream>
 #include <ostream>
+#include <format>
 #include <chrono>
 #include <stdio.h>
 
 #define BIT(x) (1 << x)
+#define ARRAY_LENGTH(arr)       ((size_t)(sizeof(arr)/sizeof(arr[0])))
 
 namespace utils
 {
@@ -46,12 +48,21 @@ namespace utils
         return destination;
     }
 
+    static const char *jfmLevelNames[] = {
+        "NONE", "ERR", "INFO", "TRACE"
+    };
+    enum JfmLogLevel : uint8_t {
+        None = 0,
+        Err,
+        Info,
+        Trace,
+        Count
+    };
+    static_assert(JfmLogLevel::Count == ARRAY_LENGTH(jfmLevelNames));
+
     struct FileLogger {
     private:
         static constexpr const char *path = "jfm.log";
-        static constexpr const char *levelNames[] = {
-            "NONE", "ERR", "INFO"
-        };
 
         std::ofstream m_fileObj;
 
@@ -67,30 +78,26 @@ namespace utils
             m_fileObj.close();
         }
 
-        void writeMessage(int level, const char *msg)
+        void writeMessage(const char *msg)
         {
             assert(m_fileObj.is_open() == true);
-            m_fileObj << "[" << FileLogger::levelNames[level] << "]" << msg;
+            m_fileObj << msg;
             m_fileObj.flush();
         }
     };
     extern FileLogger gLogger;
 
-#   define JFM_NONE            0
-#   define JFM_ERR             1
-#   define JFM_INFO            2
-
     struct Logger {
     private:
         std::ostringstream m_stream;
         std::ostream m_os;
-        int m_level;
+        JfmLogLevel m_level;
         const char *m_file;
         const char *m_function;
         int m_line;
 
     public:
-        Logger(const char *file, const char *function, int line, int logLevel)
+        Logger(const char *file, const char *function, int line, enum JfmLogLevel logLevel)
             : m_stream{}
             , m_os(m_stream.rdbuf())
             , m_level(logLevel)
@@ -98,15 +105,23 @@ namespace utils
             , m_function(function)
             , m_line(line)
         {
-            m_os << m_file << ":" << m_function << ":" << m_line << ": ";
+            static char header[17]; // Note: we are using fixed number of characters: 4 + 5 + 6 + 1 + 1
+            // our header is:
+            //         '[' + jfmLevelNames padded with ' '         + ']'
+            //         '[' + first 6 digits of calling thread's id + ']' + ' '
+            snprintf(header, sizeof header, "[%5.5s][%6.6s] ",
+                jfmLevelNames[m_level],
+                std::to_string( std::hash<std::thread::id>{}(std::this_thread::get_id()) ).c_str() );
+
+            m_os << header << m_file << ":" << m_function << ":" << m_line << ": ";
         }
 
         ~Logger()
         {
             if (isVerbose())
-                fprintf(m_level <= JFM_ERR ? stderr : stdout, "%s", m_stream.str().c_str());
+                fprintf(m_level <= JfmLogLevel::Err ? stderr : stdout, "%s", m_stream.str().c_str());
 
-            gLogger.writeMessage(m_level, m_stream.str().c_str());
+            gLogger.writeMessage(m_stream.str().c_str());
         }
 
         std::ostream &stream() { return m_os; }
@@ -135,9 +150,11 @@ namespace utils
     };
 }
 
-#define _Log(level)      utils::Logger(__FILE__, __func__, __LINE__, JFM_##level).stream()
-#define Info()          _Log(INFO)
-#define Err()           _Log(ERR)
+#define _Log(level)      utils::Logger(__FILE__, __func__, __LINE__, utils::JfmLogLevel::level).stream()
+#define Info()          _Log(Info)
+#define Err()           _Log(Err)
+
+#define JFM_Trace()     _Log(Trace) << "\n"
 
 #define MEASURE_TIME(section_name, ...) \
 { \
@@ -148,3 +165,5 @@ namespace utils
            << std::chrono::duration_cast<std::chrono::milliseconds>(end_time-start_time).count() \
            << "milliseconds.\n"; \
 }
+
+#define Unreachable()           assert("Unreachable reached !" == 0)
