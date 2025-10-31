@@ -20,7 +20,12 @@ namespace JFMService
 	{
 	public:
 		MonteCarloEngine();
-		void Simulate(const MCInput &input, std::function<void(MCOutput &&)> callback);
+
+        void Simulate(const MCInput& input, std::function<void(MCOutput&&)> callback)
+        {
+            MEASURE_CALLBACK_EXECUTION_TIME( [&]() { SimulateImpl(input, callback); } );
+        }
+
 		double GetUncertainty(const MCOutput &output, int level, ParameterID id);
 
 	private:
@@ -43,6 +48,8 @@ namespace JFMService
 
 		double calculateMaximumError(const PlotData &trueData, double noiseFactor);
 		void generateNoise(double &value, double factor);
+
+		void SimulateImpl(const MCInput &input, std::function<void(MCOutput &&)> callback);
 
 		void simulate(
 			const std::shared_ptr<AbstractPreFit> preFitter,

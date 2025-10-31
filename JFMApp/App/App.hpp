@@ -77,7 +77,7 @@ namespace JFMApp {
 				, calledClose(false)
 				, currentDone(true)
 			{
-				assert(workerThread.joinable() == true);
+				JFM_ASSERT(workerThread.joinable() == true);
 			}
 
 			~WorkDispatcher()
@@ -124,7 +124,7 @@ namespace JFMApp {
 						if (calledClose == true)
 							break;
 
-						assert(currentDone == true);
+						JFM_ASSERT(currentDone == true);
 						currentDone = false;
 					}
 

@@ -4,10 +4,7 @@
 #include "../Models/CalculateData.hpp"
 #include <utils.hpp>
 #include <compare>
-#include <assert.h>
 #include <thread>
-//#define MULTITHREAD
-#define FOR_LOOP_IMPLEMENTATION
 extern std::vector<std::pair<std::vector<double>, std::vector<double>>> globalNoisyI;
 std::mutex g_mutex;
 static int blockNumber = 0;
@@ -59,108 +56,61 @@ namespace JFMService
 		m_iterationCount++;
 	}
 
-	void MonteCarloEngine::Simulate(const MCInput& input, std::function<void(MCOutput&&)> callback)
+	void MonteCarloEngine::SimulateImpl(const MCInput& input, std::function<void(MCOutput&&)> callback)
 	{
 		MCOutput output;
 		output.inputData = input;
 		std::shared_ptr<Fitters::AbstractFitter> fitter = m_fitter[input.startingData.initialData.modelID];
 		std::shared_ptr<AbstractPreFit> preFitter = m_prefitter[input.startingData.initialData.modelID];
-		assert(input.iterations);
+		JFM_ASSERT(input.iterations);
 		output.mcResult.resize(input.iterations);
 
+#	if defined(JFM_ITER_SIMULATE)
+		for (size_t iteration = 0; iteration < output.inputData.iterations; ++iteration)
+		MEASURE_TIME("simulate",
+			simulate(preFitter, fitter, output.inputData, output.mcResult[iteration]);
+		);
+#	else
+		auto idealParameters = input.trueParameters;
+		std::vector<ParameterMap> parameters;
+		int steps_per_param = input.iterations;
 
-				std::vector<MCResult> finalResults/*input.iterations*/;
-#ifdef MULTITHREAD
-				std::vector<std::future<std::vector<MCResult>>> futures;
-				int numChunks = (input.iterations + chunkSize - 1) / chunkSize;
-				for (int chunk = 0; chunk < numChunks; ++chunk)
-				{
-					int startIdx = chunk * chunkSize;
-					futures.push_back(std::async(std::launch::async,
-												 [&, startIdx]()
-												 {
-													 std::vector<MCResult> localResults(chunkSize);
-													 simulateChunk(startIdx, chunkSize, preFitter, fitter, output.inputData, localResults, chunk);
-													 return localResults; // Return local results
-												 }));
-				}
+		// Calculate step sizes based on range
+		ParameterMap currentParameters = idealParameters;
+		std::vector<std::vector<double>> pSets(idealParameters.size()); // Pre-size the vector
+		for (size_t i = 0; i < idealParameters.size(); ++i)
+		{
+			double start = input.trueParameters.at(i) * 0.90;
+			double end = input.trueParameters.at(i) * 1.1;
+			double stepSize = (end - start) / steps_per_param;
+			double curr = start;
 
-				for (int chunk = 0; chunk < numChunks; ++chunk)
-				{
-					auto localResults = futures[chunk].get(); // Wait for and retrieve local results
-					std::copy(localResults.begin(), localResults.end(), output.mcResult.begin() + (chunk * chunkSize));
-				}
+			while (curr <= end) {
+				pSets[i].push_back(curr);
+				curr += stepSize;
+			}
+		}
+
+		auto cartesian = std::views::cartesian_product(pSets[0], pSets[1], pSets[2], pSets[3]);
+		output.mcResult.resize(cartesian.size());
+
+		size_t i = 0;
+		for (size_t productIdx = 0; productIdx < cartesian.size(); ++productIdx)
+		{
+			auto&&t = cartesian[productIdx];
+			MCResult& result = output.mcResult[productIdx];
+
+			ParameterMap& param = result.foundParameters;
+			param[0] = std::get<0>(t);
+			param[1] = std::get<1>(t);
+			param[2] = std::get<2>(t);
+			param[3] = std::get<3>(t);
+
+			calculateFittingError(input, result);
+		}
 #endif
-#ifndef FOR_LOOP_IMPLEMENTATION
-#ifndef MULTITHREAD 
-				for (int i=0;i<output.inputData.iterations;i++)
-				{
-                MEASURE_TIME("simulate",
-					simulate(preFitter, fitter, output.inputData, finalResults, i);
-                );
-					output.mcResult = finalResults;
-				}
-#endif
-#endif
-#ifdef  FOR_LOOP_IMPLEMENTATION
-				auto idealParameters = input.trueParameters;
-				std::vector<ParameterMap> parameters;
-				ParameterMap stepSizes;
-				int steps_per_param = input.iterations;
-
-				// Calculate step sizes based on range
-				ParameterMap currentParameters = idealParameters;
-				std::vector<std::vector<double>> pSets(idealParameters.size()); // Pre-size the vector
-				for (size_t i = 0; i < idealParameters.size(); ++i)
-				{
-					double start = input.trueParameters.at(i) * 0.90;
-					double end = input.trueParameters.at(i) * 1.1;
-					stepSizes[i] = (end - start) / steps_per_param;
-
-					for (double j = start; j <= end; j += stepSizes[i]) 
-						pSets[i].push_back(j);
-					
-				}
-
-				// If you're on C++23 or using a compatible range library
-				auto cartesian = std::views::cartesian_product(pSets[0], pSets[1], pSets[2], pSets[3]);
-
-				// Convert to parameters vector (optional step)
-				for (auto&& tuple : cartesian) 
-				{
-					ParameterMap param;
-					param[0] = std::get<0>(tuple);
-					param[1] = std::get<1>(tuple);
-					param[2] = std::get<2>(tuple);
-					param[3] = std::get<3>(tuple);
-					parameters.push_back(param);
-				}
-				std::vector<double> calculated;
-				size_t it = 0;
-				size_t size = parameters.size();
-				for (const auto& [it,item]: std::ranges::enumerate_view(parameters))
-				{
-					MCResult result;
-					result.foundParameters = item;
-					calculateFittingError(input, result, calculated);
-					std::cout << "Iteration: " << it << "/" << size << " has finished!" << std::endl;
-					if (result.error > 23.5)
-						continue;
-					else
-						finalResults.push_back(result);
-				}
-#endif //  FOR_LOOP_IMPLEMENTATION
-				output.mcResult = finalResults;
-				auto end = std::chrono::high_resolution_clock().now();
-				auto miliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
- 				assert(size);
-				auto perIteration = miliseconds /size;
-				auto seconds = miliseconds / 1000;
-				Info() << "time: " << seconds << " s "
-						  << perIteration << " ms per fit" << std::endl;
-
-				if (callback)
-					callback(std::move(output));
+		if (callback)
+			callback(std::move(output));
 	}
 
 	void MonteCarloEngine::generateNoise(double& value, double factor)

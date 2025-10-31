@@ -10,6 +10,7 @@ if __name__ == "__main__":
     parser.add_argument('--setup', action='store_true')
     parser.add_argument('--no-setup', dest='setup', action='store_false')
     parser.add_argument('--multi', action='store_true')
+    parser.add_argument('--iter_simulate', action='store_true')
     args = parser.parse_args()
 
     print('Build JFM Application')
@@ -20,7 +21,7 @@ if __name__ == "__main__":
         #          python3 scripts/build.py --build-type linux --no-clean
         if args.setup:
             build_linux.setup_dependencies(args.clean)
-        build_linux.build(args.clean, args.multi)
+        build_linux.build(args.clean, args.multi, args.iter_simulate)
     else:
         print('\t target:\t windows\n')
         build_windows.build()

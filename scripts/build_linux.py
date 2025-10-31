@@ -21,13 +21,15 @@ def do_build_yaml_cpp(buildDir='build'):
     do_build(args, buildDir, 'make', builder_env={'PATH': '/usr/bin'})
 
 
-def do_meson_build(isMultithreaded=False, buildDir='build'):
+def do_meson_build(isMultithreaded=False, iterSimulate=False, buildDir='build'):
     args = ['meson', buildDir]
 
     if os.path.exists(buildDir):
         args.append('--reconfigure')
     if isMultithreaded:
         args.append('-Dmulti=true')
+    if iterSimulate:
+        args.append('-Diter_simulate=true')
 
     do_build(args, buildDir, 'ninja')
 
@@ -67,7 +69,7 @@ def setup_dependencies(doClean):
     deps = [
         ['LambertW', 'https://github.com/SirJamesClarkMaxwell/LambertW', 'bf728a4',
             ['0001-feat-Add-build-script.patch'], do_meson_build],
-        ['NumericStorm', 'https://github.com/SirJamesClarkMaxwell/NumericStorm', 'f80187b', [], None],
+        ['NumericStorm', 'https://github.com/SirJamesClarkMaxwell/NumericStorm', 'c71c5e2', [], None],
         ['googletest', 'https://github.com/ArnoXX/googletest', 'ff233bd', [], None],
         ['imgui', 'https://github.com/ArnoXX/imgui', 'c795886',
             ['0001-fix-Make-compile-on-unix-systems.patch'], do_meson_build],
@@ -94,11 +96,11 @@ def setup_dependencies(doClean):
     print('Setup done !')
 
 
-def build(doClean, isMultithreaded):
+def build(doClean, isMultithreaded, iterSimulate):
     buildDir = 'build'
 
     if doClean:
         subprocess.run(['rm', '-rf', buildDir])
 
-    do_meson_build(isMultithreaded)
+    do_meson_build(isMultithreaded, iterSimulate)
 

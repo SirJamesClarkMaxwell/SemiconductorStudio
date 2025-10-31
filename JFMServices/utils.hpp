@@ -6,13 +6,13 @@
 #include <format>
 #include <chrono>
 #include <stdio.h>
+#include <assert.h>
 
 #define BIT(x) (1 << x)
 #define ARRAY_LENGTH(arr)       ((size_t)(sizeof(arr)/sizeof(arr[0])))
 
 namespace utils
 {
-
     inline void generateVectorAtGivenRanges(std::vector<double> &destination, double min, double max, double step)
     {
         destination.clear();
@@ -48,6 +48,43 @@ namespace utils
         return destination;
     }
 
+    template <typename T>
+    inline T min(const T& a, const T&b)
+    {
+        return a > b ? b : a;
+    }
+} // namespace utils
+
+#define _Log(level)      utils::Logger(__FILE__, __func__, __LINE__, utils::JfmLogLevel::level).stream()
+#define Err()           _Log(Err)
+#define Info()          _Log(Info)
+#define Verbose()       _Log(Verbose)
+#define Trace()         _Log(Trace) << "\n"
+
+#define _MEASURE_TIME(logger, precision, section_name, ...) \
+do { \
+    auto start_time = std::chrono::steady_clock::now(); \
+    __VA_ARGS__ \
+    auto end_time = std::chrono::steady_clock::now(); \
+    logger() << "[" << section_name << "] Time elapsed: " \
+           << std::chrono::duration_cast<std::chrono::precision>(end_time-start_time).count() \
+           << " " #precision << ".\n"; \
+} while (0)
+
+#define MEASURE_TIME(...)                   _MEASURE_TIME(Info, milliseconds, __VA_ARGS__)
+#define MEASURE_TIME_PRECISE(...)           _MEASURE_TIME(Trace, microseconds, __VA_ARGS__)
+#define MEASURE_TIME_THIS_FUNC(...)         MEASURE_TIME(__func__, __VA_ARGS__)
+
+#define Unreachable()           JFM_ASSERT("Unreachable reached !" == 0)
+
+#ifdef JFM_DEBUG
+#define JFM_ASSERT(cond) 		assert(cond)
+#else
+#define JFM_ASSERT(cond)
+#endif
+
+namespace utils
+{
     static const char *jfmLevelNames[] = {
         "NONE", "ERR", "INFO", "VERBOSE", "TRACE"
     };
@@ -71,7 +108,7 @@ namespace utils
         FileLogger()
         {
             m_fileObj = std::ofstream(FileLogger::path, std::ios_base::app);
-            assert(m_fileObj.is_open() == true);
+            JFM_ASSERT(m_fileObj.is_open() == true);
         }
 
         ~FileLogger()
@@ -81,7 +118,7 @@ namespace utils
 
         void writeMessage(const char *msg)
         {
-            assert(m_fileObj.is_open() == true);
+            JFM_ASSERT(m_fileObj.is_open() == true);
             m_fileObj << msg;
             m_fileObj.flush();
         }
@@ -182,31 +219,11 @@ namespace utils
         }
     };
 
-    template <typename T>
-    inline T min(const T& a, const T&b)
+    template <typename Callback>
+    inline void measure_callback_execution_time(Callback cb, const char *measurementName)
     {
-        return a > b ? b : a;
+        MEASURE_TIME( measurementName, cb(); );
     }
-}
+} // namespace utils
 
-#define _Log(level)      utils::Logger(__FILE__, __func__, __LINE__, utils::JfmLogLevel::level).stream()
-#define Err()           _Log(Err)
-#define Info()          _Log(Info)
-#define Verbose()       _Log(Verbose)
-#define Trace()         _Log(Trace) << "\n"
-
-#define _MEASURE_TIME(logger, precision, section_name, ...) \
-do { \
-    auto start_time = std::chrono::steady_clock::now(); \
-    __VA_ARGS__ \
-    auto end_time = std::chrono::steady_clock::now(); \
-    logger() << "[" << section_name << "] Time elapsed: " \
-           << std::chrono::duration_cast<std::chrono::precision>(end_time-start_time).count() \
-           << #precision << ".\n"; \
-} while (0)
-
-#define MEASURE_TIME(...)                   _MEASURE_TIME(Info, milliseconds, __VA_ARGS__)
-#define MEASURE_TIME_PRECISE(...)           _MEASURE_TIME(Trace, microseconds, __VA_ARGS__)
-#define MEASURE_TIME_THIS_FUNC(...)         MEASURE_TIME(__func__, __VA_ARGS__)
-
-#define Unreachable()           assert("Unreachable reached !" == 0)
+#define MEASURE_CALLBACK_EXECUTION_TIME(__cb)       utils::measure_callback_execution_time((__cb), __func__)

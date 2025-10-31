@@ -11,7 +11,6 @@ void JFMService::DataCalculator::CalculateData(CalculatingData &input)
     SixParameterModel model6;
     FiveParameterModel model5;
     SevenParameterModel model7;
-    JFM_Trace();
     
     switch (input.modelID)
     {
