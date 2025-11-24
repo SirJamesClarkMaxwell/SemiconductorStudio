@@ -127,6 +127,7 @@ namespace utils
 
     inline static JfmLogLevel getLogLevel()
     {
+        JfmLogLevel ret;
         const char *level = getenv("JFM_LOG_LEVEL");
         if (level == NULL)
             return JfmLogLevel::None;
@@ -135,15 +136,21 @@ namespace utils
 
         switch (value)
         {
-        case 1: return JfmLogLevel::Err;
-        case 2: return JfmLogLevel::Info;
-        case 3: return JfmLogLevel::Trace;
+        case 2:
+            ret = JfmLogLevel::Info;
+            break;
+        case 3:
+            ret = JfmLogLevel::Trace;
+            break;
         case 0:
+            ret = JfmLogLevel::None;
         default:
+        case 1:
+            ret = JfmLogLevel::Err;
             break;
         }
 
-        return JfmLogLevel::None;
+        return ret;
     }
 
     static const JfmLogLevel gLogLevel = getLogLevel();
