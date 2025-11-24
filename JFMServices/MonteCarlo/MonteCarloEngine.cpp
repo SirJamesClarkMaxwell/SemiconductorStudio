@@ -4,7 +4,6 @@
 #include "../Models/CalculateData.hpp"
 #include <utils.hpp>
 #include <compare>
-#include <thread>
 extern std::vector<std::pair<std::vector<double>, std::vector<double>>> globalNoisyI;
 std::mutex g_mutex;
 static int blockNumber = 0;
@@ -76,7 +75,6 @@ namespace JFMService
 		int steps_per_param = input.iterations;
 
 		// Calculate step sizes based on range
-		ParameterMap currentParameters = idealParameters;
 		std::vector<std::vector<double>> pSets(idealParameters.size()); // Pre-size the vector
 		for (size_t i = 0; i < idealParameters.size(); ++i)
 		{
