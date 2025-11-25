@@ -4,6 +4,7 @@
 #include "../Models/CalculateData.hpp"
 #include <utils.hpp>
 #include <compare>
+#include <future>
 extern std::vector<std::pair<std::vector<double>, std::vector<double>>> globalNoisyI;
 std::mutex g_mutex;
 static int blockNumber = 0;
@@ -89,10 +90,29 @@ namespace JFMService
 			}
 		}
 
-		auto cartesian = std::views::cartesian_product(pSets[0], pSets[1], pSets[2], pSets[3]);
-		output.mcResult.resize(cartesian.size());
+		ProductT cartesian = std::views::cartesian_product(pSets[0], pSets[1], pSets[2], pSets[3]);
+#if defined(JFM_MULTITHREADED)
+		unsigned threadCount = std::thread::hardware_concurrency();
+		Info() << "WARN: Multithreaded mode - using all threads : " << threadCount << "\n";
+		std::vector<std::thread> threads(threadCount);
+		const size_t totalLength = cartesian.size();
+		const size_t batchLength = totalLength / threadCount;
+		size_t index = 0;
 
-		size_t i = 0;
+		auto &outputs = output.mcResult;
+		outputs.resize(cartesian.size());
+
+		for (uint32_t threadIndx = 0; threadIndx < threadCount; ++threadIndx)
+		{
+			size_t startIndx = threadIndx * batchLength;
+			size_t length = batchLength +
+				(threadIndx+1 != threadCount ? 0 : totalLength % threadCount);
+			threads[threadIndx] = std::thread(&MonteCarloEngine::calculateFittingErrorByBatch, this,
+									input, &outputs, cartesian, startIndx, length);
+		}
+		for (auto &t : threads)
+			t.join();
+#else
 		for (size_t productIdx = 0; productIdx < cartesian.size(); ++productIdx)
 		{
 			auto&&t = cartesian[productIdx];
@@ -106,9 +126,23 @@ namespace JFMService
 
 			calculateFittingError(input, result);
 		}
-#endif
+#endif // JFM_MULTITHREADED
+#endif // JFM_ITER_SIMULATE
 		if (callback)
 			callback(std::move(output));
+	}
+
+	void MonteCarloEngine::calculateFittingErrorByBatch(
+		const MCInput &input,
+		std::vector<MCResult> *output,
+		const ProductT &cartesian,
+		size_t startIndx,
+		size_t length)
+	{
+		for (size_t indx = 0; indx < length; ++indx)
+		{
+			calculateFittingError(input, output->at(startIndx+indx));
+		}
 	}
 
 	void MonteCarloEngine::generateNoise(double& value, double factor)

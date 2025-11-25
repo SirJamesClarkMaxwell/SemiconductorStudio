@@ -4,6 +4,7 @@
 #include "../Fitting/JFMFitter.hpp"
 #include "../Fitting/PreFitter.hpp"
 #include <atomic>
+#include <ranges>
 
 namespace JFMService
 {
@@ -21,10 +22,10 @@ namespace JFMService
 	public:
 		MonteCarloEngine();
 
-        void Simulate(const MCInput& input, std::function<void(MCOutput&&)> callback)
-        {
-            MEASURE_CALLBACK_EXECUTION_TIME( [&]() { SimulateImpl(input, callback); } );
-        }
+		void Simulate(const MCInput& input, std::function<void(MCOutput&&)> callback)
+		{
+			MEASURE_CALLBACK_EXECUTION_TIME( [&]() { SimulateImpl(input, callback); } );
+		}
 
 		double GetUncertainty(const MCOutput &output, int level, ParameterID id);
 
@@ -55,9 +56,21 @@ namespace JFMService
 			const std::shared_ptr<AbstractPreFit> preFitter,
 			const std::shared_ptr<Fitters::AbstractFitter> fitter,
 			MCInput &input,
-			MCResult& result);
+			MCResult &result);
 
-		void calculateFittingError(const MCInput &input, MCResult &result);
+		void calculateFittingError(const MCInput& input, MCResult& result);
+
+		using ProductT = std::ranges::cartesian_product_view<
+			std::views::all_t<std::vector<double> &>,
+			std::views::all_t<std::vector<double> &>,
+			std::views::all_t<std::vector<double> &>,
+			std::views::all_t<std::vector<double> &> >;
+		void calculateFittingErrorByBatch(
+			const MCInput &input,
+			std::vector<MCResult> *output,
+			const ProductT &cartesian,
+			size_t startIndx,
+			size_t length);
 
 		std::atomic<uint32_t> m_iterationCount;
 		std::atomic<uint32_t> m_blockNumber;

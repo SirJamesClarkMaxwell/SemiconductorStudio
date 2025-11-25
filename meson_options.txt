@@ -1,0 +1,13 @@
+option(
+    'iter_simulate',
+    type: 'boolean',
+    value: true,
+    description: 'Use legacy computation of MonteCarloEngine::simulate() method.'
+)
+
+option(
+    'multi',
+    type: 'boolean',
+    value: true,
+    description: 'Use multiple cores'
+)
