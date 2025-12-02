@@ -110,19 +110,7 @@ namespace JFMService
 		for (auto &t : threads)
 			t.join();
 #else
-		for (size_t productIdx = 0; productIdx < cartesian.size(); ++productIdx)
-		{
-			auto&&t = cartesian[productIdx];
-			MCResult& result = output.mcResult[productIdx];
-
-			ParameterMap& param = result.foundParameters;
-			param[0] = std::get<0>(t);
-			param[1] = std::get<1>(t);
-			param[2] = std::get<2>(t);
-			param[3] = std::get<3>(t);
-
-			MonteCarloEngine::calculateFittingError(input, result);
-		}
+		calculateFittingErrorByBatch(input, &outputs, cartesian, 0, cartesian.size());
 #endif // JFM_MULTITHREADED
 #endif // JFM_ITER_SIMULATE
 		if (callback)
