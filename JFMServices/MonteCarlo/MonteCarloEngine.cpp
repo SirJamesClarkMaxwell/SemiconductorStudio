@@ -4,10 +4,7 @@
 #include "../Models/CalculateData.hpp"
 #include <utils.hpp>
 #include <compare>
-#include <future>
-extern std::vector<std::pair<std::vector<double>, std::vector<double>>> globalNoisyI;
-std::mutex g_mutex;
-static int blockNumber = 0;
+
 namespace JFMService
 {
 	MonteCarloEngine::MonteCarloEngine()
@@ -50,7 +47,7 @@ namespace JFMService
 								result.foundParameters = fittingResult;
 							});
 
-			calculateFittingError(input, result);
+			MonteCarloEngine::calculateFittingError(input, result);
 		} while ((result.error > 23.5) or outOfBounds(result.foundParameters, input.startingData.bounds));
 
 		m_iterationCount++;
@@ -63,7 +60,6 @@ namespace JFMService
 		std::shared_ptr<Fitters::AbstractFitter> fitter = m_fitter[input.startingData.initialData.modelID];
 		std::shared_ptr<AbstractPreFit> preFitter = m_prefitter[input.startingData.initialData.modelID];
 		JFM_ASSERT(input.iterations);
-		output.mcResult.resize(input.iterations);
 
 #	if defined(JFM_ITER_SIMULATE)
 		for (size_t iteration = 0; iteration < output.inputData.iterations; ++iteration)
@@ -91,22 +87,23 @@ namespace JFMService
 		}
 
 		ProductT cartesian = std::views::cartesian_product(pSets[0], pSets[1], pSets[2], pSets[3]);
+		auto &outputs = output.mcResult;
+		outputs.resize(cartesian.size());
 #if defined(JFM_MULTITHREADED)
 		unsigned threadCount = std::thread::hardware_concurrency();
 		Info() << "WARN: Multithreaded mode - using all threads : " << threadCount << "\n";
 		std::vector<std::thread> threads(threadCount);
 		const size_t totalLength = cartesian.size();
 		const size_t batchLength = totalLength / threadCount;
+		const size_t batchLengthReminder = totalLength % threadCount;
 		size_t index = 0;
-
-		auto &outputs = output.mcResult;
-		outputs.resize(cartesian.size());
 
 		for (uint32_t threadIndx = 0; threadIndx < threadCount; ++threadIndx)
 		{
 			size_t startIndx = threadIndx * batchLength;
 			size_t length = batchLength +
-				(threadIndx+1 != threadCount ? 0 : totalLength % threadCount);
+				(threadIndx+1 != threadCount ? 0 : batchLengthReminder);
+
 			threads[threadIndx] = std::thread(&MonteCarloEngine::calculateFittingErrorByBatch, this,
 									input, &outputs, cartesian, startIndx, length);
 		}
@@ -124,7 +121,7 @@ namespace JFMService
 			param[2] = std::get<2>(t);
 			param[3] = std::get<3>(t);
 
-			calculateFittingError(input, result);
+			MonteCarloEngine::calculateFittingError(input, result);
 		}
 #endif // JFM_MULTITHREADED
 #endif // JFM_ITER_SIMULATE
@@ -139,9 +136,18 @@ namespace JFMService
 		size_t startIndx,
 		size_t length)
 	{
-		for (size_t indx = 0; indx < length; ++indx)
+		for (size_t currIndx = 0; currIndx < length; ++currIndx)
 		{
-			calculateFittingError(input, output->at(startIndx+indx));
+			size_t indx = startIndx + currIndx;
+			auto&&t = cartesian[indx];
+			MCResult& result = output->at(indx);
+
+			ParameterMap& param = result.foundParameters;
+			param[0] = std::get<0>(t);
+			param[1] = std::get<1>(t);
+			param[2] = std::get<2>(t);
+			param[3] = std::get<3>(t);
+			MonteCarloEngine::calculateFittingError(input, result);
 		}
 	}
 

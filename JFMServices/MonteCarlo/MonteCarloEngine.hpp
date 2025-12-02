@@ -58,7 +58,7 @@ namespace JFMService
 			MCInput &input,
 			MCResult &result);
 
-		void calculateFittingError(const MCInput& input, MCResult& result);
+		static void calculateFittingError(const MCInput& input, MCResult& result);
 
 		using ProductT = std::ranges::cartesian_product_view<
 			std::views::all_t<std::vector<double> &>,
