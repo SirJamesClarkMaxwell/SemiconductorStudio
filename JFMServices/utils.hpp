@@ -231,7 +231,7 @@ namespace utils
     template <typename Callback>
     inline void measure_callback_execution_time(Callback cb, const char *measurementName)
     {
-        MEASURE_TIME( measurementName, cb(); );
+        //MEASURE_TIME( measurementName, cb(); );
     }
 } // namespace utils
 

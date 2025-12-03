@@ -88,7 +88,7 @@ namespace JFMService
 
 		ProductT cartesian = std::views::cartesian_product(pSets[0], pSets[1], pSets[2], pSets[3]);
 		auto &outputs = output.mcResult;
-		outputs.resize(cartesian.size());
+		outputs.resize(static_cast<size_t>(cartesian.size()));
 #if defined(JFM_MULTITHREADED)
 		unsigned threadCount = std::thread::hardware_concurrency();
 		Info() << "WARN: Multithreaded mode - using all threads : " << threadCount << "\n";
@@ -110,7 +110,7 @@ namespace JFMService
 		for (auto &t : threads)
 			t.join();
 #else
-		calculateFittingErrorByBatch(input, &outputs, cartesian, 0, cartesian.size());
+		calculateFittingErrorByBatch(input, &outputs, cartesian, 0, static_cast<size_t>(cartesian.size()));
 #endif // JFM_MULTITHREADED
 #endif // JFM_ITER_SIMULATE
 		if (callback)
