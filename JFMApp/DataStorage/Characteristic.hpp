@@ -32,7 +32,10 @@ namespace JFMApp::Data {
 		CalculatingData getCalculatingData();
 		CalculatingData getTuningData();
 		MCInput getMCConfig();
-		void submitMC(const MCOutput& mcData);
+		void submitMC(MCOutput &&mcData, int dummyInt);
+		void submitMC(const MCOutput &mcData);
+		struct MCSimulation;
+		void doSubmitMC(MCSimulation &sim, const MCOutput &out);
 
 		void initState();
 

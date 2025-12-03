@@ -184,7 +184,7 @@ namespace JFMApp
 		if (m_state.uiState.m_showMonteCarloInspector)
 		{
 			ImGui::SetNextWindowDockID(mainDockID, ImGuiCond_Once);
-			if (ImGui::Begin("MC Inspector"), nullptr, ImGuiWindowFlags_NoDocking)
+			if (ImGui::Begin("MC Inspector", nullptr, ImGuiWindowFlags_NoDocking))
 			{
 				Views::Widgets::MonteCarloInspector(m_state.plotData);
 			}
@@ -445,14 +445,14 @@ namespace JFMApp
 							}
 							break;
 						case Data::BrowserData::GenType::Log:
-							for (int i = 0; i < N; ++i)
+							for (size_t i = 0; i < N; ++i)
 							{
 								double log_value = start_pow + i * log_step;
 								vals[i] = std::pow(10, log_value);
 							}
 							break;
 						case Data::BrowserData::GenType::Exponential:
-							for (int i = 0; i < N; ++i)
+							for (size_t i = 0; i < N; ++i)
 							{
 								double exponent_value = start + i * step;
 								vals[i] = std::exp(exponent_value);
@@ -467,6 +467,8 @@ namespace JFMApp
 									vals[(i - start_pow) * N + p++] = j * std::pow(10, i);
 							}
 							break;
+                        default:
+                            Unreachable();
 						}
 					}
 					else
@@ -594,6 +596,7 @@ namespace JFMApp
 					for (const auto &[k, v] : eParams)
 					{
 						if (k != 1 or k != 4)
+                            // FIXME: (k != 1 && k != 4) --- ???
 						{
 							ch.savedBounds[k].first = 1.0 * std::pow(10.0, std::floor(std::log10(v)) - 1);
 							ch.savedBounds[k].second = 9.0 * std::pow(10.0, std::floor(std::log10(v)) + 1);
@@ -673,7 +676,6 @@ namespace JFMApp
 			{
 				using ModelID = JFMService::Fitters::JFMModelID;
 				using CharacteristicType = JFMService::Fitters::CharacteristicType;
-				using ParameterID = JFMService::Fitters::ParameterID;
 				bool light = false;
 				auto modelID = ModelID::Model4P;
 				auto copiedI = temp.I;
@@ -753,7 +755,7 @@ namespace JFMApp
 								stringStream << "--";
 						}
 
-						stringStream << std::endl; // ✅ Ensure a newline after every row
+						stringStream << std::endl; // Ensure a newline after every row
 					}
 				}
 
@@ -794,38 +796,38 @@ namespace JFMApp
 										if (!c.success)
 											continue;
 										   // loading a characteristic
-											if (c.data)
+										if (c.data)
+										{
+
+											Data::Characteristic temp{*c.data};
+											temp.nConfig = m_state.nConfig;
+											temp.checked = true;
+											temp.characteristicType = m_state.browserData.m_characteristicType;
+											temp.forcedModelID = m_state.browserData.forcedModelID;
+											const auto &p = std::find_if(paths.begin(), paths.end(), [&](const std::filesystem::path &path)
+																		{ return path.string().contains(temp.name); });
+
+											if (p != paths.end())
 											{
-
-												Data::Characteristic temp{*c.data};
-												temp.nConfig = m_state.nConfig;
-												temp.checked = true;
-												temp.characteristicType = m_state.browserData.m_characteristicType;
-												temp.forcedModelID = m_state.browserData.forcedModelID;
-												const auto &p = std::find_if(paths.begin(), paths.end(), [&](const std::filesystem::path &path)
-																			{ return path.string().contains(temp.name); });
-
-												if (p != paths.end())
-												{
-													   temp.path = *p;
-												}
-
-												temp.m_tuneCallback = [&]()
-												{
-													// assuming the tuned parameters are copied into fitted
-													CalculatingData cData = m_state.plotData.active->getCalculatingData();
-													m_numerics->CalculateData(cData);
-													temp.fitError = m_numerics->CalculateError(cData.characteristic.currentData, m_state.plotData.active->getEstimateInput().characteristic.currentData);
-												};
-												m_state.browserData.m_loadSingleCharacteristic(temp);
-												m_state.browserData.m_characteristics.push_back(temp);
-												m_state.plotData.active = &m_state.browserData.m_characteristics.back();
-												m_state.plotData.active->tunedI = m_state.plotData.active->fittedI;
-												m_state.plotData.active->tunedParameters = m_state.plotData.active->fittedParameters;
+												   temp.path = *p;
 											}
+
+											temp.m_tuneCallback = [&]()
+											{
+												// assuming the tuned parameters are copied into fitted
+												CalculatingData cData = m_state.plotData.active->getCalculatingData();
+												m_numerics->CalculateData(cData);
+												temp.fitError = m_numerics->CalculateError(cData.characteristic.currentData, m_state.plotData.active->getEstimateInput().characteristic.currentData);
+											};
+											m_state.browserData.m_loadSingleCharacteristic(temp);
+											m_state.browserData.m_characteristics.push_back(temp);
+											m_state.plotData.active = &m_state.browserData.m_characteristics.back();
+											m_state.plotData.active->tunedI = m_state.plotData.active->fittedI;
+											m_state.plotData.active->tunedParameters = m_state.plotData.active->fittedParameters;
+										}
 									}
 
-									   for (auto &c : characteristics)
+									   for (auto &&c : characteristics)
 									   {
 										   if (!c.success)
 											   continue;
@@ -854,7 +856,7 @@ namespace JFMApp
 
 												   if (mcs == cha.mcData.end())
 												   {
-													   cha.submitMC(mc);
+													   cha.submitMC(std::move(mc), 1);
 												   }
 											   };
 
@@ -980,7 +982,7 @@ namespace JFMApp
 
 			m_state.browserData.m_invertSelectionCallback = [&]()
 			{
-				auto &active = m_state.plotData.active;
+				auto *&active = m_state.plotData.active;
 				for (auto &ch : m_state.browserData.m_characteristics)
 				{
 					if (active == &ch)
@@ -1032,31 +1034,31 @@ namespace JFMApp
 				if (!m_state.plotData.active)
 					return;
 
-				auto &active = *m_state.plotData.active;
+				auto *&active = m_state.plotData.active;
 
-				auto eParams = m_numerics->Estimate(active.getEstimateInput());
+				auto eParams = m_numerics->Estimate(active->getEstimateInput());
 
-				active.fittedParameters = eParams;
-				active.savedInitialGuess = eParams;
-				active.savedBounds.clear();
-				active.bounds.clear();
+				active->fittedParameters = eParams;
+				active->savedInitialGuess = eParams;
+				active->savedBounds.clear();
+				active->bounds.clear();
 				for (const auto &[k, v] : eParams)
 				{
 					if (k != 1)
 					{
-						active.savedBounds[k].first = 1.0 * std::pow(10.0, std::floor(std::log10(v)) - 1);
-						active.savedBounds[k].second = 9.0 * std::pow(10.0, std::floor(std::log10(v)) + 1);
+						active->savedBounds[k].first = 1.0 * std::pow(10.0, std::floor(std::log10(v)) - 1);
+						active->savedBounds[k].second = 9.0 * std::pow(10.0, std::floor(std::log10(v)) + 1);
 					}
 					else
 					{
-						active.savedBounds[k].first = 1;
-						active.savedBounds[k].second = 5;
+						active->savedBounds[k].first = 1;
+						active->savedBounds[k].second = 5;
 					}
 				}
-				active.bounds = active.savedBounds;
-				active.savedUseBounds = true;
-				active.useBounds = true;
-				active.savedUseInitial = true;
+				active->bounds = active->savedBounds;
+				active->savedUseBounds = true;
+				active->useBounds = true;
+				active->savedUseInitial = true;
 			};
 
 			m_state.plotData.m_fitCallback = [&]()
@@ -1064,20 +1066,20 @@ namespace JFMApp
 				if (!m_state.plotData.active)
 					return;
 
-				auto &active = *m_state.plotData.active;
+				auto *&active = m_state.plotData.active;
 
-				m_numerics->Fit(active.getFittingInput(), [&](ParameterMap &&output)
+				m_numerics->Fit(active->getFittingInput(), [&](ParameterMap &&output)
 								{
-							if (!&active)
+							if (!active)
 								return;
 
-							active.fittedParameters = output;
-							CalculatingData cData = active.getCalculatingData();
+							active->fittedParameters = output;
+							CalculatingData cData = active->getCalculatingData();
 
 							m_numerics->CalculateData(cData);
 
-							double fitError = m_numerics->CalculateError(cData.characteristic.currentData, active.getEstimateInput().characteristic.currentData);
-							active.submitFitting(output, fitError); });
+							double fitError = m_numerics->CalculateError(cData.characteristic.currentData, active->getEstimateInput().characteristic.currentData);
+							active->submitFitting(output, fitError); });
 			};
 
 			m_state.plotData.m_tuneCallback = [&]()
@@ -1085,13 +1087,13 @@ namespace JFMApp
 				if (!m_state.plotData.active)
 					return;
 
-				auto &active = *m_state.plotData.active;
+				auto *&active = m_state.plotData.active;
 
-				auto tData = active.getTuningData();
+				auto tData = active->getTuningData();
 
 				m_numerics->CalculateData(tData);
 
-				active.tuneError = m_numerics->CalculateError(tData.characteristic.currentData, active.getEstimateInput().characteristic.currentData);
+				active->tuneError = m_numerics->CalculateError(tData.characteristic.currentData, active->getEstimateInput().characteristic.currentData);
 			};
 
 			// m_state.plotData.m_changeModelCallback
@@ -1119,17 +1121,17 @@ namespace JFMApp
 				if (!m_state.plotData.active)
 					return;
 
-				auto &active = *m_state.plotData.active;
+				auto *&active = m_state.plotData.active;
 
-				auto mcData = active.getMCConfig();
+				auto mcData = active->getMCConfig();
 
 				auto work = std::bind(&IFitting::Simulate, m_numerics.get(), mcData, [&](MCOutput &&output) {
-						if (!&active)
-							return;
+				    	if (!active)
+				    		return;
 
-						m_state.plotData.activeMC = nullptr;
-						active.submitMC(output);
-					});
+				    	m_state.plotData.activeMC = nullptr;
+				    	active->submitMC(std::move(output), 1);
+				    });
 				dispatcher.addWork(work, "performMCallback");
 			};
 
@@ -1145,7 +1147,7 @@ namespace JFMApp
 					mcData.noise = m_state.plotData.savedGlobalMCConfig.sigma;
 
 					auto work = std::bind(&IFitting::Simulate, m_numerics.get(), mcData,
-											[&](MCOutput &&output) { ch.submitMC(output); });
+											[&](MCOutput &&output) { ch.submitMC(std::move(output), 1); });
 					dispatcher.addWork(work, "performMOnAllCallback");
 				}
 			};
@@ -1265,7 +1267,7 @@ namespace JFMApp
 
 			m_state.plotData.m_saveAllMCPlots = [&]() 
 			{
-				for(int index=0;index<m_state.plotData.mcPlots.size();index++)
+				for(size_t index=0; index < m_state.plotData.mcPlots.size(); index++)
 					m_state.plotData.m_saveMCPlot(index);
 			};
 			m_state.plotData.m_clearAllPlots = [&]()

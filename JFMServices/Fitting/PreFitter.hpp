@@ -9,6 +9,7 @@ namespace JFMService
 	{
 	public:
 		AbstractPreFit();
+        virtual ~AbstractPreFit() = default;
 		std::pair<size_t, size_t> RangeData(const FittingService::PlotData& characteristic);
 		virtual FittingService::ParameterMap Estimate(const FittingService::EstimateInput& input) = 0;
 

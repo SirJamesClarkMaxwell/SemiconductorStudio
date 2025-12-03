@@ -44,7 +44,7 @@ namespace JFMService
 		auto data = loaders.at(ex)(content);
 		double temperature = readTemperature(path.filename().string());
 		std::string name = readName(path);
-		output.data = std::move(std::make_unique<DataManagementService::CharacteristicData>(data, temperature, name));
+		output.data = std::make_unique<DataManagementService::CharacteristicData>(data, temperature, name);
 		output.success = true;
 	}
 
@@ -125,6 +125,7 @@ namespace JFMService
 				return Fitters::JFMModelID::Model4PLight;
 			if (name == "FiveParameterModel")
 				return Fitters::JFMModelID::Model6PLight;
+            Unreachable();
 		};
 
 		std::string model = config["model"].as<std::string>();

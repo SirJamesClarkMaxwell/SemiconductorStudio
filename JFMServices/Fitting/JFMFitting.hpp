@@ -14,6 +14,7 @@ namespace JFMService::FittingService
 	{
 	public:
 		Fitting();
+        virtual ~Fitting() = default;
 		virtual NumericsConfig GetConfiguration() override;
 		virtual void CalculateData(CalculatingData& input) override;
 		virtual double CalculateError(const std::span<double>& original, const std::span<double>& checked) override;
@@ -24,7 +25,7 @@ namespace JFMService::FittingService
 
 		virtual void Simulate(const MCInput& input, std::function<void(MCOutput&&)> callback) override;
 		virtual double GetUncertainty(const MCOutput& output, int level, ParameterID id) override;
-		virtual void SaveMCPlot(const MCSave& toSave);
+		virtual void SaveMCPlot(const MCSave& toSave) override;
 		virtual void SaveUncertanties(std::vector< UncertaintySave>& toSave, const std::filesystem::path& path)override;
 
 	private:

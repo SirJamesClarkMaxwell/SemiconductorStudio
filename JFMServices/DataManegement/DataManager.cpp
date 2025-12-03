@@ -15,7 +15,7 @@ namespace JFMService
         try
         {
 			std::shared_ptr<Loader> loader = loaders.at(findLoader(path));
-			LoaderOutput output = std::move(loader->Load(path));
+			LoaderOutput output = loader->Load(path);
 			if (callback)
 				callback(std::move(output));
         }
@@ -82,6 +82,7 @@ namespace JFMService
 			else
 				return loadingType;
 		}
+        Unreachable();
 	}
 	LoadingTypes DataManager::findDumper(const std::filesystem::path &path)
 	{

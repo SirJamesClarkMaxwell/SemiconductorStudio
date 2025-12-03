@@ -83,6 +83,8 @@ do { \
 #define JFM_ASSERT(cond)
 #endif
 
+#define JFM_UNUSED              [[maybe_unused]]
+
 namespace utils
 {
     static const char *jfmLevelNames[] = {

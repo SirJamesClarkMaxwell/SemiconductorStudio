@@ -18,6 +18,7 @@ namespace JFMService
 
     public:
         DataManager();
+        virtual ~DataManager() = default;
         virtual void Load(const path &path, const Callback &callback) override;
         virtual void Load(const std::vector<path> &paths, const VectorCallback &callbacks) override;
 
@@ -33,7 +34,6 @@ namespace JFMService
     private:
         std::unordered_map<LoadingTypes, std::shared_ptr<Loader>> loaders;
         std::unordered_map<LoadingTypes, std::shared_ptr<Dumper>> dumpers;
-        bool useThreadsParallel{false};
         std::mutex mutex;
 
     private:

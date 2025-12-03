@@ -129,7 +129,7 @@ namespace JFMApp::Views {
 				std::string id = "MC Tab Dock" + std::to_string(data.mcTabs.back());
 				data.tabsIDs.push_back(ImGui::GetID(id.c_str()));
 			}
-			int activeTab = data.mcTabs[0];
+			unsigned int activeTab = data.mcTabs[0];
 			for (auto& tab : data.mcTabs) 
 			{
 				std::string name = "MC group " + std::to_string(tab);

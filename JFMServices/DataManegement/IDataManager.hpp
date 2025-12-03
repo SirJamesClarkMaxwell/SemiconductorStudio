@@ -64,6 +64,7 @@ namespace JFMService::DataManagementService
             return Fitters::ParameterID::alpha;
         if (name == "Rsh2")
             return Fitters::ParameterID::Rsh2;
+        Unreachable();
     };
     static std::string parameterIdToString(Fitters::ParameterID id)
     {

@@ -122,16 +122,36 @@ namespace JFMApp::Data
 		return input;
 	}
 
+	void Characteristic::submitMC(MCOutput &&out, int /* ignore */)
+	{
+		MCSimulation sim{};
+
+		sim.data.resize(out.mcResult.size());
+		for (const auto &[src, dest] : std::views::zip(out.mcResult, sim.data))
+			dest = std::move(src);
+        out.mcResult.clear();
+		std::sort(sim.data.begin(), sim.data.end(), [](const MCData &lhs, const MCData &rhs)
+				  { return lhs.error > rhs.error; });
+
+        doSubmitMC(sim, out);
+	}
+
 	void Characteristic::submitMC(const MCOutput &out)
 	{
 		MCSimulation sim{};
 		sim.data.resize(out.mcResult.size());
 		for (const auto &[src, dest] : std::views::zip(out.mcResult, sim.data))
 		{
-			dest = src;
+			dest = std::move(src);
 		}
 		std::sort(sim.data.begin(), sim.data.end(), [](const MCData &lhs, const MCData &rhs)
 				  { return lhs.error > rhs.error; });
+
+        doSubmitMC(sim, out);
+	}
+
+    void Characteristic::doSubmitMC(MCSimulation &sim, const MCOutput &out)
+    {
 		sim.sigma = out.inputData.noise;
 		sim.iterations = out.inputData.iterations;
 		sim.fixConfig = out.inputData.startingData.fixConfig;
@@ -147,7 +167,8 @@ namespace JFMApp::Data
 		mcData.push_back(sim);
 		//else
 		//	*d = sim;
-	}
+    }
+
 	std::string Characteristic::buildMCPlotName(ParameterID xId,ParameterID yId, int iterations,double noise)
 	{
 		std::string toReturn = name;

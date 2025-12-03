@@ -28,6 +28,7 @@ namespace JFMService::Fitters
     class AbstractFitter
     {
     public:
+        virtual ~AbstractFitter() = default;
         virtual void Fit(const FittingInput &input, Callback callback) = 0;
     };
 

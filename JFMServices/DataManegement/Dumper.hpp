@@ -15,6 +15,7 @@ namespace JFMService
         using Callback = std::function<void(LoaderOutput)>;
         using VectorCallback = std::function<void(std::vector<LoaderOutput>)>;
 
+        virtual ~Dumper() = default;
         virtual void Save(const path &path, const LoaderOutput &toSave, const Callback &callback) = 0;
         virtual void Save(const std::vector<path> &path, const std::vector<LoaderOutput> &toSave, const VectorCallback &callback) = 0;
     };

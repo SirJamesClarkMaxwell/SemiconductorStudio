@@ -39,20 +39,30 @@ linked_deps = [
     '-L' + join_paths(project_root, 'Vendor/yaml-cpp/build'), '-lyaml-cpp',
 ]
 
-args = []
+args = ['-Wall',
+        '-Wextra',
+        '-Wformat',
+        '-Werror',
+        '-Wno-unused-variable',
+        '-Wno-unused-function',
+        '-Wno-unused-parameter',
+        '-Wno-format-security',
+        '-Wno-tautological-overlap-compare',
+        '-Wno-unused-but-set-variable',
+        '-fexperimental-library']
 if get_option('debug')
-	args += '-DJFM_DEBUG'
+    args += '-DJFM_DEBUG'
 endif
 
 if get_option('multi')
-	args += '-DJFM_MULTITHREADED'
+    args += '-DJFM_MULTITHREADED'
 endif
 
 executable('JFM',
     sources: JFM_sources,
     include_directories: JFM_includes,
-    cpp_args: ['-std=c++23','-fexperimental-library',
-               '-DJFM_PLATFORM_NIX', args,
-               '-Wno-unused-variable', '-Wno-unused-function', '-Wno-unused-but-set-variable'],
+    cpp_args: ['-std=c++23',
+               '-DJFM_PLATFORM_NIX',
+               args],
     link_args: [ linked_deps, '-lglfw', '-lGL'],
     install: true)

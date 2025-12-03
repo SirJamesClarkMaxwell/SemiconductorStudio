@@ -11,6 +11,7 @@ namespace JFMService
     class Loader
     {
     public:
+        virtual ~Loader() = default;
         virtual bool CheckExtentionCompatibility(const std::filesystem::path &path) = 0;
         virtual LoaderOutput Load(const std::filesystem::path &path) = 0;
     };

@@ -19,9 +19,9 @@ namespace JFMService
 	};
     double adjustCoefficient(double dV, const std::vector<std::pair<double,double>>& m_AMultiplier)
     {
-		int index = std::distance(m_AMultiplier.begin(), std::lower_bound(m_AMultiplier.begin(), m_AMultiplier.end(), dV, [&](std::pair<double, double> lhs, double rhs)
+		size_t index = std::distance(m_AMultiplier.begin(), std::lower_bound(m_AMultiplier.begin(), m_AMultiplier.end(), dV, [&](std::pair<double, double> lhs, double rhs)
 			{ return lhs.first < rhs; }));
-		auto interpolate = [&](int index)
+		auto interpolate = [&](size_t index)
 			{
 				if (index == m_AMultiplier.size() - 1)
 					index-=1;
@@ -132,6 +132,16 @@ namespace JFMService
 		int AStart, AEnd, maxDerIndex;
 		double T,dV,k;
 		std::vector<double>logI;
+
+        IdealityFactorAdditionalParameters() = default;
+
+        IdealityFactorAdditionalParameters(int AStart, int AEnd, int maxDerIndex, double T)
+            : AStart(AStart)
+            , AEnd(AEnd)
+            , maxDerIndex(maxDerIndex)
+            , T(T)
+        {
+        }
 	};
 	double estimateIdealityFactor(const std::vector<double>& V, const std::vector<double>& I,IdealityFactorAdditionalParameters& params) 
 	{
@@ -221,7 +231,7 @@ namespace JFMService
 
 		// getting A
 		double T = input.additionalParameters.at(Fitters::AdditionalParametersID::Temperature);
-		IdealityFactorAdditionalParameters idealityFactorParams{ AStart, AEnd, 0, T};
+		IdealityFactorAdditionalParameters idealityFactorParams { AStart, AEnd, 0, T};
 		
 		double A = estimateIdealityFactor(V, I, idealityFactorParams) * adjustCoefficient(idealityFactorParams.dV, AMultipiers);
 		auto logI = idealityFactorParams.logI;

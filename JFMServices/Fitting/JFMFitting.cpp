@@ -61,7 +61,8 @@ namespace JFMService::FittingService
 				default:
 					break;
 				}
-				};
+				Unreachable();
+			};
 			ModelParameters map;
 			map[Fitters::JFMModelID::Model4P] = intRange(0, Fitters::JFMModelID::Model4P, 1);
 			map[Fitters::JFMModelID::Model6P] = intRange(0, Fitters::JFMModelID::Model6P, 1);
