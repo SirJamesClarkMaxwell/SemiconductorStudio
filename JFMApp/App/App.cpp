@@ -318,12 +318,12 @@ namespace JFMApp
 					else if (k == 4)
 					{
 						ch.savedBounds[k].first = 1;
-						ch.savedBounds[k].second = 5;
+						ch.savedBounds[k].second = 20;
 					}
 					else
 					{
 						ch.savedBounds[k].first = 1;
-						ch.savedBounds[k].second = 5;
+						ch.savedBounds[k].second = 20;
 					}
 				}
 				ch.savedUseBounds = true;
@@ -604,7 +604,7 @@ namespace JFMApp
 						else
 						{
 							ch.savedBounds[k].first = 1;
-							ch.savedBounds[k].second = 5;
+							ch.savedBounds[k].second = 20;
 						}
 					}
 					ch.savedUseBounds = true;
@@ -1052,7 +1052,7 @@ namespace JFMApp
 					else
 					{
 						active->savedBounds[k].first = 1;
-						active->savedBounds[k].second = 5;
+						active->savedBounds[k].second = 20;
 					}
 				}
 				active->bounds = active->savedBounds;
