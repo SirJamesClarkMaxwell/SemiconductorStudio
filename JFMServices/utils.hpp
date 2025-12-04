@@ -61,14 +61,14 @@ namespace utils
 #define Verbose()       _Log(Verbose)
 #define Trace()         _Log(Trace) << "\n"
 
-#define _MEASURE_TIME(logger, precision, section_name, ...) \
-do { \
-    auto start_time = std::chrono::steady_clock::now(); \
-    __VA_ARGS__ \
-    auto end_time = std::chrono::steady_clock::now(); \
-    logger() << "[" << section_name << "] Time elapsed: " \
-           << std::chrono::duration_cast<std::chrono::precision>(end_time-start_time).count() \
-           << " " #precision << ".\n"; \
+#define _MEASURE_TIME(logger, precision, section_name, ...)                                     \
+do {                                                                                            \
+    auto start_time = std::chrono::steady_clock::now();                                         \
+    __VA_ARGS__                                                                                 \
+    auto end_time = std::chrono::steady_clock::now();                                           \
+    logger() << "[" << section_name << "] Time elapsed: "                                       \
+           << std::chrono::duration_cast<std::chrono::precision>(end_time-start_time).count()   \
+           << " " #precision << ".\n";                                                          \
 } while (0)
 
 #define MEASURE_TIME(...)                   _MEASURE_TIME(Info, milliseconds, __VA_ARGS__)
@@ -212,12 +212,6 @@ namespace utils
             return gLogLevel >= level;
         }
     };
-
-    template <typename Callback>
-    inline void measure_callback_execution_time(Callback cb, const char *measurementName)
-    {
-        //MEASURE_TIME( measurementName, cb(); );
-    }
 } // namespace utils
 
-#define MEASURE_CALLBACK_EXECUTION_TIME(__cb)       utils::measure_callback_execution_time((__cb), __func__)
+#define MEASURE_CALLBACK_EXECUTION_TIME(__cb)       MEASURE_TIME(__func__, { (__cb)(); })
