@@ -157,6 +157,12 @@ namespace utils
 
     static const JfmLogLevel gLogLevel = getLogLevel();
 
+    static inline bool isVerbose()
+    {
+        const char *jfmVerbose = NULL;
+        return ((jfmVerbose = getenv("JFM_VERBOSE")) && (atoi(jfmVerbose) == 1));
+    }
+    static const bool gIsVerbose = isVerbose();
 
     struct Logger {
     private:
@@ -191,7 +197,7 @@ namespace utils
         {
             if (isLoggerOn(m_level))
             {
-                if (isVerbose())
+                if (gIsVerbose)
                     fprintf(m_level <= JfmLogLevel::Err ? stderr : stdout, "%s", m_stream.str().c_str());
 
                 gLogger.writeMessage(m_stream.str().c_str());
@@ -201,27 +207,6 @@ namespace utils
         std::ostream &stream() { return m_os; }
 
     private:
-        inline bool isVerbose()
-        {
-            static bool verbose = false;
-            {
-                static bool setupDone = false;
-                if (setupDone == false)
-                {
-#if defined(JFM_PLATFORM_NIX)
-                    const char *jfmVerbose = NULL;
-
-                    if ((jfmVerbose = getenv("JFM_VERBOSE")) && (atoi(jfmVerbose) == 1))
-                        verbose = true;
-#else
-                        verbose = true;
-#endif
-                    setupDone = true;
-                }
-            }
-            return verbose;
-        }
-
         inline static bool isLoggerOn(JfmLogLevel level)
         {
             return gLogLevel >= level;
