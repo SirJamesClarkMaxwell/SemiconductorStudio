@@ -93,7 +93,7 @@ namespace JFMService
 		unsigned threadCount = std::thread::hardware_concurrency();
 		Info() << "WARN: Multithreaded mode - using all threads : " << threadCount << "\n";
 		std::vector<std::thread> threads(threadCount);
-		const size_t totalLength = cartesian.size();
+		const size_t totalLength = static_cast<size_t>(cartesian.size());
 		const size_t batchLength = totalLength / threadCount;
 		const size_t batchLengthReminder = totalLength % threadCount;
 		size_t index = 0;
