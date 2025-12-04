@@ -213,5 +213,3 @@ namespace utils
         }
     };
 } // namespace utils
-
-#define MEASURE_CALLBACK_EXECUTION_TIME(__cb)       MEASURE_TIME(__func__, { (__cb)(); })

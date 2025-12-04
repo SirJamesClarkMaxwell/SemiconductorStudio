@@ -24,7 +24,7 @@ namespace JFMService
 
 		void Simulate(const MCInput& input, std::function<void(MCOutput&&)> callback)
 		{
-			MEASURE_CALLBACK_EXECUTION_TIME( [&]() { SimulateImpl(input, callback); } );
+			MEASURE_TIME_THIS_FUNC( SimulateImpl(input, callback); );
 		}
 
 		double GetUncertainty(const MCOutput &output, int level, ParameterID id);
