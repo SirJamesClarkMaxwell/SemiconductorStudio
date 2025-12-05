@@ -1,13 +1,6 @@
 option(
-    'iter_simulate',
-    type: 'boolean',
-    value: true,
-    description: 'Use legacy computation of MonteCarloEngine::simulate() method.'
-)
-
-option(
-    'multi',
-    type: 'boolean',
-    value: true,
-    description: 'Use multiple cores'
+    'mode',
+    type: 'array',
+    value: ['single-core', 'multi-core', 'gpu', 'simulate'],
+    description: 'Calculate using GPU device'
 )

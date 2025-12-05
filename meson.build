@@ -50,12 +50,19 @@ args = ['-Wall',
         '-Wno-tautological-overlap-compare',
         '-Wno-unused-but-set-variable',
         '-fexperimental-library']
+
 if get_option('debug')
     args += '-DJFM_DEBUG'
 endif
 
-if get_option('multi')
+mode = get_option('mode')
+if mode.contains('single-core')
+elif mode.contains('multi-core')
     args += '-DJFM_MULTITHREADED'
+elif mode.contains('simulate')
+    args += '-DJFM_ITER_SIMULATE'
+elif mode.contains('gpu')
+    args += '-DJFM_MODE_GPU'
 endif
 
 executable('JFM',

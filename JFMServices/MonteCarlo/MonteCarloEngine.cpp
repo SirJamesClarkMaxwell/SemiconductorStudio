@@ -88,12 +88,12 @@ namespace JFMService
 
 		ProductT cartesian = std::views::cartesian_product(pSets[0], pSets[1], pSets[2], pSets[3]);
 		auto &outputs = output.mcResult;
-		outputs.resize(static_cast<size_t>(cartesian.size()));
-#if defined(JFM_MULTITHREADED)
+		const size_t totalLength = static_cast<size_t>(cartesian.size());
+		outputs.resize(totalLength);
+#   if defined(JFM_MULTITHREADED)
 		unsigned threadCount = std::thread::hardware_concurrency();
 		Info() << "WARN: Multithreaded mode - using all threads : " << threadCount << "\n";
 		std::vector<std::thread> threads(threadCount);
-		const size_t totalLength = static_cast<size_t>(cartesian.size());
 		const size_t batchLength = totalLength / threadCount;
 		const size_t batchLengthReminder = totalLength % threadCount;
 		size_t index = 0;
@@ -109,13 +109,24 @@ namespace JFMService
 		}
 		for (auto &t : threads)
 			t.join();
-#else
-		calculateFittingErrorByBatch(input, &outputs, cartesian, 0, static_cast<size_t>(cartesian.size()));
-#endif // JFM_MULTITHREADED
-#endif // JFM_ITER_SIMULATE
+#   elif defined(JFM_MODE_SINGLE_CPU)
+		calculateFittingErrorByBatch(input, &outputs, cartesian, 0, totalLength);
+#   elif defined(JFM_MODE_GPU)
+        calculateFittingErrorByBatchGPU(input, &outputs, cartesian);
+#   else
+#   error "Invalid option. Use one of modes : { 'single-cpu' , 'multi-cpu' ,'gpu', 'simulate' }"
+#   endif
+#   endif // JFM_ITER_SIMULATE
 		if (callback)
 			callback(std::move(output));
 	}
+
+	void MonteCarloEngine::calculateFittingErrorByBatchGPU(
+		const MCInput &input,
+		std::vector<MCResult> *output,
+		const ProductT &cartesian)
+    {
+    }
 
 	void MonteCarloEngine::calculateFittingErrorByBatch(
 		const MCInput &input,

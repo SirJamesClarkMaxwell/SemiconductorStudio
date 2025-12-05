@@ -9,6 +9,7 @@ def getMaxJobCount():
 
 
 def do_build(args, buildDir, builder, builder_env={}):
+    print(args)
     subprocess.run(args, env={'CC': 'clang',
                               'CXX': 'clang++',
                               'CXX_LD': 'lld',
@@ -21,15 +22,14 @@ def do_build_yaml_cpp(buildDir='build'):
     do_build(args, buildDir, 'make', builder_env={'PATH': '/usr/bin'})
 
 
-def do_meson_build(isMultithreaded=False, iterSimulate=False, buildDir='build'):
+def do_meson_build(doClean=False, buildDir='build', mode=None):
     args = ['meson', buildDir]
+    modes = ['single-core', 'multi-core', 'gpu', 'simulate']
 
     if os.path.exists(buildDir):
         args.append('--reconfigure')
-    if isMultithreaded:
-        args.append('-Dmulti=true')
-    if iterSimulate:
-        args.append('-Diter_simulate=true')
+    if mode in modes:
+        args.append(f'-Dmode={mode}')
 
     do_build(args, buildDir, 'ninja')
 
@@ -96,11 +96,11 @@ def setup_dependencies(doClean):
     print('Setup done !')
 
 
-def build(doClean, isMultithreaded, iterSimulate):
+def build(doClean, mode):
     buildDir = 'build'
 
     if doClean:
         subprocess.run(['rm', '-rf', buildDir])
 
-    do_meson_build(isMultithreaded, iterSimulate)
+    do_meson_build(doClean, mode=mode)
 

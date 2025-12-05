@@ -72,6 +72,11 @@ namespace JFMService
 			size_t startIndx,
 			size_t length);
 
+        void calculateFittingErrorByBatchGPU(
+            const MCInput &input,
+            std::vector<MCResult> *output,
+            const ProductT &cartesian);
+
 		std::atomic<uint32_t> m_iterationCount;
 		std::atomic<uint32_t> m_blockNumber;
 	};

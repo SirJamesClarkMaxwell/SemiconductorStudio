@@ -9,19 +9,24 @@ if __name__ == "__main__":
     parser.add_argument('--no-clean', dest='clean', action='store_false')
     parser.add_argument('--setup', action='store_true')
     parser.add_argument('--no-setup', dest='setup', action='store_false')
-    parser.add_argument('--multi', action='store_true')
-    parser.add_argument('--iter_simulate', action='store_true')
+    parser.add_argument('--mode', choices=['single-core', 'multi-core', 'gpu', 'simulate'])
     args = parser.parse_args()
 
     print('Build JFM Application')
     if args.build_type == 'linux':
         print('\t target:\t linux\n')
         # NOTE: on linux example execution commands:
-        #          python3 scripts/build.py --build-type linux --clean --multi --setup
-        #          python3 scripts/build.py --build-type linux --no-clean
+        #
+        #   GPU device calculation mode:
+        #        >  python3 scripts/build.py --build-type linux --clean --mode=gpu --setup
+        #
+        #   Multi CPU core calculation mode:
+        #        >  python3 scripts/build.py --build-type linux --clean --mode=multi --setup
+        #        >  python3 scripts/build.py --build-type linux --no-clean
+        #
         if args.setup:
             build_linux.setup_dependencies(args.clean)
-        build_linux.build(args.clean, args.multi, args.iter_simulate)
+        build_linux.build(args.clean, args.mode)
     else:
         print('\t target:\t windows\n')
         build_windows.build()
