@@ -37,14 +37,12 @@ namespace JFMApp {
 
 		void update();
 		void draw();
-
-	private:
-		void setUpCallbacks();
-
 	private:
 		Data::ViewData m_state{};
 		std::shared_ptr<JFMService::FittingService::IFitting> m_numerics{};
 		std::shared_ptr<JFMService::DataManagementService::IDataManager> m_dataLoader{};
+
+		void setUpCallbacks();
 
 		struct WorkDispatcher {
 			typedef std::function<void()> WorkCb;

@@ -4,6 +4,8 @@
 #include "../Models/CalculateData.hpp"
 #include <utils.hpp>
 #include <compare>
+#include "Calculator/Calculator.h"
+#include "JunctionFitMaster.hpp"
 
 namespace JFMService
 {
@@ -13,141 +15,85 @@ namespace JFMService
 	{
 	}
 
-	void MonteCarloEngine::simulate(
-		const std::shared_ptr<AbstractPreFit> preFitter,
-		const std::shared_ptr<Fitters::AbstractFitter> fitter,
-		MCInput &input,
-		MCResult& result)
-	{
-		MCInput copied{ input };
-		auto characteristic = input.startingData.initialData.characteristic;
-		std::vector<double> current{ characteristic.currentData.begin(), characteristic.currentData.end() };
-		copied.startingData.initialData.characteristic.currentData = { current.begin(), current.end() };
+    template <CalculationModeId calculationModeId>
+    constexpr ParamsPtr<calculationModeId> MonteCarloEngine::createParams(
+        const MCInput &input,
+        std::vector<MCResult> *outputs)
+    {
+        using namespace Calculator;
 
-		auto outOfBounds = [](const ParameterMap& PMap, const ParamBounds& bounds)
-			{
-				for (const auto& [key, val] : PMap)
-				{
-					if (val < bounds.at(key).first or val > bounds.at(key).second)
-						return true;
-				}
-				return false;
-		};
+        ParamsPtr<calculationModeId> params;
 
-		do {
-			current = { characteristic.currentData.begin(), characteristic.currentData.end() };
-			copied.startingData.initialData.characteristic.currentData = { current.begin(), current.end() };
-			for (auto& I : current)
-				generateNoise(I, copied.noise);
+        if constexpr (calculationModeId == CalculationModeId::CalculateSimulate)
+        {
+            JFM_ASSERT(input.iterations > 0);
+            outputs->resize(input.iterations);
 
-			copied.startingData.initialValues = preFitter->Estimate(copied.startingData.initialData);
+            params = std::make_unique<CalcParams<calculationModeId>> (
+                                        std::move(input),
+                                        std::move(outputs),
+                                        &MonteCarloEngine::calculateFittingError,
+                                        m_fitter[input.startingData.initialData.modelID],
+                                        m_prefitter[input.startingData.initialData.modelID],
+                                        &MonteCarloEngine::generateNoise );
+        }
+        else if constexpr (calculationModeId == CalculationModeId::CalculateSingleCore ||
+                    calculationModeId == CalculationModeId::CalculateMultiCore ||
+                    calculationModeId == CalculationModeId::CalculateGpu)
+        {
+		    auto idealParameters = input.trueParameters;
+		    std::vector<ParameterMap> parameters;
+		    int steps_per_param = input.iterations;
 
-			fitter->Fit(copied.startingData,
-							[&](const ParameterMap&& fittingResult) {
-								result.foundParameters = fittingResult;
-							});
+		    // Calculate step sizes based on range
+		    std::vector<std::vector<double>> pSets(idealParameters.size()); // Pre-size the vector
+		    for (size_t i = 0; i < idealParameters.size(); ++i)
+		    {
+		    	double start = input.trueParameters.at(i) * 0.90;
+		    	double end = input.trueParameters.at(i) * 1.1;
+		    	double stepSize = (end - start) / steps_per_param;
+		    	double curr = start;
 
-			MonteCarloEngine::calculateFittingError(input, result);
-		} while ((result.error > 23.5) or outOfBounds(result.foundParameters, input.startingData.bounds));
+		    	while (curr <= end) {
+		    		pSets[i].push_back(curr);
+		    		curr += stepSize;
+		    	}
+		    }
 
-		m_iterationCount++;
-	}
+            params = std::make_unique<CalcParams<calculationModeId>> (
+                                        std::move(input),
+                                        std::move(outputs),
+                                        &MonteCarloEngine::calculateFittingError,
+                                        pSets );
+        }
+        else
+        {
+            Unreachable();
+        }
 
-	void MonteCarloEngine::SimulateImpl(const MCInput& input, std::function<void(MCOutput&&)> callback)
+        return std::move(params);
+    }
+
+    template <CalculationModeId calculationModeId>
+    constexpr inline void calculatorCall(ParamsPtr<calculationModeId> params)
+    {
+        Calculator::CalculatorAll< CalcParams<calculationModeId> >::call( std::ref(*params.get()) );
+    }
+
+	void MonteCarloEngine::SimulateImpl(
+        const MCInput& input,
+        std::function<void(MCOutput&&)> callback)
 	{
 		MCOutput output;
 		output.inputData = input;
-		std::shared_ptr<Fitters::AbstractFitter> fitter = m_fitter[input.startingData.initialData.modelID];
-		std::shared_ptr<AbstractPreFit> preFitter = m_prefitter[input.startingData.initialData.modelID];
-		JFM_ASSERT(input.iterations);
-
-#	if defined(JFM_ITER_SIMULATE)
-		for (size_t iteration = 0; iteration < output.inputData.iterations; ++iteration)
-		MEASURE_TIME("simulate",
-			simulate(preFitter, fitter, output.inputData, output.mcResult[iteration]);
-		);
-#	else
-		auto idealParameters = input.trueParameters;
-		std::vector<ParameterMap> parameters;
-		int steps_per_param = input.iterations;
-
-		// Calculate step sizes based on range
-		std::vector<std::vector<double>> pSets(idealParameters.size()); // Pre-size the vector
-		for (size_t i = 0; i < idealParameters.size(); ++i)
-		{
-			double start = input.trueParameters.at(i) * 0.90;
-			double end = input.trueParameters.at(i) * 1.1;
-			double stepSize = (end - start) / steps_per_param;
-			double curr = start;
-
-			while (curr <= end) {
-				pSets[i].push_back(curr);
-				curr += stepSize;
-			}
-		}
-
-		ProductT cartesian = std::views::cartesian_product(pSets[0], pSets[1], pSets[2], pSets[3]);
 		auto &outputs = output.mcResult;
-		const size_t totalLength = static_cast<size_t>(cartesian.size());
-		outputs.resize(totalLength);
-#   if defined(JFM_MULTITHREADED)
-		unsigned threadCount = std::thread::hardware_concurrency();
-		Info() << "WARN: Multithreaded mode - using all threads : " << threadCount << "\n";
-		std::vector<std::thread> threads(threadCount);
-		const size_t batchLength = totalLength / threadCount;
-		const size_t batchLengthReminder = totalLength % threadCount;
-		size_t index = 0;
+        using namespace Calculator;
 
-		for (uint32_t threadIndx = 0; threadIndx < threadCount; ++threadIndx)
-		{
-			size_t startIndx = threadIndx * batchLength;
-			size_t length = batchLength +
-				(threadIndx+1 != threadCount ? 0 : batchLengthReminder);
+        auto params = createParams<JunctionFitMaster::modeId>(input, &outputs);
+        calculatorCall<JunctionFitMaster::modeId>( std::move(params) );
 
-			threads[threadIndx] = std::thread(&MonteCarloEngine::calculateFittingErrorByBatch, this,
-									input, &outputs, cartesian, startIndx, length);
-		}
-		for (auto &t : threads)
-			t.join();
-#   elif defined(JFM_MODE_SINGLE_CPU)
-		calculateFittingErrorByBatch(input, &outputs, cartesian, 0, totalLength);
-#   elif defined(JFM_MODE_GPU)
-        calculateFittingErrorByBatchGPU(input, &outputs, cartesian);
-#   else
-#   error "Invalid option. Use one of modes : { 'single-cpu' , 'multi-cpu' ,'gpu', 'simulate' }"
-#   endif
-#   endif // JFM_ITER_SIMULATE
 		if (callback)
 			callback(std::move(output));
-	}
-
-	void MonteCarloEngine::calculateFittingErrorByBatchGPU(
-		const MCInput &input,
-		std::vector<MCResult> *output,
-		const ProductT &cartesian)
-    {
-    }
-
-	void MonteCarloEngine::calculateFittingErrorByBatch(
-		const MCInput &input,
-		std::vector<MCResult> *output,
-		const ProductT &cartesian,
-		size_t startIndx,
-		size_t length)
-	{
-		for (size_t currIndx = 0; currIndx < length; ++currIndx)
-		{
-			size_t indx = startIndx + currIndx;
-			auto&&t = cartesian[indx];
-			MCResult& result = output->at(indx);
-
-			ParameterMap& param = result.foundParameters;
-			param[0] = std::get<0>(t);
-			param[1] = std::get<1>(t);
-			param[2] = std::get<2>(t);
-			param[3] = std::get<3>(t);
-			MonteCarloEngine::calculateFittingError(input, result);
-		}
 	}
 
 	void MonteCarloEngine::generateNoise(double& value, double factor)

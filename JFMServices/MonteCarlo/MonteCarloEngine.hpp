@@ -5,6 +5,10 @@
 #include "../Fitting/PreFitter.hpp"
 #include <atomic>
 #include <ranges>
+#include <memory>
+#include "Calculator/Calculator.h"
+
+using namespace utils;
 
 namespace JFMService
 {
@@ -16,6 +20,39 @@ namespace JFMService
 		twoSigma,
 		threeSigma
 	};
+
+    template <CalculationModeId>
+    struct CalculationParamsAll;
+
+    template<>
+    struct CalculationParamsAll<CalculationModeId::CalculateSingleCore>
+    {
+        using type = Calculator::CalculationParamsCpuSingle;
+    };
+
+    template<>
+    struct CalculationParamsAll<CalculationModeId::CalculateMultiCore>
+    {
+        using type = Calculator::CalculationParamsCpuMulti;
+    };
+
+    template<>
+    struct CalculationParamsAll<CalculationModeId::CalculateSimulate>
+    {
+        using type = Calculator::CalculationParamsSimulate;
+    };
+
+    template<>
+    struct CalculationParamsAll<CalculationModeId::CalculateGpu>
+    {
+        using type = Calculator::CalculationParamsGpu;
+    };
+
+    template <CalculationModeId modeId>
+    using CalcParams = CalculationParamsAll<modeId>::type;
+
+    template <CalculationModeId modeId>
+    using ParamsPtr = std::unique_ptr<CalcParams<modeId>>;
 
 	class MonteCarloEngine
 	{
@@ -48,34 +85,16 @@ namespace JFMService
 		double getUncertaintyMultiplier(uint8_t numberOfParameters, ConfidenceLevel level);
 
 		double calculateMaximumError(const PlotData &trueData, double noiseFactor);
-		void generateNoise(double &value, double factor);
+		static void generateNoise(double &value, double factor);
 
 		void SimulateImpl(const MCInput &input, std::function<void(MCOutput &&)> callback);
 
-		void simulate(
-			const std::shared_ptr<AbstractPreFit> preFitter,
-			const std::shared_ptr<Fitters::AbstractFitter> fitter,
-			MCInput &input,
-			MCResult &result);
+        template <CalculationModeId calculationModeId>
+        constexpr ParamsPtr<calculationModeId> createParams(
+            const MCInput &input,
+            std::vector<MCResult> *outputs);
 
 		static void calculateFittingError(const MCInput& input, MCResult& result);
-
-		using ProductT = std::ranges::cartesian_product_view<
-			std::views::all_t<std::vector<double> &>,
-			std::views::all_t<std::vector<double> &>,
-			std::views::all_t<std::vector<double> &>,
-			std::views::all_t<std::vector<double> &> >;
-		void calculateFittingErrorByBatch(
-			const MCInput &input,
-			std::vector<MCResult> *output,
-			const ProductT &cartesian,
-			size_t startIndx,
-			size_t length);
-
-        void calculateFittingErrorByBatchGPU(
-            const MCInput &input,
-            std::vector<MCResult> *output,
-            const ProductT &cartesian);
 
 		std::atomic<uint32_t> m_iterationCount;
 		std::atomic<uint32_t> m_blockNumber;

@@ -14,6 +14,8 @@ JFMServices_sources = [
 './Models/JFMErrorModel.cpp',
 './Models/JFMModels.cpp',
 './Models/CalculateData.cpp',
+'./Calculator/CalculatorGpu.cpp',
+'./Calculator/CalculatorCpu.cpp',
 ]
 
 JFMServices_includes = [

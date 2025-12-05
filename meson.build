@@ -57,8 +57,9 @@ endif
 
 mode = get_option('mode')
 if mode.contains('single-core')
+    args += '-DJFM_MODE_SINGLE_CORE'
 elif mode.contains('multi-core')
-    args += '-DJFM_MULTITHREADED'
+    args += '-DJFM_MODE_MULTI_CORE'
 elif mode.contains('simulate')
     args += '-DJFM_ITER_SIMULATE'
 elif mode.contains('gpu')

@@ -3,6 +3,7 @@
 #include "JFMFitting.hpp"
 #include "DataManager.hpp"
 #include "tests.hpp"
+
 int main()
 {
 #if 0

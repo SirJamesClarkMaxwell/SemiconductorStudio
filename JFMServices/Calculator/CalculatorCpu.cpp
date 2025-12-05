@@ -1,0 +1,111 @@
+#include "Calculator.h"
+#include <thread>
+
+namespace Calculator
+{
+
+void calculateFittingErrorByBatch(
+    const MCInput &input,
+    std::vector<MCResult> *output,
+    const ProductT &cartesian,
+    size_t startIndx,
+    size_t length,
+    CalculationParams::CalculationCb cb)
+{
+    for (size_t currIndx = 0; currIndx < length; ++currIndx)
+    {
+        size_t indx = startIndx + currIndx;
+        auto&&t = cartesian[indx];
+        MCResult& result = output->at(indx);
+
+        ParameterMap& param = result.foundParameters;
+        param[0] = std::get<0>(t);
+        param[1] = std::get<1>(t);
+        param[2] = std::get<2>(t);
+        param[3] = std::get<3>(t);
+        cb(input, result);
+    }
+}
+
+void CalculatorAll<CalculationParamsCpuSingle>::call(const CalculationParamsCpuSingle &params)
+{
+    calculateFittingErrorByBatch(params.input,
+                                 params.output,
+                                 params.cartesian,
+                                 0,
+                                 params.totalLength,
+                                 params.cb);
+}
+
+void CalculatorAll<CalculationParamsCpuMulti>::call(const CalculationParamsCpuMulti &params)
+{
+    const MCInput &input = params.input;
+    std::vector<MCResult> *output = params.output;
+    size_t totalLength = params.totalLength;
+    unsigned threadCount = std::thread::hardware_concurrency();
+    auto cartesian = params.cartesian;
+    Info() << "WARN: Multithreaded mode - using all threads : " << threadCount << "\n";
+    std::vector<std::thread> threads(threadCount);
+    const size_t batchLength = totalLength / threadCount;
+    const size_t batchLengthReminder = totalLength % threadCount;
+
+    for (uint32_t threadIndx = 0; threadIndx < threadCount; ++threadIndx)
+    {
+        size_t startIndx = threadIndx * batchLength;
+        size_t length = batchLength +
+            (threadIndx+1 != threadCount ? 0 : batchLengthReminder);
+
+        threads[threadIndx] = std::thread(calculateFittingErrorByBatch,
+                                input, output, cartesian, startIndx, length, params.cb);
+    }
+    for (auto &t : threads)
+        t.join();
+}
+
+void CalculatorAll<CalculationParamsSimulate>::call(const CalculationParamsSimulate &params)
+{
+    const MCInput &input = params.input;
+    MCInput copied{ input };
+    std::vector<MCResult> *outputs = params.output;
+    auto characteristic = input.startingData.initialData.characteristic;
+    std::vector<double> current{ characteristic.currentData.begin(), characteristic.currentData.end() };
+    copied.startingData.initialData.characteristic.currentData = { current.begin(), current.end() };
+    std::shared_ptr<Fitters::AbstractFitter> fitter = params.fitter;
+    std::shared_ptr<AbstractPreFit> preFitter = params.preFitter;
+
+    auto outOfBounds = [](const ParameterMap& PMap, const ParamBounds& bounds)
+        {
+            for (const auto& [key, val] : PMap)
+            {
+                if (val < bounds.at(key).first or val > bounds.at(key).second)
+                    return true;
+            }
+            return false;
+    };
+
+    MEASURE_TIME("simulate",
+    for (size_t iteration = 0; iteration < input.iterations; ++iteration)
+    {
+        MCResult& result = outputs->at(iteration);
+        // simulate(preFitter, fitter, output.inputData, output.mcResult[iteration]);
+        do {
+            current = { characteristic.currentData.begin(), characteristic.currentData.end() };
+            copied.startingData.initialData.characteristic.currentData = { current.begin(), current.end() };
+            for (auto& I : current)
+                params.generateNoiseCb(I, copied.noise);
+
+            copied.startingData.initialValues = preFitter->Estimate(copied.startingData.initialData);
+
+            fitter->Fit(copied.startingData,
+                            [&](const ParameterMap&& fittingResult) {
+                                result.foundParameters = fittingResult;
+                            });
+
+            params.cb(input, result);
+        } while ((result.error > 23.5) or outOfBounds(result.foundParameters, input.startingData.bounds));
+
+        // m_iterationCount++;
+    }
+    );
+}
+} // namespace Calculator

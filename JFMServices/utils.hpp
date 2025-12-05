@@ -53,6 +53,13 @@ namespace utils
     {
         return a > b ? b : a;
     }
+
+    enum CalculationModeId {
+        CalculateSimulate,
+        CalculateSingleCore,
+        CalculateMultiCore,
+        CalculateGpu,
+    };
 } // namespace utils
 
 #define _Log(level)      utils::Logger(__FILE__, __func__, __LINE__, utils::JfmLogLevel::level).stream()
@@ -213,3 +220,7 @@ namespace utils
         }
     };
 } // namespace utils
+
+#define JFM_COPY_CTOR_DELETE(__className)                                  \
+        __className(__className &) = delete;                               \
+        __className &operator=(__className &) = delete;

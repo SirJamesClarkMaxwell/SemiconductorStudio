@@ -1,5 +1,6 @@
 #pragma once
 #include "pch.hpp"
+#include "utils.hpp"
 namespace JFMService::FittingService
 {
 	// NOTE Parameters
@@ -27,6 +28,7 @@ namespace JFMService::FittingService
 	// theoretical bounds for parameters
 	using Bounds = std::pair<double, double>;
 	using ParamBounds = std::unordered_map<ParameterID, Bounds>;
+    using utils::CalculationModeId;
 
 	struct NumericsConfig
 	{
