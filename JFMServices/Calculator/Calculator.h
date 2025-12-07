@@ -7,6 +7,7 @@
 #include "Fitting/JFMFitter.hpp"
 #include "Fitting/PreFitter.hpp"
 #include "utils.hpp"
+#include "SymbolLoader/SymbolLoader.h"
 
 using namespace JFMService::Fitters;
 
@@ -46,7 +47,7 @@ struct CalculationParamsNonSimulate : public CalculationParams
     // Due to it being a reference to pSets objects we need to keep
     // pSets within _this_ object so as to provide sufficient lifetime
     // of cartesian object
-    std::vector<std::vector<double>> pSets;
+    mutable std::vector<std::vector<double>> pSets;
     ProductT cartesian;
     size_t totalLength;
 
@@ -147,6 +148,11 @@ struct CalculatorAll<CalculationParamsCpuMulti>
 template <>
 struct CalculatorAll<CalculationParamsGpu>
 {
+private:
+    constexpr static const char *library_path = "libcalculator_gpu.so";
+    static utils::SymbolLoader *loader;
+
+public:
     static void call(const CalculationParamsGpu &params);
 };
 } // namespace Calculator

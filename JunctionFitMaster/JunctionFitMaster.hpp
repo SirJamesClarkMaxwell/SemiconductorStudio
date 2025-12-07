@@ -1,6 +1,7 @@
 #pragma once
 
 #include "utils.hpp"
+#include "SymbolLoader/SymbolLoader.h"
 
 namespace JunctionFitMaster
 {
@@ -15,5 +16,12 @@ constexpr const utils::CalculationModeId modeId =
     utils::CalculationModeId::CalculateGpu;
 #else
 #error "Invalid option. Use one of modes : { 'single-cpu' , 'multi-cpu' ,'gpu', 'simulate' }"
+#endif
+
+constexpr const utils::PlatformType platformType =
+#if defined(JFM_PLATFORM_NIX)
+    utils::PlatformType::Nix;
+#else
+    utils::Platform::Windows;
 #endif
 }

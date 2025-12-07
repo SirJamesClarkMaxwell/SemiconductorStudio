@@ -1,7 +1,14 @@
 #pragma once
-#include "pch.hpp"
-#include "utils.hpp"
-namespace JFMService::FittingService
+#include <string>
+#include <map>
+#include <unordered_map>
+#include <span>
+#include <filesystem>
+#include <functional>
+
+namespace JFMService
+{
+namespace FittingService
 {
 	// NOTE Parameters
 	using ParameterID = unsigned int;
@@ -28,7 +35,6 @@ namespace JFMService::FittingService
 	// theoretical bounds for parameters
 	using Bounds = std::pair<double, double>;
 	using ParamBounds = std::unordered_map<ParameterID, Bounds>;
-    using utils::CalculationModeId;
 
 	struct NumericsConfig
 	{
@@ -125,8 +131,9 @@ namespace JFMService::FittingService
 		virtual void SaveMCPlot(const MCSave &toSave) = 0;
 		virtual void SaveUncertanties(std::vector< UncertaintySave>& toSave,const std::filesystem::path& path)=0;
 	};
-}
-namespace JFMService::Fitters
+} // FittingService
+
+namespace Fitters
 {
 	enum ParameterID
 	{
@@ -156,4 +163,5 @@ namespace JFMService::Fitters
 		Model6P = 5,
 		Model6PLight = 6,
 	};
-}
+} // namespace Fitters
+} // namespace JFMService

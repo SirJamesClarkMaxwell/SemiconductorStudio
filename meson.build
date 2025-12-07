@@ -1,7 +1,8 @@
-project('JFM', 'cpp',
+project('JFM', 'cpp', 'cuda',
     version: '1.0.0')
 
 cpp = meson.get_compiler('cpp')
+cu = meson.get_compiler('cuda')
 
 subdir('JFMApp')
 subdir('JFMServices')
@@ -16,7 +17,7 @@ subs = [
 ]
 
 JFM_sources = []
-JFM_includes = []
+JFM_includes = ['.']
 
 foreach sub : subs
     name = sub[0]
@@ -72,5 +73,6 @@ executable('JFM',
     cpp_args: ['-std=c++23',
                '-DJFM_PLATFORM_NIX',
                args],
+    cuda_args: ['-std=c++20', '-gencode=arch=compute_86,code=sm_86', '-DJFM_COMPILER_CUDA'],
     link_args: [ linked_deps, '-lglfw', '-lGL'],
     install: true)

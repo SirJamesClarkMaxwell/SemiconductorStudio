@@ -3,7 +3,6 @@
 
 namespace Calculator
 {
-
 void calculateFittingErrorByBatch(
     const MCInput &input,
     std::vector<MCResult> *output,

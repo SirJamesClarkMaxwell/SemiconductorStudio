@@ -1,5 +1,8 @@
 JFMServices_sources = [
-'./utils.cpp',
+'./Helpers/utils.cpp',
+'./Helpers/SymbolLoader/SymbolLoader.cpp',
+'./Helpers/SymbolLoader/SymbolLoaderNix.cpp',
+'./Helpers/SymbolLoader/SymbolLoaderWindows.cpp',
 './Fitting/PreFitter.cpp',
 './Fitting/JFMFitter.cpp',
 './Fitting/JFMFitting.cpp',
@@ -14,14 +17,18 @@ JFMServices_sources = [
 './Models/JFMErrorModel.cpp',
 './Models/JFMModels.cpp',
 './Models/CalculateData.cpp',
-'./Calculator/CalculatorGpu.cpp',
 './Calculator/CalculatorCpu.cpp',
 ]
+
+if get_option('mode').contains('gpu')
+    JFMServices_sources += 'Calculator/CalculatorGpu.cpp'
+endif
 
 JFMServices_includes = [
     'DataManegement',
     'Fitting',
     'Models',
     'MonteCarlo',
+    'Helpers',
     './'
 ]
