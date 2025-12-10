@@ -1,13 +1,27 @@
 #include "Calculator.h"
+#include "CalculatorGpu/CalculatorGpu.h"
+#include "JFMAdditionalParameters.hpp"
+
+namespace
+{
+static const CudaParams defaultCalculationParams = {
+    100,     /* blocks per grid */
+    256,     /* threads per block*/
+    512,    /* memory pool size */
+};
+} // namespace anonymous
 
 namespace Calculator
 {
 utils::SymbolLoader *CalculatorAll<CalculationParamsGpu>::loader =
     utils::SymbolLoader::Create(CalculatorAll<CalculationParamsGpu>::library_path);
 
-typedef void (*PFN_calculatorGpuCallProc)(const MCInput &input,
+typedef void (*PFN_calculatorGpuCallProc)(CudaParams calculationParams,
+                                          const MCInput &input,
                                           std::vector<MCResult> *output,
-                                          std::vector<std::vector<double>> pSets);
+                                          size_t totalLength,
+                                          double Temperature,
+                                          double Noise);
 
 void CalculatorAll<CalculationParamsGpu>::call(const CalculationParamsGpu &params)
 {
@@ -15,9 +29,16 @@ void CalculatorAll<CalculationParamsGpu>::call(const CalculationParamsGpu &param
         reinterpret_cast<PFN_calculatorGpuCallProc>(loader->getProcAddress("calculatorGpuCall"));
     JFM_ASSERT(calculatorGpuCallProc != nullptr);
 
-    calculatorGpuCallProc(params.input,
+    CudaParams calcParams = ::defaultCalculationParams;
+
+    fillUpResultOutputs(params.input, params.output, params.cartesian);
+    double Temperature = params.input.startingData.initialData.getTemperature();
+
+    calculatorGpuCallProc(calcParams,
+                          params.input,
                           params.output,
-                          params.pSets);
-    JFM_ASSERT("Has to fail : Not implemented !" == 0);
+                          params.output->size(),
+                          Temperature,
+                          params.input.noise);
 }
 } // namespace Calculator

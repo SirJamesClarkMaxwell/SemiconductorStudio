@@ -1,6 +1,7 @@
 #include "CalculateData.hpp"
 #include "JFMModels.hpp"
 #include "JFMErrorModel.hpp"
+
 void JFMService::DataCalculator::CalculateData(CalculatingData &input)
 {
     // FIXME: remove unnecessary object creation
@@ -11,7 +12,7 @@ void JFMService::DataCalculator::CalculateData(CalculatingData &input)
     SixParameterModel model6;
     FiveParameterModel model5;
     SevenParameterModel model7;
-    
+
     switch (input.modelID)
     {
     case Fitters::JFMModelID::Model4P:

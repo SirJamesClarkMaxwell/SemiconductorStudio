@@ -155,4 +155,9 @@ private:
 public:
     static void call(const CalculationParamsGpu &params);
 };
+
+void fillUpResultOutputs(
+    const MCInput &input,
+    std::vector<MCResult> *output,
+    const ProductT &cartesian);
 } // namespace Calculator

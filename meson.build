@@ -39,6 +39,7 @@ linked_deps = [
     '-L' + join_paths(project_root, 'Vendor/LambertW/build'), '-lLambertW',
     '-L' + join_paths(project_root, 'Vendor/yaml-cpp/build'), '-lyaml-cpp',
 ]
+deps = []
 
 args = ['-Wall',
         '-Wextra',
@@ -52,7 +53,9 @@ args = ['-Wall',
         '-Wno-unused-but-set-variable',
         '-fexperimental-library']
 
+use_debug = false
 if get_option('debug')
+    use_debug = true
     args += '-DJFM_DEBUG'
 endif
 
@@ -65,6 +68,8 @@ elif mode.contains('simulate')
     args += '-DJFM_ITER_SIMULATE'
 elif mode.contains('gpu')
     args += '-DJFM_MODE_GPU'
+    subdir('JFMServices/Calculator')
+    deps += libcalculator_gpu_dep
 endif
 
 executable('JFM',
@@ -75,4 +80,5 @@ executable('JFM',
                args],
     cuda_args: ['-std=c++20', '-gencode=arch=compute_86,code=sm_86', '-DJFM_COMPILER_CUDA'],
     link_args: [ linked_deps, '-lglfw', '-lGL'],
+    dependencies: deps,
     install: true)

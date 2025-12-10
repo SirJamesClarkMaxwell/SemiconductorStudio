@@ -79,7 +79,7 @@ namespace JFMService::Fitters
 		additional.Temperature = input.at(Temperature);
 		FixingConfiguration fixingConfiguration = static_cast<FixingConfiguration>(0);
 		JFMParameters destination;
-		destination.getParameters().resize(6);
+		destination.Initialize(6);
 		for (const auto & src :  fixingConfig)
 		{
 			auto &[key, val] = src;

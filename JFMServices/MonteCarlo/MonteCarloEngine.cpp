@@ -117,23 +117,50 @@ namespace JFMService
 		data.modelID = input.startingData.initialData.modelID;
 
 		DataCalculator calculator;
+        MEASURE_TIME_PRECISE("CalculateData() : 1",
 		calculator.CalculateData(data);
+        );
+        {
+            static bool dumped = false;
+            if (dumped == false)
+            {
+                auto vec = std::vector<double>{data.characteristic.currentData.begin(), data.characteristic.currentData.end()};
+                jfm_debug::DataDumper("cpu : 1", vec.data(), vec.size());
+                dumped = true;
+            }
+        }
 
 		std::vector<double> trueCurrentVector{};
 		trueCurrentVector.resize(current.size());
 		CalculatingData trueData = data;
 		trueData.parameters = input.trueParameters;
 		trueData.characteristic.currentData = std::span<double>{ trueCurrentVector };
+        MEASURE_TIME_PRECISE("CalculateData() : 2",
 		calculator.CalculateData(trueData);
+        );
+        {
+            static bool dumped = false;
+            if (dumped == false)
+            {
+                auto vec = std::vector<double>{trueData.characteristic.currentData.begin(), trueData.characteristic.currentData.end()};
+                jfm_debug::DataDumper("cpu : 2", vec.data(), vec.size());
+
+                auto vecFitted = std::vector<double>{trueData.characteristic.currentData.begin(), trueData.characteristic.currentData.end()};
+                jfm_debug::DataDumper("cpu : Fitted", vecFitted.data(), vecFitted.size());
+                dumped = true;
+            }
+        }
 
 		std::span<double> fittedCurrent = data.characteristic.currentData;
 		double accumulatedError = 0.0;
 		double noise = input.noise / 100.0;
 
+        MEASURE_TIME_PRECISE("post process loop",
 		for (const auto& [trueI, fitI] : std::views::zip(trueData.characteristic.currentData, fittedCurrent))
 		{
 			accumulatedError += std::pow(((std::log(fitI) - std::log(trueI)) / (noise)), 2);
 		}
+        );
 		result.error = (accumulatedError);
 	}
 

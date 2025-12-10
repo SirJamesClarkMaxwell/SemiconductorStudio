@@ -26,14 +26,25 @@ void calculateFittingErrorByBatch(
     }
 }
 
+void fillUpResultOutputs(
+    const MCInput &input,
+    std::vector<MCResult> *output,
+    const ProductT &cartesian)
+{
+    calculateFittingErrorByBatch(input, output, cartesian, 0, cartesian.size(),
+                [](auto, auto) { /* noop */ });
+}
+
 void CalculatorAll<CalculationParamsCpuSingle>::call(const CalculationParamsCpuSingle &params)
 {
+    MEASURE_TIME_THIS_FUNC(
     calculateFittingErrorByBatch(params.input,
                                  params.output,
                                  params.cartesian,
                                  0,
                                  params.totalLength,
                                  params.cb);
+    );
 }
 
 void CalculatorAll<CalculationParamsCpuMulti>::call(const CalculationParamsCpuMulti &params)

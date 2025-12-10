@@ -10,6 +10,7 @@ if __name__ == "__main__":
     parser.add_argument('--setup', action='store_true')
     parser.add_argument('--no-setup', dest='setup', action='store_false')
     parser.add_argument('--mode', choices=['single-core', 'multi-core', 'gpu', 'simulate'])
+    parser.add_argument('--debug', action='store_true')
     args = parser.parse_args()
 
     print('Build JFM Application')
@@ -26,7 +27,7 @@ if __name__ == "__main__":
         #
         if args.setup:
             build_linux.setup_dependencies(args.clean)
-        build_linux.build(args.clean, args.mode)
+        build_linux.build(args.clean, args.mode, args.debug)
     else:
         print('\t target:\t windows\n')
         build_windows.build()

@@ -2,21 +2,34 @@
 namespace JFMService
 {
     template <size_t parameter_size>
-    std::array<double, parameter_size> adjustFixingConfiguration(NumericStorm::Fitting::Parameters<parameter_size> &parameters, JFMAdditionalParameters &additionalParameters)
+    constexpr std::array<double, parameter_size> adjustFixingConfiguration(
+        NumericStorm::Fitting::Parameters<parameter_size> &parameters,
+        const JFMAdditionalParameters &additionalParameters)
     {
         std::array<double, parameter_size> destination(parameters.getParameters());
-        std::valarray<double> fixedValues(additionalParameters.fixingValues.getParameters());
+        const std::valarray<double> fixedValues(additionalParameters.fixingValues.getParameters());
         FixingConfiguration config = additionalParameters.fixingConfiguration;
         int i = 0;
+        if (fixedValues.size() == 0)
+        {
+            JFM_ASSERT(static_cast<int>(config) == 0);
+            Info() << "destination : size : " << destination.size() << "\n"
+                   << "additionaParameters : fixedValues : size : " << fixedValues.size() << "\n"
+                   << "config : " << config << "\n";
+
+            // jfm_debug::show_backtrace();
+        }
+
         for (const auto &[dst, src] : std::views::zip(destination, fixedValues))
         {
             if (config & 1)
                 destination[i] = src;
             i++;
-            config >>= (uint32_t)1;
+            config >>= static_cast<FixingConfiguration>(1);
         }
+
         return destination;
-    };
+    }
 
     template <size_t parameter_size, class CurrentModel>
     void call_model(CalculatingData &data, CurrentModel model)
@@ -47,10 +60,15 @@ namespace JFMService
         NumericStorm::Fitting::Parameters<4> params(parameters);
         JFMAdditionalParameters additionalParams(additionalParameters);
         auto adjusted = adjustFixingConfiguration<4>(params, additionalParams);
+        if (additionalParams.fixingValues.getParameters().size() == 0)
+        {
+            Info() << "Empty fixing values : "
+                   << "adjusted.size()  = " << adjusted.size() << "\n";
+        }
         auto [I0, A, Rs, Rsh] = adjusted;
         const double k = 8.6e-5;
 
-        auto func = [&](double &V, double &I, double &I0, double &A, double &Rsh, double &Rs, double T)
+        auto func = [&](double &I, const double &V, const double &I0, const double &A, const double &Rsh, const double &Rs, double T)
         {
             double x = ((I0 * Rs) / (A * k * T)) * std::exp(V / (A * k * T));
             double I_lw = utl::LambertW<0>(x);
@@ -59,7 +77,7 @@ namespace JFMService
         };
 
         for (const auto &[V, I] : std::views::zip(data[0], data[1]))
-            func(V, I, I0, A, Rsh, Rs, additionalParameters.Temperature);
+            func(I, V, I0, A, Rsh, Rs, additionalParameters.Temperature);
     }
     void FourParameterModel::call(CalculatingData &data)
     {

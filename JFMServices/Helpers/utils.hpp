@@ -6,6 +6,7 @@
 #include <format>
 #include <chrono>
 #include "macros.h"
+#include <execinfo.h>
 
 namespace utils
 {
@@ -57,3 +58,8 @@ namespace utils
         CalculateGpu,
     };
 } // namespace utils
+
+namespace jfm_debug
+{
+    void show_backtrace();
+} // namespace jfm_debug

@@ -4,10 +4,8 @@
 
 namespace JFMService
 {
+    using JFMService::FittingService::CalculatingData;
 
-
-
-	using namespace FittingService;
 	class DataCalculator
 	{
 	public:

@@ -22,7 +22,7 @@ def do_build_yaml_cpp(buildDir='build'):
     do_build(args, buildDir, 'make', builder_env={'PATH': '/usr/bin'})
 
 
-def do_meson_build(doClean=False, buildDir='build', mode=None):
+def do_meson_build(doClean=False, buildDir='build', mode=None, debug=False):
     args = ['meson', buildDir]
     modes = ['single-core', 'multi-core', 'gpu', 'simulate']
 
@@ -30,6 +30,8 @@ def do_meson_build(doClean=False, buildDir='build', mode=None):
         args.append('--reconfigure')
     if mode in modes:
         args.append(f'-Dmode={mode}')
+    if debug:
+        args.append('-Ddebug=true')
 
     do_build(args, buildDir, 'ninja')
 
@@ -96,11 +98,11 @@ def setup_dependencies(doClean):
     print('Setup done !')
 
 
-def build(doClean, mode):
+def build(doClean, mode, debug):
     buildDir = 'build'
 
     if doClean:
         subprocess.run(['rm', '-rf', buildDir])
 
-    do_meson_build(doClean, mode=mode)
+    do_meson_build(doClean, mode=mode, debug=debug)
 

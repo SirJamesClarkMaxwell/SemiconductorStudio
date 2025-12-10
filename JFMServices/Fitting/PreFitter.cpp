@@ -2,6 +2,8 @@
 #include "JFMFitter.hpp"
 #include "CalculateData.hpp"
 
+using JFMService::FittingService::ParameterMap;
+
 namespace JFMService
 {
     AbstractPreFit::AbstractPreFit()

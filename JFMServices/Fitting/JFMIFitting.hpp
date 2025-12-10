@@ -5,6 +5,7 @@
 #include <span>
 #include <filesystem>
 #include <functional>
+#include "macros.h"
 
 namespace JFMService
 {
@@ -65,6 +66,16 @@ namespace FittingService
 		PlotData characteristic{};
 		AdditionalParameterMap additionalParameters{};
 		ModelID modelID{};
+
+        auto getTemperature() const
+        {
+            // Note: in some places in the code we obtain temperature
+            //       from `additionalParameters` map as first element
+            //       Not to have vague and to increase readibility let's
+            //       use _this_ method to get it.
+            JFM_ASSERT(!additionalParameters.empty());
+            return (*additionalParameters.begin()).second;
+        }
 	};
 	struct FittingInput
 	{
