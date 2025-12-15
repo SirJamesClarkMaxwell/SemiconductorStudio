@@ -10,15 +10,6 @@ namespace JFMService
         const std::valarray<double> fixedValues(additionalParameters.fixingValues.getParameters());
         FixingConfiguration config = additionalParameters.fixingConfiguration;
         int i = 0;
-        if (fixedValues.size() == 0)
-        {
-            JFM_ASSERT(static_cast<int>(config) == 0);
-            Info() << "destination : size : " << destination.size() << "\n"
-                   << "additionaParameters : fixedValues : size : " << fixedValues.size() << "\n"
-                   << "config : " << config << "\n";
-
-            // jfm_debug::show_backtrace();
-        }
 
         for (const auto &[dst, src] : std::views::zip(destination, fixedValues))
         {
@@ -60,11 +51,6 @@ namespace JFMService
         NumericStorm::Fitting::Parameters<4> params(parameters);
         JFMAdditionalParameters additionalParams(additionalParameters);
         auto adjusted = adjustFixingConfiguration<4>(params, additionalParams);
-        if (additionalParams.fixingValues.getParameters().size() == 0)
-        {
-            Info() << "Empty fixing values : "
-                   << "adjusted.size()  = " << adjusted.size() << "\n";
-        }
         auto [I0, A, Rs, Rsh] = adjusted;
         const double k = 8.6e-5;
 

@@ -117,9 +117,7 @@ namespace JFMService
 		data.modelID = input.startingData.initialData.modelID;
 
 		DataCalculator calculator;
-        MEASURE_TIME_PRECISE("CalculateData() : 1",
 		calculator.CalculateData(data);
-        );
         {
             static bool dumped = false;
             if (dumped == false)
@@ -135,9 +133,7 @@ namespace JFMService
 		CalculatingData trueData = data;
 		trueData.parameters = input.trueParameters;
 		trueData.characteristic.currentData = std::span<double>{ trueCurrentVector };
-        MEASURE_TIME_PRECISE("CalculateData() : 2",
 		calculator.CalculateData(trueData);
-        );
         {
             static bool dumped = false;
             if (dumped == false)
@@ -155,12 +151,10 @@ namespace JFMService
 		double accumulatedError = 0.0;
 		double noise = input.noise / 100.0;
 
-        MEASURE_TIME_PRECISE("post process loop",
 		for (const auto& [trueI, fitI] : std::views::zip(trueData.characteristic.currentData, fittedCurrent))
 		{
 			accumulatedError += std::pow(((std::log(fitI) - std::log(trueI)) / (noise)), 2);
 		}
-        );
 		result.error = (accumulatedError);
 	}
 
