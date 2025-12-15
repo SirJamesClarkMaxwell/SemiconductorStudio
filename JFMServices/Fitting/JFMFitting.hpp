@@ -1,14 +1,16 @@
 #pragma once
-#include "../Fitting/JFMIFitting.hpp"
+#include "MonteCarlo/JFMMonteCarlo.hpp"
+#include "Fitting/JFMIFitting.hpp"
 #include "DataManager.hpp"
-#include "../Fitting/PreFitter.hpp"
-#include "../Fitting/JFMFitter.hpp"
-#include "../Models/CalculateData.hpp"
-#include "../Models/JFMErrorModel.hpp"
-#include "../MonteCarlo/JFMMonteCarlo.hpp"
+#include "Fitting/PreFitter.hpp"
+#include "Fitting/JFMFitter.hpp"
+#include "Models/CalculateData.hpp"
+#include "Models/JFMErrorModel.hpp"
+
 namespace JFMService::FittingService
 {
 	using namespace DataManagementService;
+    using JFMService::MonteCarlo;
 
 	class Fitting : public IFitting
 	{
@@ -26,18 +28,16 @@ namespace JFMService::FittingService
 		virtual void Simulate(const MCInput& input, std::function<void(MCOutput&&)> callback) override;
 		virtual double GetUncertainty(const MCOutput& output, int level, ParameterID id) override;
 		virtual void SaveMCPlot(const MCSave& toSave) override;
-		virtual void SaveUncertanties(std::vector< UncertaintySave>& toSave, const std::filesystem::path& path)override;
+		virtual void SaveUncertanties(std::vector< UncertaintySave>& toSave, const std::filesystem::path& path) override;
 
-	private:
+    private:
+		NumericsConfig instantiateNumericsConfig();
+
 		DataManager m_dataManager;
 		PreFitter m_preFitter;
 		Fitters::Fitter m_fitter;
 		DataCalculator m_dataCalculator;
 		const NumericsConfig m_numericsConfig;
 		MonteCarlo m_monteCarlo;
-
-
-	private:
-		NumericsConfig instantiateNumericsConfig();
 	};
-}
+} // namespace JFMService::FittingService

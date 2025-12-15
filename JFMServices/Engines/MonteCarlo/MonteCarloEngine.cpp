@@ -1,7 +1,7 @@
 #include "MonteCarloEngine.hpp"
-#include "../Models/JFMErrorModel.hpp"
-#include "../Fitting/JFMFitter.hpp"
-#include "../Models/CalculateData.hpp"
+#include "Models/JFMErrorModel.hpp"
+#include "Fitting/JFMFitter.hpp"
+#include "Models/CalculateData.hpp"
 #include <utils.hpp>
 #include <compare>
 #include "Calculator/Calculator.h"
@@ -32,10 +32,9 @@ namespace JFMService
             params = std::make_unique<CalcParams<calculationModeId>> (
                                         std::move(input),
                                         std::move(outputs),
-                                        &MonteCarloEngine::calculateFittingError,
+                                        this,
                                         m_fitter[input.startingData.initialData.modelID],
-                                        m_prefitter[input.startingData.initialData.modelID],
-                                        &MonteCarloEngine::generateNoise );
+                                        m_prefitter[input.startingData.initialData.modelID]);
         }
         else if constexpr (calculationModeId == CalculationModeId::CalculateSingleCore ||
                     calculationModeId == CalculationModeId::CalculateMultiCore ||
@@ -63,7 +62,7 @@ namespace JFMService
             params = std::make_unique<CalcParams<calculationModeId>> (
                                         std::move(input),
                                         std::move(outputs),
-                                        &MonteCarloEngine::calculateFittingError,
+                                        this,
                                         pSets );
         }
         else
@@ -96,15 +95,64 @@ namespace JFMService
 			callback(std::move(output));
 	}
 
-	void MonteCarloEngine::generateNoise(double& value, double factor)
+	double MonteCarloEngine::generateNoise(double value, double factor)
 	{
 		double noise = (value * factor / 100);
-		double copy = value;
 		std::normal_distribution<double> distribution{ 0, 1 };
-		value += distribution(generator) * noise;
+		return distribution(generator) * noise;
 	}
 
-	void MonteCarloEngine::calculateFittingError(const MCInput& input, MCResult& result)
+	void MonteCarloEngine::simulateSingleIteration(
+        const std::shared_ptr<AbstractPreFit>& preFitter,
+        const std::shared_ptr<Fitters::AbstractFitter> fitter,
+        MCInput& input,
+        MCResult &result)
+	{
+		MCInput copied{ input };
+		auto characteristic = input.startingData.initialData.characteristic;
+		std::vector<double> current{ characteristic.currentData.begin(), characteristic.currentData.end() };
+		copied.startingData.initialData.characteristic.currentData = { current.begin(), current.end() };
+
+		static auto checkParams = [](const ParameterMap& PMap)
+        {
+			return std::any_of(PMap.begin(), PMap.end(),
+                               [](const std::pair<const int, double>& pair) {
+                                    return pair.second < 0;
+                               });
+		};
+
+		static auto outOfBounds = [](const ParameterMap& PMap, const ParamBounds& bounds)
+		{
+			for (const auto& [key, val] : PMap)
+			{
+				if ((val < bounds.at(key).first) || (val > bounds.at(key).second))
+					return true;
+			}
+			return false;
+		};
+
+		static auto callback = [&](const ParameterMap&& fittingResult)
+        {
+            result.foundParameters = fittingResult;
+        };
+
+		do
+		{
+			current = { characteristic.currentData.begin(), characteristic.currentData.end() };
+			copied.startingData.initialData.characteristic.currentData = { current.begin(), current.end() };
+			for (auto& I : current)
+            {
+				I += generateNoise(I, copied.noise);
+            }
+
+			copied.startingData.initialValues = preFitter->Estimate(copied.startingData.initialData);
+			fitter->Fit(copied.startingData, callback);
+
+			CalculateError(input, result);
+		} while (result.error > 23.5 || outOfBounds(result.foundParameters, input.startingData.bounds));
+	}
+
+	void MonteCarloEngine::CalculateError(const MCInput& input, MCResult& result)
 	{
 		auto characteristic = input.startingData.initialData.characteristic;
 		std::vector<double> current{ characteristic.currentData.begin(), characteristic.currentData.end() };

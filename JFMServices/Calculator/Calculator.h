@@ -8,8 +8,10 @@
 #include "Fitting/PreFitter.hpp"
 #include "utils.hpp"
 #include "SymbolLoader/SymbolLoader.h"
+#include "SimulationEngine.hpp"
 
 using namespace JFMService::Fitters;
+using JFMService::SimulationEngine;
 
 using ProductT = std::ranges::cartesian_product_view<
     std::views::all_t<std::vector<double> &>,
@@ -24,19 +26,17 @@ using namespace JFMService;
 
 struct CalculationParams
 {
-    using CalculationCb = void (*)(const MCInput& input, MCResult& result);
-
     const MCInput &input;
     mutable std::vector<MCResult> *output;
-    CalculationCb cb;
+    SimulationEngine *engine;
 
     CalculationParams(
             const MCInput &input,
             std::vector<MCResult> *output,
-            CalculationCb cb)
+            SimulationEngine *engine)
         : input(input)
         , output(output)
-        , cb(cb)
+        , engine(engine)
     {
     }
 };
@@ -54,9 +54,9 @@ struct CalculationParamsNonSimulate : public CalculationParams
     CalculationParamsNonSimulate(
             const MCInput &input,
             std::vector<MCResult> *output,
-            CalculationCb cb,
+            SimulationEngine *engine,
             std::vector<std::vector<double>> pSets)
-        : CalculationParams(input, output, cb)
+        : CalculationParams(input, output, engine)
         , pSets(pSets)
         , cartesian(std::views::cartesian_product(this->pSets[0], this->pSets[1], this->pSets[2], this->pSets[3]))
         , totalLength(cartesian.size())
@@ -70,9 +70,9 @@ struct CalculationParamsCpuSingle : public CalculationParamsNonSimulate
     CalculationParamsCpuSingle(
             const MCInput &input,
             std::vector<MCResult> *output,
-            CalculationCb cb,
+            SimulationEngine *engine,
             std::vector<std::vector<double>> pSets)
-        : CalculationParamsNonSimulate(input, output, cb, pSets)
+        : CalculationParamsNonSimulate(input, output, engine, pSets)
     {
     }
 };
@@ -82,9 +82,9 @@ struct CalculationParamsCpuMulti : public CalculationParamsNonSimulate
     CalculationParamsCpuMulti(
             const MCInput &input,
             std::vector<MCResult> *output,
-            CalculationCb cb,
+            SimulationEngine *engine,
             std::vector<std::vector<double>> pSets)
-        : CalculationParamsNonSimulate(input, output, cb, pSets)
+        : CalculationParamsNonSimulate(input, output, engine, pSets)
     {
     }
 };
@@ -94,32 +94,27 @@ struct CalculationParamsGpu : public CalculationParamsNonSimulate
     CalculationParamsGpu(
             const MCInput &input,
             std::vector<MCResult> *output,
-            CalculationCb cb,
+            SimulationEngine *engine,
             std::vector<std::vector<double>> pSets)
-        : CalculationParamsNonSimulate(input, output, cb, pSets)
+        : CalculationParamsNonSimulate(input, output, engine, pSets)
     {
     }
 };
 
 struct CalculationParamsSimulate : public CalculationParams
 {
-    using GenerateNoiseCb = void (*)(double &value, double factor);
-
     std::shared_ptr<Fitters::AbstractFitter> fitter;
     std::shared_ptr<AbstractPreFit> preFitter;
-    GenerateNoiseCb generateNoiseCb;
 
     CalculationParamsSimulate(
             const MCInput &input,
             std::vector<MCResult> *output,
-            CalculationCb cb,
+            SimulationEngine *engine,
             std::shared_ptr<Fitters::AbstractFitter> fitter,
-            std::shared_ptr<AbstractPreFit> preFitter,
-            GenerateNoiseCb generateNoiseCb)
-        : CalculationParams(input, output, cb)
+            std::shared_ptr<AbstractPreFit> preFitter)
+        : CalculationParams(input, output, engine)
         , fitter(fitter)
         , preFitter(preFitter)
-        , generateNoiseCb(generateNoiseCb)
     {
     }
 };

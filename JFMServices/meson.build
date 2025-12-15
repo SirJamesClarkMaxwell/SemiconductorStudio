@@ -7,8 +7,8 @@ JFMServices_sources = [
 './Fitting/JFMFitter.cpp',
 './Fitting/JFMFitting.cpp',
 './Test.cpp',
-'./MonteCarlo/JFMMonteCarlo.cpp',
-'./MonteCarlo/MonteCarloEngine.cpp',
+'./Engines/MonteCarlo/JFMMonteCarlo.cpp',
+'./Engines/MonteCarlo/MonteCarloEngine.cpp',
 './DataManegement/Dumper.cpp',
 './DataManegement/DataManager.cpp',
 './DataManegement/Loader.cpp',
@@ -28,7 +28,8 @@ JFMServices_includes = [
     'DataManegement',
     'Fitting',
     'Models',
-    'MonteCarlo',
+    'Engines',
+    'Engines/MonteCarlo',
     'Helpers',
     './'
 ]

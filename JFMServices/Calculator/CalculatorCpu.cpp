@@ -1,4 +1,5 @@
 #include "Calculator.h"
+#include "MonteCarloEngine.hpp"
 #include <thread>
 
 namespace Calculator
@@ -9,7 +10,7 @@ void calculateFittingErrorByBatch(
     const ProductT &cartesian,
     size_t startIndx,
     size_t length,
-    CalculationParams::CalculationCb cb)
+    SimulationEngine *simulationEngine)
 {
     for (size_t currIndx = 0; currIndx < length; ++currIndx)
     {
@@ -22,7 +23,9 @@ void calculateFittingErrorByBatch(
         param[1] = std::get<1>(t);
         param[2] = std::get<2>(t);
         param[3] = std::get<3>(t);
-        cb(input, result);
+
+        if (simulationEngine != nullptr)
+            simulationEngine->CalculateError(input, result);
     }
 }
 
@@ -31,8 +34,7 @@ void fillUpResultOutputs(
     std::vector<MCResult> *output,
     const ProductT &cartesian)
 {
-    calculateFittingErrorByBatch(input, output, cartesian, 0, cartesian.size(),
-                [](auto, auto) { /* noop */ });
+    calculateFittingErrorByBatch(input, output, cartesian, 0, cartesian.size(), nullptr);
 }
 
 void CalculatorAll<CalculationParamsCpuSingle>::call(const CalculationParamsCpuSingle &params)
@@ -43,7 +45,7 @@ void CalculatorAll<CalculationParamsCpuSingle>::call(const CalculationParamsCpuS
                                  params.cartesian,
                                  0,
                                  params.totalLength,
-                                 params.cb);
+                                 params.engine);
     );
 }
 
@@ -54,10 +56,15 @@ void CalculatorAll<CalculationParamsCpuMulti>::call(const CalculationParamsCpuMu
     size_t totalLength = params.totalLength;
     unsigned threadCount = std::thread::hardware_concurrency();
     auto cartesian = params.cartesian;
-    Info() << "WARN: Multithreaded mode - using all threads : " << threadCount << "\n";
+    Info() << "Multithreaded mode - using all threads : " << threadCount << "\n";
     std::vector<std::thread> threads(threadCount);
     const size_t batchLength = totalLength / threadCount;
     const size_t batchLengthReminder = totalLength % threadCount;
+
+    Info() << "------------------------------------------------------\n";
+    Info() << "Multihreaded mode:\n";
+    Info() << "\tnumber of threads : " << threadCount << "\n";
+    Info() << "------------------------------------------------------\n";
 
     for (uint32_t threadIndx = 0; threadIndx < threadCount; ++threadIndx)
     {
@@ -66,7 +73,7 @@ void CalculatorAll<CalculationParamsCpuMulti>::call(const CalculationParamsCpuMu
             (threadIndx+1 != threadCount ? 0 : batchLengthReminder);
 
         threads[threadIndx] = std::thread(calculateFittingErrorByBatch,
-                                input, output, cartesian, startIndx, length, params.cb);
+                                input, output, cartesian, startIndx, length, params.engine);
     }
     for (auto &t : threads)
         t.join();
@@ -75,46 +82,24 @@ void CalculatorAll<CalculationParamsCpuMulti>::call(const CalculationParamsCpuMu
 void CalculatorAll<CalculationParamsSimulate>::call(const CalculationParamsSimulate &params)
 {
     const MCInput &input = params.input;
-    MCInput copied{ input };
     std::vector<MCResult> *outputs = params.output;
-    auto characteristic = input.startingData.initialData.characteristic;
-    std::vector<double> current{ characteristic.currentData.begin(), characteristic.currentData.end() };
-    copied.startingData.initialData.characteristic.currentData = { current.begin(), current.end() };
+    JFM_ASSERT(outputs->size() == input.iterations);
     std::shared_ptr<Fitters::AbstractFitter> fitter = params.fitter;
     std::shared_ptr<AbstractPreFit> preFitter = params.preFitter;
+    auto *monteCarloEngine = reinterpret_cast<MonteCarloEngine *>(params.engine);
 
-    auto outOfBounds = [](const ParameterMap& PMap, const ParamBounds& bounds)
-        {
-            for (const auto& [key, val] : PMap)
-            {
-                if (val < bounds.at(key).first or val > bounds.at(key).second)
-                    return true;
-            }
-            return false;
-    };
+    Info() << "------------------------------------------------------\n";
+    Info() << "Simulation:\n";
+    Info() << "\titerations : " << input.iterations << "\n";
+    Info() << "------------------------------------------------------\n";
 
     MEASURE_TIME("simulate",
     for (size_t iteration = 0; iteration < input.iterations; ++iteration)
     {
-        MCResult& result = outputs->at(iteration);
-        // simulate(preFitter, fitter, output.inputData, output.mcResult[iteration]);
-        do {
-            current = { characteristic.currentData.begin(), characteristic.currentData.end() };
-            copied.startingData.initialData.characteristic.currentData = { current.begin(), current.end() };
-            for (auto& I : current)
-                params.generateNoiseCb(I, copied.noise);
-
-            copied.startingData.initialValues = preFitter->Estimate(copied.startingData.initialData);
-
-            fitter->Fit(copied.startingData,
-                            [&](const ParameterMap&& fittingResult) {
-                                result.foundParameters = fittingResult;
-                            });
-
-            params.cb(input, result);
-        } while ((result.error > 23.5) or outOfBounds(result.foundParameters, input.startingData.bounds));
-
-        // m_iterationCount++;
+        monteCarloEngine->simulateSingleIteration(preFitter,
+                                                  fitter,
+                                                  const_cast<MCInput &>(input),
+                                                  outputs->at(iteration));
     }
     );
 }

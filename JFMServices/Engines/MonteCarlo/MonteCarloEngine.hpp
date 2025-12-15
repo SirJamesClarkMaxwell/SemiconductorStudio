@@ -1,8 +1,8 @@
 #pragma once
-#include "../pch.hpp"
-#include "../Fitting/JFMIFitting.hpp"
-#include "../Fitting/JFMFitter.hpp"
-#include "../Fitting/PreFitter.hpp"
+#include "SimulationEngine.hpp"
+#include "Fitting/JFMIFitting.hpp"
+#include "Fitting/JFMFitter.hpp"
+#include "Fitting/PreFitter.hpp"
 #include <atomic>
 #include <ranges>
 #include <memory>
@@ -54,15 +54,22 @@ namespace JFMService
     template <CalculationModeId modeId>
     using ParamsPtr = std::unique_ptr<CalcParams<modeId>>;
 
-	class MonteCarloEngine
+	class MonteCarloEngine : public SimulationEngine
 	{
 	public:
 		MonteCarloEngine();
 
-		void Simulate(const MCInput& input, std::function<void(MCOutput&&)> callback)
+        void CalculateError(const MCInput& input, MCResult& result) override;
+
+		void Simulate(const MCInput& input, std::function<void(MCOutput&&)> callback) override
 		{
 			MEASURE_TIME_THIS_FUNC( SimulateImpl(input, callback); );
 		}
+
+        void simulateSingleIteration(const std::shared_ptr<AbstractPreFit>& preFitter,
+                                     const std::shared_ptr<Fitters::AbstractFitter> fitter,
+                                     MCInput& input,
+                                     MCResult &result);
 
 		double GetUncertainty(const MCOutput &output, int level, ParameterID id);
 
@@ -85,7 +92,7 @@ namespace JFMService
 		double getUncertaintyMultiplier(uint8_t numberOfParameters, ConfidenceLevel level);
 
 		double calculateMaximumError(const PlotData &trueData, double noiseFactor);
-		static void generateNoise(double &value, double factor);
+		double generateNoise(double value, double factor);
 
 		void SimulateImpl(const MCInput &input, std::function<void(MCOutput &&)> callback);
 
@@ -93,8 +100,6 @@ namespace JFMService
         constexpr ParamsPtr<calculationModeId> createParams(
             const MCInput &input,
             std::vector<MCResult> *outputs);
-
-		static void calculateFittingError(const MCInput& input, MCResult& result);
 
 		std::atomic<uint32_t> m_iterationCount;
 		std::atomic<uint32_t> m_blockNumber;
