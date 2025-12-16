@@ -18,23 +18,23 @@ namespace JFMService
         {
         }
 
-        constexpr void Initialize(const size_t size)
+        void Initialize(const size_t size)
         {
             m_size = size;
             m_parameters.resize(m_size);
         }
 
-        constexpr size_t size() const { return m_size; }
+         size_t size() const { return m_size; }
 
         const std::valarray<double>&
         getParameters() const { return m_parameters; };
 
-        constexpr double &operator[](size_t index)
+        double &operator[](size_t index)
         {
             JFM_ASSERT(index < m_parameters.size());
             return m_parameters[index];
         }
-        constexpr double operator[](size_t index) const
+        double operator[](size_t index) const
         {
             JFM_ASSERT(index < m_parameters.size());
             return m_parameters[index];

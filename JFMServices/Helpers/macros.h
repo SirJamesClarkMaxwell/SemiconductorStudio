@@ -20,6 +20,7 @@
 #define Verbose()       _Log(Verbose)
 #define Trace()         _Log(Trace) << "\n"
 
+#if defined(JFM_PLATFORM_NIX)
 #define _MEASURE_TIME(logger, precision, section_name, ...)                                     \
 do {                                                                                            \
     Info() << "[Measurement][Start]\n";                                                         \
@@ -31,6 +32,9 @@ do {                                                                            
            << std::chrono::duration_cast<std::chrono::precision>(end_time-start_time).count()   \
            << " " #precision << ".\n";                                                          \
 } while (0)
+#else
+#define _MEASURE_TIME(logger, precision, section_name, ...)    __VA_ARGS__
+#endif
 
 #define MEASURE_TIME(...)                   _MEASURE_TIME(Info, milliseconds, __VA_ARGS__)
 #define MEASURE_TIME_PRECISE(...)           _MEASURE_TIME(Trace, microseconds, __VA_ARGS__)
@@ -40,11 +44,11 @@ do {                                                                            
 
 #ifdef JFM_DEBUG
 #define JFM_ASSERT(cond)                    assert(cond)
-#define JFM_ASSERT_WITH_MSG(cond, fmt, args...) do {                                            \
+#define JFM_ASSERT_WITH_MSG(cond, fmt, ...) do {                                            \
     if ( ! (cond)) {                                                                            \
         char errLog[1000];                                                                      \
         Err() << "Command \"" << #cond << "\" failed !\n";                                      \
-        sprintf(errLog, fmt, ##args);                                                           \
+        sprintf(errLog, fmt, __VA_ARGS__);                                                           \
         Err() << errLog;                                                                        \
         abort();                                                                                \
     }                                                                                           \
@@ -53,7 +57,7 @@ do {                                                                            
 #else
 
 #define JFM_ASSERT(cond)                        (cond)
-#define JFM_ASSERT_WITH_MSG(cond, fmt, args...) (cond)
+#define JFM_ASSERT_WITH_MSG(cond, fmt, ...) (cond)
 #endif
 
 #define JFM_UNUSED                          [[maybe_unused]]

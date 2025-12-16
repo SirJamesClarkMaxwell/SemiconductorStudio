@@ -1,8 +1,11 @@
 #include "utils.hpp"
 #include <string.h>
+#if defined(JFM_PLATFORM_NIX)
 #include <pthread.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <execinfo.h>
+#endif
 
 namespace utils
 {
@@ -12,6 +15,7 @@ FileLogger gLogger;
 namespace jfm_debug
 {
 #ifdef JFM_DEBUG
+#if defined(JFM_PLATFORM_NIX)
 char *get_address(char *str)
 {
     char *start = strstr(str, "+")+1;
@@ -63,6 +67,7 @@ void show_backtrace()
 
     free(strings);
 }
+#endif
 #else
 void show_backtrace() {  }
 #endif

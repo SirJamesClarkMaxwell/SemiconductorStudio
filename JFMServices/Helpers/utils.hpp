@@ -6,7 +6,6 @@
 #include <format>
 #include <chrono>
 #include "macros.h"
-#include <execinfo.h>
 
 namespace utils
 {

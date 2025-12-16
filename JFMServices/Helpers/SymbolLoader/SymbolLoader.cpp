@@ -1,7 +1,7 @@
 #include "SymbolLoaderNix.h"
 #include "SymbolLoaderWindows.h"
 #include "utils.hpp"
-#include "JunctionFitMaster.hpp"
+#include "../JunctionFitMaster/JunctionFitMaster.hpp"
 
 namespace utils
 {

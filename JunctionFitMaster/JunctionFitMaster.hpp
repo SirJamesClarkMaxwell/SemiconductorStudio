@@ -22,6 +22,6 @@ constexpr const utils::PlatformType platformType =
 #if defined(JFM_PLATFORM_NIX)
     utils::PlatformType::Nix;
 #else
-    utils::Platform::Windows;
+    utils::PlatformType::Windows;
 #endif
 }

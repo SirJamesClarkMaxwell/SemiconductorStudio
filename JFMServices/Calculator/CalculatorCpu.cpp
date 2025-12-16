@@ -34,7 +34,7 @@ void fillUpResultOutputs(
     std::vector<MCResult> *output,
     const ProductT &cartesian)
 {
-    calculateFittingErrorByBatch(input, output, cartesian, 0, cartesian.size(), nullptr);
+    calculateFittingErrorByBatch(input, output, cartesian, 0, static_cast<size_t>(cartesian.size()), nullptr);
 }
 
 void CalculatorAll<CalculationParamsCpuSingle>::call(const CalculationParamsCpuSingle &params)
