@@ -10,6 +10,8 @@
 
 #include <cuda_runtime.h>
 
+#define pad_n(__n)      std::right << std::setw(__n)
+
 namespace
 {
 using namespace JFMService;
@@ -22,6 +24,20 @@ static const int g_params_count = 4; // Note: this is per model type (e.g. 4, 5,
 
 namespace cuda_hidden
 {
+__host__ void
+inspectGpuMemory(const char *tag="")
+{
+    size_t freeMemoryInBytes;
+    size_t totalMemoryInBytes;
+    constexpr static const size_t MB_1 = 1024 * 1024;
+
+    cudaMemGetInfo(&freeMemoryInBytes, &totalMemoryInBytes);
+
+    Info() << "Gpu device memory: [ " << tag << " ]\n";
+    Info() << pad_n(8) << "total: " << pad_n(8) << (totalMemoryInBytes/MB_1) << "MB\n";
+    Info() << pad_n(8) << "free: "  << pad_n(8) << (freeMemoryInBytes/MB_1) << "MB\n";
+}
+
 enum class ArrType {
     // Device array fitted by Host, output it copied back to the original array
     InputOutput,
@@ -185,7 +201,8 @@ struct ArrEmpty : public Arr<T>
     }
 };
 
-__device__ void model_calculate_current(
+__device__ void
+model_calculate_current(
     cuda_float_t *current,
     cuda_float_t *voltage,
     size_t length,
@@ -217,7 +234,8 @@ __device__ void model_calculate_current(
     }
 }
 
-__device__ void calculate_error(
+__device__ void
+calculate_error(
     cuda_float_t *current,
     cuda_float_t *reference_current,
     size_t length,
@@ -373,11 +391,11 @@ void calculatorGpuCall(
         size_t executionDimension = totalLength;
 
         const size_t blocksPerGrid = executionDimension / threadsPerBlock + !!(executionDimension % threadsPerBlock);
-        Log() << "------------------------------------------------------\n"
-              << "GPU Calculation Parameters :\n"
-              << "\tblocks per grid : " << blocksPerGrid << "\n"
-              << "\tthreads per block : " << threadsPerBlock << "\n"
-              << "------------------------------------------------------\n";
+        Info() << "------------------------------------------------------\n";
+        Info() << "GPU Calculation Parameters :\n";
+        Info() << "\tblocks per grid : " << blocksPerGrid << "\n";
+        Info() << "\tthreads per block : " << threadsPerBlock << "\n";
+        Info() << "------------------------------------------------------\n";
 
         ArrLazy<cuda_float_t> dCurrent(ArrType::Input, currentTotal.size());
         ArrEmpty<cuda_float_t> dReferenceCurrent(ArrType::Input, currentTotal.size());
@@ -389,6 +407,8 @@ void calculatorGpuCall(
         dResultParameters.Reinitialize(result_parameters.data());
         dCurrent.Reinitialize(currentTotal.data());
         JFM_ASSERT(cudaGetLastError() == cudaSuccess);
+
+        cuda_hidden::inspectGpuMemory("before");
 
         calculate_data<<<blocksPerGrid, threadsPerBlock>>>(
             dCurrent.Get(),
@@ -408,6 +428,8 @@ void calculatorGpuCall(
     }
     jfm_debug::DataDumper("gpu : after", currentTotal.data(), current.size());
     jfm_debug::DataDumper("gpu : errors", errors.data(), errors.size());
+
+    cuda_hidden::inspectGpuMemory("after");
 
     // rewrite results back
     for (size_t ndx = 0; ndx < output->size(); ++ndx)

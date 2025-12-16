@@ -113,14 +113,6 @@ namespace JFMService
 		std::vector<double> current{ characteristic.currentData.begin(), characteristic.currentData.end() };
 		copied.startingData.initialData.characteristic.currentData = { current.begin(), current.end() };
 
-		static auto checkParams = [](const ParameterMap& PMap)
-        {
-			return std::any_of(PMap.begin(), PMap.end(),
-                               [](const std::pair<const int, double>& pair) {
-                                    return pair.second < 0;
-                               });
-		};
-
 		static auto outOfBounds = [](const ParameterMap& PMap, const ParamBounds& bounds)
 		{
 			for (const auto& [key, val] : PMap)
@@ -130,11 +122,6 @@ namespace JFMService
 			}
 			return false;
 		};
-
-		static auto callback = [&](const ParameterMap&& fittingResult)
-        {
-            result.foundParameters = fittingResult;
-        };
 
 		do
 		{
@@ -146,7 +133,9 @@ namespace JFMService
             }
 
 			copied.startingData.initialValues = preFitter->Estimate(copied.startingData.initialData);
-			fitter->Fit(copied.startingData, callback);
+			fitter->Fit(copied.startingData,
+						[&](const ParameterMap&& fittingResult)
+						{ result.foundParameters = fittingResult; });
 
 			CalculateError(input, result);
 		} while (result.error > 23.5 || outOfBounds(result.foundParameters, input.startingData.bounds));
