@@ -77,6 +77,30 @@ namespace JFMService
     constexpr inline void calculatorCall(ParamsPtr<calculationModeId> params)
     {
         Calculator::CalculatorAll< CalcParams<calculationModeId> >::call( std::ref(*params.get()) );
+
+        // Numeric using cartesian product currently accept each returned value even though
+        // it might not having physical backing.
+        // We need to remove then from the output array
+        if constexpr (calculationModeId == CalculationModeId::CalculateSingleCore ||
+                      calculationModeId == CalculationModeId::CalculateMultiCore ||
+                      calculationModeId == CalculationModeId::CalculateGpu)
+        {
+            size_t validErrCount = 0;
+            auto *output = params->output;
+
+            for (size_t ndx = 0; ndx < output->size(); ++ndx)
+            {
+                auto e = output->at(ndx).error;
+
+                if (e < static_cast<decltype(e)>(23.5))
+                {
+                    output->at(validErrCount).error = e;
+                    output->at(validErrCount).foundParameters = output->at(ndx).foundParameters;
+                    validErrCount++;
+                }
+            }
+            output->resize(validErrCount);
+        }
     }
 
 	void MonteCarloEngine::SimulateImpl(
