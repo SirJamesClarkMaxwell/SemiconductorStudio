@@ -39,11 +39,17 @@ linked_deps = [
     '-L' + join_paths(project_root, 'Vendor/yaml-cpp/build'), '-lyaml-cpp',
 ]
 
+args = []
+if get_option('multi')
+    args += '-DJFM_MULTITHREADED'
+endif
+
 executable('JFM',
     sources: JFM_sources,
     include_directories: JFM_includes,
     cpp_args: ['-std=c++23','-fexperimental-library',
                '-DJFM_PLATFORM_NIX',
+               args,
                '-Wno-unused-variable', '-Wno-unused-function', '-Wno-unused-but-set-variable'],
     link_args: [ linked_deps, '-lglfw', '-lGL'],
     install: true)

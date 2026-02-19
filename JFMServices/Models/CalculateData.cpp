@@ -3,15 +3,10 @@
 #include "JFMErrorModel.hpp"
 void JFMService::DataCalculator::CalculateData(CalculatingData &input)
 {
-    // FIXME: remove unnecessary object creation
-    //        even if lightweight (can't tell at this point)
-    //        still call should be static
-    //        else create object once ..
     FourParameterModel model4;
     SixParameterModel model6;
     FiveParameterModel model5;
     SevenParameterModel model7;
-    JFM_Trace();
     
     switch (input.modelID)
     {
@@ -28,7 +23,6 @@ void JFMService::DataCalculator::CalculateData(CalculatingData &input)
         model7.call(input);
         break;
     default:
-        Unreachable();
         break;
     }
 }

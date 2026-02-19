@@ -49,13 +49,12 @@ namespace utils
     }
 
     static const char *jfmLevelNames[] = {
-        "NONE", "ERR", "INFO", "VERBOSE", "TRACE"
+        "NONE", "ERR", "INFO", "TRACE"
     };
     enum JfmLogLevel : uint8_t {
         None = 0,
         Err,
         Info,
-        Verbose,
         Trace,
         Count
     };
@@ -88,30 +87,6 @@ namespace utils
     };
     extern FileLogger gLogger;
 
-    inline static JfmLogLevel getLogLevel()
-    {
-        const char *level = getenv("JFM_LOG_LEVEL");
-        if (level == NULL)
-            return JfmLogLevel::None;
-
-        int value = atoi(level);
-
-        switch (value)
-        {
-        case 1: return JfmLogLevel::Err;
-        case 2: return JfmLogLevel::Info;
-        case 3: return JfmLogLevel::Trace;
-        case 0:
-        default:
-            break;
-        }
-
-        return JfmLogLevel::None;
-    }
-
-    static const JfmLogLevel gLogLevel = getLogLevel();
-
-
     struct Logger {
     private:
         std::ostringstream m_stream;
@@ -143,13 +118,10 @@ namespace utils
 
         ~Logger()
         {
-            if (isLoggerOn(m_level))
-            {
-                if (isVerbose())
-                    fprintf(m_level <= JfmLogLevel::Err ? stderr : stdout, "%s", m_stream.str().c_str());
+            if (isVerbose())
+                fprintf(m_level <= JfmLogLevel::Err ? stderr : stdout, "%s", m_stream.str().c_str());
 
-                gLogger.writeMessage(m_stream.str().c_str());
-            }
+            gLogger.writeMessage(m_stream.str().c_str());
         }
 
         std::ostream &stream() { return m_os; }
@@ -175,38 +147,23 @@ namespace utils
             }
             return verbose;
         }
-
-        inline static bool isLoggerOn(JfmLogLevel level)
-        {
-            return gLogLevel >= level;
-        }
     };
-
-    template <typename T>
-    inline T min(const T& a, const T&b)
-    {
-        return a > b ? b : a;
-    }
 }
 
 #define _Log(level)      utils::Logger(__FILE__, __func__, __LINE__, utils::JfmLogLevel::level).stream()
-#define Err()           _Log(Err)
 #define Info()          _Log(Info)
-#define Verbose()       _Log(Verbose)
-#define Trace()         _Log(Trace) << "\n"
+#define Err()           _Log(Err)
 
-#define _MEASURE_TIME(logger, precision, section_name, ...) \
-do { \
+#define JFM_Trace()     _Log(Trace) << "\n"
+
+#define MEASURE_TIME(section_name, ...) \
+{ \
     auto start_time = std::chrono::steady_clock::now(); \
     __VA_ARGS__ \
     auto end_time = std::chrono::steady_clock::now(); \
-    logger() << "[" << section_name << "] Time elapsed: " \
-           << std::chrono::duration_cast<std::chrono::precision>(end_time-start_time).count() \
-           << #precision << ".\n"; \
-} while (0)
-
-#define MEASURE_TIME(...)                   _MEASURE_TIME(Info, milliseconds, __VA_ARGS__)
-#define MEASURE_TIME_PRECISE(...)           _MEASURE_TIME(Trace, microseconds, __VA_ARGS__)
-#define MEASURE_TIME_THIS_FUNC(...)         MEASURE_TIME(__func__, __VA_ARGS__)
+    Info() << "[" << section_name << "] Time elapsed: " \
+           << std::chrono::duration_cast<std::chrono::milliseconds>(end_time-start_time).count() \
+           << "milliseconds.\n"; \
+}
 
 #define Unreachable()           assert("Unreachable reached !" == 0)

@@ -1,0 +1,6 @@
+option(
+  'multi',
+  type: 'boolean',
+  value: false,
+  description: 'Build JFM Application in multithreaded mode'
+)
