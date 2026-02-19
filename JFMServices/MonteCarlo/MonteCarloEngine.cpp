@@ -4,11 +4,111 @@
 #include "../Models/CalculateData.hpp"
 #include <utils.hpp>
 #include <compare>
+#define MULTITHREAD
+extern std::vector<std::pair<std::vector<double>, std::vector<double>>> globalNoisyI;
+std::mutex g_mutex;
+static int blockNumber = 0;
 #include <assert.h>
 #include <thread>
 
 namespace JFMService
 {
+	MonteCarloEngine::MonteCarloEngine() {};
+	void MonteCarloEngine::simulateChunk(int startIdx, int chunkSize, const std::shared_ptr<AbstractPreFit>& preFitter,
+		const std::shared_ptr<Fitters::AbstractFitter> fitter, MCInput& input,
+		std::vector<MCResult>& localResults, int numBlock)
+	{
+		blockNumber += 1;
+		int localNumeber = blockNumber;
+		// int blockNumber = startIdx - chunkSize
+		for (int i = 0; i < chunkSize; ++i)
+		{
+			int idx = startIdx + i;
+			if (idx >= input.iterations)
+			{
+				localResults.resize(i);
+				break;
+			}
+			MCResult result;
+			simulate(preFitter, fitter, input, localResults, i);
+			// if(i%20 == 0)
+			//std::cout << "block:" << localNumeber << " idx: " << i << std::endl;
+		}
+	};
+
+	static std::mutex mutex;
+	static int num = 0;
+	void MonteCarloEngine::Simulate(const MCInput& input, std::function<void(MCOutput&&)> callback)
+	{ 
+		int chunkSize = input.iterations / 12; // 41
+		std::jthread thread{
+			[=]()
+			{
+				MCOutput output;
+				output.inputData = input;
+				std::shared_ptr<Fitters::AbstractFitter> fitter = m_fitter[input.startingData.initialData.modelID];
+				std::shared_ptr<AbstractPreFit> preFitter = m_prefitter[input.startingData.initialData.modelID];
+				auto start = std::chrono::high_resolution_clock().now();
+				output.mcResult.resize(input.iterations);
+
+
+				std::vector<MCResult> finalResults(input.iterations);
+#ifdef MULTITHREAD
+				std::vector<std::future<std::vector<MCResult>>> futures;
+				int numChunks = (input.iterations + chunkSize - 1) / chunkSize; // 25
+				for (int chunk = 0; chunk < numChunks; ++chunk)
+				{
+					int startIdx = chunk * chunkSize;
+					futures.push_back(std::async(std::launch::async,
+												 [&, startIdx]()
+												 {
+													 std::vector<MCResult> localResults(chunkSize);
+													 simulateChunk(startIdx, chunkSize, preFitter, fitter, output.inputData, localResults, chunk);
+													 return localResults; // Return local results
+												 }));
+				}
+
+				for (int chunk = 0; chunk < numChunks; ++chunk)
+				{
+					auto localResults = futures[chunk].get(); // Wait for and retrieve local results
+					std::copy(localResults.begin(), localResults.end(), output.mcResult.begin() + (chunk * chunkSize));
+				}
+#endif
+#ifndef MULTITHREAD
+				for (int i=0;i<output.inputData.iterations;i++)
+				{
+					simulate(preFitter, fitter, output.inputData, finalResults, i);
+					output.mcResult = finalResults;
+				}
+#endif
+				auto end = std::chrono::high_resolution_clock().now();
+				auto miliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+				auto perIteration = miliseconds / input.iterations;
+				auto seconds = miliseconds / 1000;
+				std::cout << "time: " << seconds << " s "
+						  << perIteration << " ms per fit" << std::endl;
+
+				if (callback)
+					callback(std::move(output));
+			} };
+
+		thread.detach();
+	}
+
+	void MonteCarloEngine::generateNoise(double& value, double factor)
+	{
+		double noise = (value * factor / 100);
+		double copy = value;
+		// std::uniform_real_distribution<double> distribution{ -1,1 };
+		std::normal_distribution<double> distribution{ 0, 1 };
+		// std::cout << distribution(m_generator)*sigma << std::endl;
+		//std::cout << value << " ";
+		value += distribution(m_generator) * noise;
+		//std::cout << value << std::endl;
+		// value = value +  distribution(m_generator)*(factor / 100) * value ;
+		// value = std::abs(value);
+	}
+	void MonteCarloEngine::simulate(const std::shared_ptr<AbstractPreFit>& preFitter, const std::shared_ptr<Fitters::AbstractFitter> fitter, MCInput& input, std::vector<MCResult>& results, int i)
 	MonteCarloEngine::MonteCarloEngine()
 		: m_iterationCount(0)
 		, m_blockNumber(0)

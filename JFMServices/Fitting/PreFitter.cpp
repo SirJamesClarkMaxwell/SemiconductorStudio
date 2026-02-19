@@ -71,10 +71,14 @@ namespace JFMService
 			if ((item - avg(i, window)) < 0.0001)
 				continue;
 			else
+			{
+				if (copy.size() - i - window < 20)
+					return copy.size() - window;
 				return copy.size() - i - window;
+			}
 		}
 
-		return copy.size();
+		return copy.size()-5;
 	};
 
 	double estimateRsh(const std::vector<double>& V,const std::vector<double>& I,int&AStart )

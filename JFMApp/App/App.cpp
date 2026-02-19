@@ -702,15 +702,29 @@ namespace JFMApp
 					unsigned int index = ModelID::Model4P;
 					temp.modelID = index;
 					temp.savedModelID = index;
-					auto minValue = std::abs(temp.I[*std::ranges::find(temp.V, 0)]);
-					temp.ShortCircuitCurrent = minValue;
-					std::ranges::for_each(copiedI, [&](auto &item)
-										  { item += minValue; });
-					temp.dataRange = m_numerics->RangeData({temp.V, copiedI});
-					temp.I = copiedI;
+
+					// Check if temp.V is not empty and contains the value 0
+					auto it = std::min_element(temp.V.begin(), temp.V.end(), [](double a, double b) {
+						return std::abs(a) < std::abs(b);
+						});
+					if (it != temp.V.end())
+					{
+						auto minValue = std::abs(temp.I[std::distance(temp.V.begin(), it)]);
+						temp.ShortCircuitCurrent = minValue;
+						std::ranges::for_each(copiedI, [&](auto& item)
+							{ item += minValue; });
+						temp.dataRange = m_numerics->RangeData({ temp.V, copiedI });
+						temp.I = copiedI;
+					}
 				}
 				else
-					temp.dataRange = m_numerics->RangeData({temp.V, copiedI});
+				{
+					// Handle the case where 0 is not found in temp.V
+					// You can set a default value or handle the error as needed
+					temp.ShortCircuitCurrent = 0; // Default value
+					temp.dataRange = m_numerics->RangeData({ temp.V, copiedI });
+					temp.I = copiedI;
+				}
 
 				if (temp.forcedModelID)
 				{

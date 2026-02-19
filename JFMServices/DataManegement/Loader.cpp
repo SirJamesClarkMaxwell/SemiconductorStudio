@@ -53,18 +53,52 @@ namespace JFMService
 		std::vector<std::string> lines = utils::spliting(content, "\n");
 		int size = lines.size();
 		std::vector<double> voltages{}, currents{}, densityCurrents{};
-
+# if 0
 		for (const auto &line : lines)
 		{
 			auto splittedLine = utils::spliting(line, "\t");
-			if (splittedLine.size() == 3)
+			if (splittedLine.size() == 3 or splittedLine.size() == 2)
 			{
 				voltages.push_back(std::stod(splittedLine[0]));
 				currents.push_back(std::stod(splittedLine[1]));
-				densityCurrents.push_back(std::stod(splittedLine[2]));
+				if(splittedLine.size() == 3)
+					densityCurrents.push_back(std::stod(splittedLine[2]));
 			}
 		}
-		return {voltages, currents, densityCurrents};
+#else
+		
+		std::reverse(lines.begin(), lines.end());
+		lines.pop_back();
+		lines.pop_back();
+		//std::reverse(lines.begin(), lines.end());
+		for (const auto& line : lines)
+		{
+			auto splittedLine = utils::spliting(line, "\t");
+
+			if (splittedLine.size() == 2 || splittedLine.size() == 3)
+			{
+				auto fix = [](std::string s)
+					{
+						// usu? spacje
+						s.erase(std::remove_if(s.begin(), s.end(), ::isspace), s.end());
+						// zamie? przecinki na kropki
+						std::replace(s.begin(), s.end(), ',', '.');
+						return s;
+					};
+
+				voltages.push_back(std::stod(fix(splittedLine[0])));
+				currents.push_back(std::stod(fix(splittedLine[1])));
+
+				if (splittedLine.size() == 3)
+					densityCurrents.push_back(std::stod(fix(splittedLine[2])));
+			}
+		}
+#endif
+		//std::reverse(voltages.begin(), voltages.end());
+		//std::reverse(currents.begin(), currents.end());
+		//std::reverse(densityCurrents.begin(), densityCurrents.end());
+
+		return {voltages, currents, densityCurrents };
 		//return items;
 	}
 
@@ -76,9 +110,9 @@ namespace JFMService
 
 	double CharacteristicLoader::readTemperature(const std::string &name)
 	{
-		auto it = name.find("T");
+		auto it = name.find("K");
 		if (it != std::string::npos)
-			return std::stod(name.substr(it + 1, 3));
+			return std::stod(name.substr(it - 5, 3));
 
 		return -1;
 	};

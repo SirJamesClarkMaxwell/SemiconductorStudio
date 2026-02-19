@@ -99,7 +99,10 @@ namespace JFMApp::Views {
 		if (ImPlot::BeginPlot(mc.name.c_str(), plotAreaSize, Data::PlotData::plotSettings.flags)) {
 
 			ImPlot::SetupAxes(prX.c_str(), prY.c_str(), Data::PlotData::plotSettings.xFlags, Data::PlotData::plotSettings.yFlags);
-			
+			std::sort(mc.mc.data.begin(), mc.mc.data.end(),
+				[&](const auto& a, const auto& b) {
+					return a.error > b.error;
+				});
 			for (auto& d : mc.mc.data) {
 				ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle, -1, mc.sig[getMCColor(d.error, mc.mc.fixConfig.size())], -1.0f, mc.sig[getMCColor(d.error, mc.mc.fixConfig.size())]);
 
