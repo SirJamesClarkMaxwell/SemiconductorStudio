@@ -195,12 +195,11 @@ namespace JFMService::FittingService
 		}
 #endif
 	}
-	void Fitting::SaveUncertanties(std::vector<UncertaintySave> &toSave, const std::filesystem::path &path)
+	void Fitting::SaveUncertanties(const std::vector<UncertaintySave> &toSave, const std::filesystem::path &path)
 	{
 		std::stringstream sttringStream;
 		std::string xlabel = Fitters::parameterIdToString((Fitters::ParameterID)(*toSave.front().paramPair.begin()).first);
-		// std::string ylabel = Fitters::parameterIdToString((Fitters::ParameterID)(*(--toSave.front().paramPair.end())).first);
-		std::string ylabel = Fitters::parameterIdToString((Fitters::ParameterID)(*(toSave.front().paramPair.end())).first);
+		std::string ylabel = Fitters::parameterIdToString((Fitters::ParameterID)(*(--toSave.front().paramPair.end())).first);
 
 		sttringStream << "Name\tTemperature\t1/T\t";
 		for (const auto& [key, val] : toSave.front().paramPair)

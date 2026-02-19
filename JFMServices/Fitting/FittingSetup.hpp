@@ -9,7 +9,7 @@
 #include "Model.hpp"
 #include "Optimizer.hpp"
 #include "ModelBase.hpp"
-#include "Data.hpp"
+#include "data.hpp"
 #include "Fitter.hpp"
 #include "Models/JFMModels.hpp"
 #include "Models/JFMErrorModel.hpp"
@@ -102,11 +102,7 @@ namespace JFMService
 
 	protected:
 		template <class BuildingType, OptimizerSettings Settings>
-#ifdef __clang__
-		class IVSimplexOptimizerSettingsBuilderBase : public BasicSimplexOptimizerSettings<M>::template BasicSimplexOptimizerSettingsBuilderBase<BuildingType, Settings>
-#else
 		class IVSimplexOptimizerSettingsBuilderBase : public BasicSimplexOptimizerSettings<M>::BasicSimplexOptimizerSettingsBuilderBase<BuildingType, Settings>
-#endif
 		{
 		public:
 			BuildingType& addLogCreatorSettings(const LogCreatorSettings<M::parameter_size>& settings)

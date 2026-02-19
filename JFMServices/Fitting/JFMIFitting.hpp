@@ -121,7 +121,7 @@ namespace JFMService::FittingService
 		virtual void Simulate(const MCInput &input, std::function<void(MCOutput &&)> callback) = 0;
 		virtual double GetUncertainty(const MCOutput &output, int level, ParameterID id) = 0;
 		virtual void SaveMCPlot(const MCSave &toSave) = 0;
-		virtual void SaveUncertanties(std::vector< UncertaintySave>& toSave,const std::filesystem::path& path)=0;
+		virtual void SaveUncertanties(const std::vector< UncertaintySave>& toSave,const std::filesystem::path& path)=0;
 	};
 }
 namespace JFMService::Fitters

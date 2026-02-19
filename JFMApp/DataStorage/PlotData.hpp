@@ -1,7 +1,6 @@
 #pragma once
 #include "pch.hpp"
 #include "Characteristic.hpp"
-#include "implot.h"
 
 namespace JFMApp::Data
 {
@@ -105,7 +104,7 @@ namespace JFMApp::Data
 			Tunned
 		};
 		using ArrheniusFunctionType = std::function<double(const ParameterMap& pMap)>;
-		static PlotSettings plotSettings;
+		static inline PlotSettings plotSettings;
 		enum ArrheniusPlotType
 		{
 			A_ln_I0 = 0,

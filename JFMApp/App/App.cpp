@@ -1,5 +1,4 @@
-﻿#include <map>
-#include "pch.hpp"
+﻿#include "pch.hpp"
 #include "App.hpp"
 
 std::vector<std::pair<std::vector<double>, std::vector<double>>> globalNoisyI{};
@@ -516,7 +515,7 @@ namespace JFMApp
 				numOfCombinations *= T.size();
 				numOfCombinations *= noise.size();
 
-				std::map<ParameterID, size_t> indices{};
+				std::unordered_map<ParameterID, size_t> indices{};
 
 				for (const auto &[id, vals] : params)
 				{
