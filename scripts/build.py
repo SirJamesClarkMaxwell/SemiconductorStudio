@@ -15,12 +15,9 @@ if __name__ == "__main__":
     print('Build JFM Application')
     if args.build_type == 'linux':
         print('\t target:\t linux\n')
-        # NOTE: on linux example execution commands:
-        #          python3 scripts/build.py --build-type linux --clean --multi --setup
-        #          python3 scripts/build.py --build-type linux --no-clean
         if args.setup:
-            build_linux.setup_dependencies(args.clean)
-        build_linux.build(args.clean, args.multi)
+            build_linux.setup_dependencies(args.clean, args.multi)
+        build_linux.build(args.clean)
     else:
         print('\t target:\t windows\n')
         build_windows.build()
