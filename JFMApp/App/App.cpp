@@ -2,7 +2,6 @@
 #include "pch.hpp"
 #include "App.hpp"
 #include <thread>
-#include <functional>
 
 std::vector<std::pair<std::vector<double>, std::vector<double>>> globalNoisyI{};
 std::vector<std::pair<std::vector<double>, std::vector<double>>> globalErrors{};
@@ -19,11 +18,6 @@ namespace JFMApp
 		m_dataLoader = services.dataLoader;
 
 		init();
-	}
-
-	App::~App()
-	{
-		dispatcher.close();
 	}
 
 	void App::init()
@@ -867,7 +861,7 @@ namespace JFMApp
 										   //
 										   //  if yes, check if montecalro data is already loaded(distinguish by the fitting config)
 										   //  if not, load the montecarlo data
-										   //	   --put montecarlo data into th echaracteristic
+										   //      --put montecarlo data into th echaracteristic
 										   //  if yes, do nothing
 										   if (c.mcData)
 										   {
@@ -1155,14 +1149,13 @@ namespace JFMApp
 
 				auto mcData = active.getMCConfig();
 
-				auto work = std::bind(&IFitting::Simulate, m_numerics.get(), mcData, [&](MCOutput &&output) {
-						if (!&active)
-							return;
-
-						m_state.plotData.activeMC = nullptr;
-						active.submitMC(output);
-					});
-				dispatcher.addWork(work, "performMCallback");
+				m_numerics->Simulate(mcData, [&](MCOutput &&output)
+									 {
+							if (!&active)
+								return;
+							// std::scoped_lock lk{ *active.mcMutex };
+							m_state.plotData.activeMC = nullptr;
+							active.submitMC(output); });
 			};
 
 			m_state.plotData.m_performMCOnAllCallback = [&]()
@@ -1176,9 +1169,8 @@ namespace JFMApp
 					mcData.iterations = m_state.plotData.savedGlobalMCConfig.n;
 					mcData.noise = m_state.plotData.savedGlobalMCConfig.sigma;
 
-					auto work = std::bind(&IFitting::Simulate, m_numerics.get(), mcData,
-											[&](MCOutput &&output) { ch.submitMC(output); });
-					dispatcher.addWork(work, "performMOnAllCallback");
+					m_numerics->Simulate(mcData, [&](MCOutput &&output)
+										 { ch.submitMC(output); });
 				}
 			};
 
