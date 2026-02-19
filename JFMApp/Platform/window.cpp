@@ -1,7 +1,6 @@
 #include "pch.hpp"
 
 #include "window.hpp"
-#include <utils.hpp>
 
 namespace JFMApp {
 	std::shared_ptr<GLFWwindow> Window::m_winPtr{ nullptr };
@@ -158,7 +157,7 @@ namespace JFMApp {
 
 	void Window::glfw_error_callback(int error, const char* description)
 	{
-		Info() << "GLFW Error %d: %s\n"
+		std::cout << "GLFW Error %d: %s\n"
 			<< error << description << "\n";
 	}
 };

@@ -14,7 +14,7 @@ void Tests::test()
 
 void Tests::testDataManager()
 {
-    Info() << "test Data Manager" << std::endl;
+    std::cout << "test Data Manager" << std::endl;
     testLoadingCharacteristics();
     testYAMLDumping();
     testYAMLLoading();
@@ -22,8 +22,8 @@ void Tests::testDataManager()
 
 void Tests::testLoadingCharacteristics()
 {
-    Info() << "----------------------" << std::endl;
-    Info() << "Loading Characteristics" << std::endl;
+    std::cout << "----------------------" << std::endl;
+    std::cout << "Loading Characteristics" << std::endl;
     DataManager manager;
     LoaderOutput loaded;
     manager.Load("ivd_HZB25_T181_L0.dat", [&](LoaderOutput output)
@@ -50,8 +50,8 @@ void Tests::testModel()
 void Tests::testYAMLLoading()
 {
 
-    Info() << "----------------------" << std::endl;
-    Info() << "Loading YAML config " << std::endl;
+    std::cout << "----------------------" << std::endl;
+    std::cout << "Loading YAML config " << std::endl;
     DataManager manager;
     LoaderOutput loaded;
     manager.Load("testLoad.yaml", [&](LoaderOutput output)
@@ -121,10 +121,10 @@ void Tests::testYAMLDumping()
 }
 void Tests::testFitting()
 {
-    Info() << std::endl
+    std::cout << std::endl
               << std::endl
               << "----------------------" << std::endl;
-    Info() << "Testing Fitting" << std::endl;
+    std::cout << "Testing Fitting" << std::endl;
 
     // testFourParameterModel();
     testSixParameterModel();
@@ -288,7 +288,7 @@ void Tests::testAutoRange()
     data.voltageData = V;
     data.currentData = I;
     std::pair<double, double> range = prefitter.rangeData(data);
-    Info() << "lower range: " << range.first << " upper range: " << range.second;
+    std::cout << "lower range: " << range.first << " upper range: " << range.second;
 }
 void Tests::testPlots()
 {

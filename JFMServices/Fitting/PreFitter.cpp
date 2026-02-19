@@ -93,7 +93,7 @@ namespace JFMService
 
 			// Prevent division by zero
 			if ((I[n - 1] - I[n - 2]) == 0 || (I[n - 1] - I[0]) == 0) {
-				//Info() << "Skipping iteration due to division by zero\n";
+				//std::cout << "Skipping iteration due to division by zero\n";
 				//continue;
 			}
 
@@ -103,9 +103,9 @@ namespace JFMService
 
 			sb = std::isinf(S);
 			s0b = std::isinf(S0);
-			//Info() << "S: " << S << " (valid: " << sb << ")  S0: " << S0 << " (valid: " << s0b << ")\n";
+			//std::cout << "S: " << S << " (valid: " << sb << ")  S0: " << S0 << " (valid: " << s0b << ")\n";
 			bool t = S / S0 >= 0.8;
-			//Info() << "t: " << t << std::endl;
+			//std::cout << "t: " << t << std::endl;
 		} while ((S / S0) >= 0.8 or sb or s0b);
 
 		AStart = n;
@@ -233,7 +233,7 @@ namespace JFMService
 		auto k = idealityFactorParams.k;
 		double l = logI[maxDerIndex] - V[maxDerIndex] / (A * k * T);
 		double l1 = logI[maxDerIndex] - V[maxDerIndex + AStart] / (A * k * T);
-		//Info() << "l: " << std::exp(l) << "l1: " << std::exp(l1) << std::endl;
+		//std::cout << "l: " << std::exp(l) << "l1: " << std::exp(l1) << std::endl;
 		double I0 = std::exp(l);
 
 		parameterResult[Fitters::ParameterID::A] = A;

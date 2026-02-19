@@ -124,9 +124,6 @@ namespace JFMService
 		};
 	};
 
-    //  NOTE: stepper can be set by inherited class:
-    //      -> BasicSimplexOptimizer
-    //      -> SimulatedAnnealzing
 	template <Model M>
 	class IVSimplexOptimizer : public BasicSimplexOptimizer<IVSimplexOptimizerSettings<M>, void>
 	{

@@ -21,7 +21,7 @@ namespace JFMService
         }
         catch(std::exception& e)
         {
-			Info() << e.what() << std::endl;
+			std::cout << e.what() << std::endl;
         }
 	}
 

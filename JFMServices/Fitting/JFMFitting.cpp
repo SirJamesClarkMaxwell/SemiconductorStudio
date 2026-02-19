@@ -159,38 +159,38 @@ namespace JFMService::FittingService
 		for (const auto &[x, y, e] : std::views::zip(xSave, ySave, errors))
 			dataToSave += formatData(x, y, e);
 		bool e = std::filesystem::exists(parentPath);
-		Info() << parentPath.string() << std::endl;
+		std::cout << parentPath.string() << std::endl;
 		if (!e)
 			std::filesystem::create_directories(parentPath);
 		std::ofstream file(path, std::ios::out | std::ios::trunc);
 		if (!file) {
-			Err() << "Error: Could not open file: " << path << std::endl;
+			std::cerr << "Error: Could not open file: " << path << std::endl;
 			return;
 		}
 		file << dataToSave;
 		file.close();
-		Info() << std::filesystem::current_path()<<std::endl;
+		std::cout << std::filesystem::current_path()<<std::endl;
 		std::string command = "python ./generate_image.py " + path.string();
 		std::system(command.c_str());
 #if 1
-		Info() << path.string();
+		std::cout << path.string();
 		try {
 			// Attempt to remove the file
 			if (std::filesystem::remove(path)) {
-				Info() << "File deleted successfully.\n";
+				std::cout << "File deleted successfully.\n";
 			}
 			else {
-				Info() << "File not found.\n";
+				std::cout << "File not found.\n";
 			}
 		}
 		catch (const std::filesystem::filesystem_error& e) {
 			// Catch the exception and print detailed error info
-			Err() << "Filesystem error: " << e.what() << '\n';
-			Err() << "Path: " << e.path1() << '\n';
+			std::cerr << "Filesystem error: " << e.what() << '\n';
+			std::cerr << "Path: " << e.path1() << '\n';
 
 			// Optionally, if the exception involves two paths (e.g., copy operations)
 			if (!e.path2().empty()) {
-				Err() << "Other path: " << e.path2() << '\n';
+				std::cerr << "Other path: " << e.path2() << '\n';
 			}
 		}
 #endif
