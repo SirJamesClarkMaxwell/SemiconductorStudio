@@ -457,36 +457,54 @@ namespace JFMApp::Views {
 
 				//draw the parameter sliders
 				{
-					ImGui::PushItemWidth(300);
+					if (ImGui::BeginTable("Tuned parameters", 6, ImGuiTableFlags_SizingStretchProp | ImGuiTableFlags_BordersInnerV)) {
+						ImGui::TableSetupColumn("Index", ImGuiTableColumnFlags_WidthFixed, 50.0f);
+						ImGui::TableSetupColumn("Parameter", ImGuiTableColumnFlags_WidthFixed, 120.0f);
+						ImGui::TableSetupColumn("List value");
+						ImGui::TableSetupColumn("Estimated");
+						ImGui::TableSetupColumn("Tune");
+						ImGui::TableSetupColumn("Fixed", ImGuiTableColumnFlags_WidthFixed, 55.0f);
+						ImGui::TableHeadersRow();
 
-					if (ImGui::BeginTable("Tuned parameters", 4, ImGuiTableFlags_SizingStretchProp)) {
-						ImGui::TableNextRow();
-
+						int parameterIndex = 0;
 						for (auto& [id, param_value] : act.tunedParameters) {
 							// Normalize the value
 							int power = std::floor(std::log10(param_value));
 							float value = param_value / std::pow(10, power);
 							bool checked = act.fixedParameterIDs[id];
+							const auto fittedParameterIt = act.fittedParameters.find(id);
+							const double fittedValue = fittedParameterIt != act.fittedParameters.end() ? fittedParameterIt->second : 0.0;
 
 							// Unique widget ID
 							std::string uniqueID = "##" + std::to_string(id);
 
-							// First column: Checkbox for activation
+							ImGui::TableNextRow();
+
+							ImGui::TableNextColumn();
+							ImGui::Text("%d", parameterIndex++);
+
 							ImGui::TableNextColumn();
 							ImGui::Checkbox(data.paramConfig->parameters[id].c_str(), &act.tempParametersActive[id]);
-							ImGui::PushItemWidth(400);
+
+							ImGui::TableNextColumn();
+							ImGui::Text("%e", param_value);
+
+							ImGui::TableNextColumn();
+							ImGui::Text("%e", fittedValue);
+
+							ImGui::TableNextColumn();
+							ImGui::PushItemWidth(-FLT_MIN);
 							// Second column: Value slider
-							ImGui::SameLine();
 							if (ImGui::SliderFloat((uniqueID + "_slider").c_str(), &value, 1.0f, 9.999f))
 								act.toTunne = true;
 							
-							ImGui::SameLine();
 							if (ImGui::SliderInt((uniqueID + "_power").c_str(), &power,  -20 , 20))
 								act.toTunne = true;
 
 							ImGui::PopItemWidth();
+
 							// Fourth column: Fixed parameter checkbox
-							ImGui::SameLine();
+							ImGui::TableNextColumn();
 							if (ImGui::Checkbox((uniqueID + "_fixed").c_str(), &checked)) {
 								if (checked) 
 								{
@@ -517,12 +535,9 @@ namespace JFMApp::Views {
 								act.tunedI = act.fittedI;
 								act.fittedI = tmpCurrent;
 							}
-
-							ImGui::TableNextRow();
 						}
 
 						ImGui::EndTable();
-						ImGui::PopItemWidth();
 					}
 				}
 

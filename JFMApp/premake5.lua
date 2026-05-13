@@ -44,6 +44,8 @@ project "JFMApp"
     filter { "configurations:Release" }
         runtime "Release"
 
-    filter { "system:windows" }
+    filter { "system:windows", "configurations:Debug" }
         ignoredefaultlibraries { "msvcrt" }
+
+    filter { "system:windows" }
         links {  "legacy_stdio_definitions", "opengl32", "glfw3", "imgui", "implot" }

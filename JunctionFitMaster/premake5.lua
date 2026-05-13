@@ -47,8 +47,10 @@ project "JunctionFitMaster"
     filter { "configurations:Release" }
         runtime "Release"
 
-    filter { "system:windows" }
+    filter { "system:windows", "configurations:Debug" }
         ignoredefaultlibraries { "msvcrt" }
+
+    filter { "system:windows" }
         -- links { "JFMApp", "JFMServices" }
         links { "JFMApp", "JFMServices" }
 

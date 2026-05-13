@@ -38,6 +38,8 @@ project "JFMServices"
     filter { "configurations:Release" }
         runtime "Release"
 
-    filter { "system:windows" }
+    filter { "system:windows", "configurations:Debug" }
         ignoredefaultlibraries { "msvcrt" }
+
+    filter { "system:windows" }
         links { "yaml-cpp","LambertW" }

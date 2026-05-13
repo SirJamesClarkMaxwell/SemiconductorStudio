@@ -67,9 +67,9 @@ namespace JFMService
 		}
 #else
 		
-		std::reverse(lines.begin(), lines.end());
-		lines.pop_back();
-		lines.pop_back();
+		//std::reverse(lines.begin(), lines.end());
+		//lines.pop_back();
+		//lines.pop_back();
 		//std::reverse(lines.begin(), lines.end());
 		for (const auto& line : lines)
 		{
@@ -110,9 +110,9 @@ namespace JFMService
 
 	double CharacteristicLoader::readTemperature(const std::string &name)
 	{
-		auto it = name.find("K");
+		auto it = name.find("T");
 		if (it != std::string::npos)
-			return std::stod(name.substr(it - 5, 3));
+			return std::stod(name.substr(it + 1, 3));
 
 		return -1;
 	};
